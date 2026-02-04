@@ -3,9 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   output: 'standalone',
-  experimental: {
-    serverComponentsExternalPackages: ['postgres'],
-  },
+  serverExternalPackages: ['postgres'],
 }
 
 module.exports = nextConfig

@@ -1,58 +1,190 @@
 import Link from "next/link"
+import { Header } from "@/components/Header"
+import { Hero, HeroTitle, HeroSubtitle } from "@/components/Hero"
+import { Container } from "@/components/Container"
+import { Card, CardContent, CardTitle, CardDescription } from "@/components/Card"
+import { Button } from "@/components/Button"
+import { Badge } from "@/components/Badge"
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="container mx-auto px-4 py-16">
-        <div className="mx-auto max-w-2xl text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-50 sm:text-6xl">
-            Sistema de Reservas
-          </h1>
-          <p className="mt-6 text-lg leading-8 text-slate-600 dark:text-slate-400">
-            Sistema completo de gestión de reservas con IVR de voz y confirmaciones por WhatsApp
-          </p>
-          <div className="mt-10 flex items-center justify-center gap-x-6">
-            <Link
-              href="/admin"
-              className="rounded-md bg-slate-900 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 dark:bg-slate-50 dark:text-slate-900 dark:hover:bg-slate-200"
-            >
-              Panel de Admin
-            </Link>
-            <Link
-              href="/api/docs"
-              className="text-sm font-semibold leading-6 text-slate-900 dark:text-slate-50"
-            >
-              API Docs <span aria-hidden="true">→</span>
-            </Link>
-          </div>
+    <>
+      <Header variant="transparent" />
+
+      {/* Hero Section */}
+      <Hero overlay>
+        <HeroTitle>
+          COCINA<br />MARINERA
+        </HeroTitle>
+        <HeroSubtitle italic>
+          Tradicional
+        </HeroSubtitle>
+        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Link href="#reservar">
+            <Button variant="secondary" size="lg">
+              RESERVAR MESA
+            </Button>
+          </Link>
         </div>
 
-        <div className="mx-auto mt-16 max-w-5xl">
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
-            <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-slate-800">
-              <div className="text-3xl">📞</div>
-              <h3 className="mt-4 text-lg font-semibold">IVR Inteligente</h3>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                Sistema de respuesta de voz con reconocimiento de habla automático
+        {/* Progress indicator */}
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/70">
+          <span className="progress-indicator">01 —— 03</span>
+        </div>
+      </Hero>
+
+      {/* Features Section */}
+      <section className="section-light py-24" id="sistema">
+        <Container>
+          <div className="text-center">
+            <h2 className="font-display text-display-md uppercase tracking-tight">
+              Sistema de Reservas
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl font-serif text-lg text-neutral-600">
+              Gestiona tus reservas con tecnologia de{" "}
+              <span className="text-accent-italic">vanguardia</span>
+            </p>
+          </div>
+
+          <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-3">
+            {/* IVR Card */}
+            <Card variant="outlined" className="text-center hover:border-black transition-colors">
+              <CardContent className="py-10">
+                <div className="mb-6 text-5xl">📞</div>
+                <CardTitle>IVR Inteligente</CardTitle>
+                <CardDescription className="text-center">
+                  Sistema de respuesta de voz con reconocimiento automatico para reservas telefonicas 24/7
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            {/* WhatsApp Card */}
+            <Card variant="outlined" className="text-center hover:border-black transition-colors">
+              <CardContent className="py-10">
+                <Badge variant="promo" className="mb-6">Nuevo</Badge>
+                <div className="mb-6 text-5xl">💬</div>
+                <CardTitle>WhatsApp</CardTitle>
+                <CardDescription className="text-center">
+                  Confirmaciones automaticas con botones interactivos y recordatorios personalizados
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            {/* Dashboard Card */}
+            <Card variant="outlined" className="text-center hover:border-black transition-colors">
+              <CardContent className="py-10">
+                <div className="mb-6 text-5xl">📊</div>
+                <CardTitle>Dashboard</CardTitle>
+                <CardDescription className="text-center">
+                  Panel de administracion completo con estadisticas y gestion en tiempo real
+                </CardDescription>
+              </CardContent>
+            </Card>
+          </div>
+        </Container>
+      </section>
+
+      {/* CTA Section (Black) */}
+      <section className="section-dark py-24" id="reservar">
+        <Container size="md">
+          <div className="text-center">
+            <h2 className="font-display text-display-md uppercase text-white tracking-tight">
+              RESERVA TU MESA
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl font-serif text-lg text-white/80">
+              Disfruta de la mejor cocina marinera tradicional en cualquiera de nuestros restaurantes
+            </p>
+            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+              <a href="tel:+34977000000">
+                <Button variant="secondary" size="lg">
+                  LLAMAR AHORA
+                </Button>
+              </a>
+              <Link href="/admin">
+                <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-black">
+                  PANEL ADMIN
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* Locations Section */}
+      <section className="section-light py-24" id="restaurantes">
+        <Container>
+          <div className="text-center mb-16">
+            <p className="font-display text-sm uppercase tracking-widest text-neutral-500 mb-2">
+              Nuestros Restaurantes
+            </p>
+            <h2 className="font-display text-display-md uppercase tracking-tight">
+              GRUPO EL POSIT
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+            {/* Location Cards */}
+            {["CAMBRILS", "TARRAGONA", "VILA-SECA"].map((location) => (
+              <div key={location} className="text-center group cursor-pointer">
+                <div className="aspect-[4/3] bg-neutral-200 mb-6 overflow-hidden">
+                  <div className="w-full h-full bg-gradient-to-br from-neutral-300 to-neutral-400 group-hover:scale-105 transition-transform duration-500" />
+                </div>
+                <h3 className="font-display text-xl uppercase tracking-wide">{location}</h3>
+                <p className="font-serif text-sm text-neutral-500 mt-2">Cocina marinera</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <div className="flex items-center justify-center gap-4">
+              <button className="w-10 h-10 border border-black flex items-center justify-center hover:bg-black hover:text-white transition-colors font-sans">
+                ←
+              </button>
+              <span className="font-display text-sm tracking-widest">01 —— 03</span>
+              <button className="w-10 h-10 border border-black flex items-center justify-center hover:bg-black hover:text-white transition-colors font-sans">
+                →
+              </button>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-black text-white py-16">
+        <Container>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-12">
+            <div>
+              <h4 className="font-display text-2xl uppercase tracking-widest mb-4">El Posit</h4>
+              <p className="font-serif text-white/70 text-sm">
+                Cocina marinera tradicional desde 1980
               </p>
             </div>
-            <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-slate-800">
-              <div className="text-3xl">💬</div>
-              <h3 className="mt-4 text-lg font-semibold">WhatsApp</h3>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                Confirmaciones automáticas con botones interactivos
-              </p>
+            <div>
+              <h5 className="font-display text-sm uppercase tracking-wider mb-4">Enlaces</h5>
+              <nav className="flex flex-col gap-2">
+                <Link href="/admin" className="font-sans text-sm text-white/70 hover:text-white transition-colors">
+                  Panel Admin
+                </Link>
+                <Link href="/api/docs" className="font-sans text-sm text-white/70 hover:text-white transition-colors">
+                  API Docs
+                </Link>
+              </nav>
             </div>
-            <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-slate-800">
-              <div className="text-3xl">📊</div>
-              <h3 className="mt-4 text-lg font-semibold">Dashboard</h3>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                Panel de administración con estadísticas en tiempo real
+            <div>
+              <h5 className="font-display text-sm uppercase tracking-wider mb-4">Contacto</h5>
+              <p className="font-sans text-sm text-white/70">
+                info@elposit.com<br />
+                +34 977 00 00 00
               </p>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+          <div className="border-t border-white/20 mt-12 pt-8 text-center">
+            <p className="font-sans text-xs text-white/50">
+              © 2024 El Posit. Todos los derechos reservados.
+            </p>
+          </div>
+        </Container>
+      </footer>
+    </>
   )
 }

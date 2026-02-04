@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { redis } from "@/lib/redis"
+import { getRedis, redisEnabled } from "@/lib/redis"
 
 export async function GET() {
   const checks = {
@@ -22,12 +22,16 @@ export async function GET() {
   }
 
   // Check redis
-  try {
-    await redis.ping()
-    checks.services.redis = "ok"
-  } catch (error) {
-    checks.services.redis = "error"
-    checks.status = "degraded"
+  if (redisEnabled()) {
+    try {
+      await getRedis().ping()
+      checks.services.redis = "ok"
+    } catch (error) {
+      checks.services.redis = "error"
+      checks.status = "degraded"
+    }
+  } else {
+    checks.services.redis = "disabled"
   }
 
   const statusCode = checks.status === "ok" ? 200 : 503

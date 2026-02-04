@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { reservationSessions } from "@/drizzle/schema"
 import { eq } from "drizzle-orm"
-import { redis } from "@/lib/redis"
+import { getRedis } from "@/lib/redis"
 import { nanoid } from "nanoid"
 import { z } from "zod"
 
@@ -94,7 +94,7 @@ async function handleStartSession(body: unknown) {
   })
 
   // Cache in Redis for fast access
-  await redis.setex(
+  await getRedis().setex(
     `ivr:${sessionId}`,
     IVR_SESSION_TTL,
     JSON.stringify(sessionState)
@@ -116,7 +116,7 @@ async function handleProcessInput(body: unknown) {
   // Get session state from Redis (faster) or DB
   let sessionState: IVRSessionState | null = null
 
-  const cachedState = await redis.get(`ivr:${sessionId.sessionId}`)
+  const cachedState = await getRedis().get(`ivr:${sessionId.sessionId}`)
   if (cachedState) {
     sessionState = JSON.parse(cachedState) as IVRSessionState
   } else {
@@ -140,7 +140,7 @@ async function handleProcessInput(body: unknown) {
   const result = await processIVRInput(sessionState, validatedData.input, validatedData.inputType)
 
   // Update session state
-  await redis.setex(
+  await getRedis().setex(
     `ivr:${sessionId.sessionId}`,
     IVR_SESSION_TTL,
     JSON.stringify(result.state)
@@ -387,7 +387,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Session ID requerido" }, { status: 400 })
   }
 
-  await redis.del(`ivr:${sessionId}`)
+  await getRedis().del(`ivr:${sessionId}`)
 
   return NextResponse.json({ success: true })
 }

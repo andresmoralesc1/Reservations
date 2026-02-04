@@ -1,7 +1,21 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { createClient } from "@/lib/supabase-client"
+import { Container } from "@/components/Container"
+import { Button } from "@/components/Button"
+import { KPICard } from "@/components/KPICard"
+import { FilterTabs } from "@/components/FilterTabs"
+import { ReservationTable } from "@/components/ReservationTable"
+import { SearchBar } from "@/components/SearchBar"
+import { Pagination } from "@/components/Pagination"
+import { ConfirmDialog } from "@/components/ConfirmDialog"
+import { PageLoader } from "@/components/LoadingSpinner"
+import { EmptyReservations } from "@/components/EmptyState"
+import { ActionDropdown } from "@/components/Dropdown"
+import { toast } from "@/components/Toast"
+import { DropdownOption } from "@/components/Dropdown"
 
 interface Reservation {
   id: string
@@ -13,15 +27,6 @@ interface Reservation {
   partySize: number
   status: string
   source: string
-  restaurant?: {
-    id: string
-    name: string
-  }
-  customer?: {
-    id: string
-    phoneNumber: string
-    noShowCount: number
-  }
 }
 
 interface Stats {
@@ -31,8 +36,18 @@ interface Stats {
   nextHour: number
 }
 
+type FilterValue = "all" | "pending" | "confirmed" | "cancelled"
+
+const filterOptions: { value: FilterValue; label: string }[] = [
+  { value: "all", label: "Todas" },
+  { value: "pending", label: "Pendientes" },
+  { value: "confirmed", label: "Confirmadas" },
+  { value: "cancelled", label: "Canceladas" },
+]
+
 export default function AdminPage() {
   const [reservations, setReservations] = useState<Reservation[]>([])
+  const [filteredReservations, setFilteredReservations] = useState<Reservation[]>([])
   const [stats, setStats] = useState<Stats>({
     totalPending: 0,
     todayPending: 0,
@@ -40,12 +55,47 @@ export default function AdminPage() {
     nextHour: 0,
   })
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<"all" | "pending" | "confirmed" | "cancelled">("pending")
+  const [filter, setFilter] = useState<FilterValue>("pending")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean
+    reservation: Reservation | null
+    action: "approve" | "reject" | null
+  }>({
+    isOpen: false,
+    reservation: null,
+    action: null,
+  })
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  const itemsPerPage = 10
   const supabase = createClient()
 
   useEffect(() => {
     loadReservations()
   }, [filter])
+
+  useEffect(() => {
+    // Filter reservations based on search query
+    if (searchQuery) {
+      const filtered = reservations.filter((r) =>
+        r.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.reservationCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.customerPhone.includes(searchQuery)
+      )
+      setFilteredReservations(filtered)
+    } else {
+      setFilteredReservations(reservations)
+    }
+    setCurrentPage(1)
+  }, [searchQuery, reservations])
+
+  useEffect(() => {
+    // Calculate total pages
+    setTotalPages(Math.ceil(filteredReservations.length / itemsPerPage))
+  }, [filteredReservations])
 
   async function loadReservations() {
     setLoading(true)
@@ -59,261 +109,275 @@ export default function AdminPage() {
       const data = await response.json()
 
       setReservations(data.reservations || [])
+      setFilteredReservations(data.reservations || [])
       setStats(data.meta || stats)
     } catch (error) {
       console.error("Error loading reservations:", error)
+      toast("Error al cargar las reservas", "error")
     } finally {
       setLoading(false)
     }
   }
 
-  async function handleApprove(id: string) {
+  function getActionItems(reservation: Reservation): DropdownOption[] {
+    return [
+      {
+        value: "details",
+        label: "Ver detalles",
+        onClick: () => {
+          // TODO: Open details modal
+          toast(`Detalles: ${reservation.reservationCode}`, "info")
+        },
+        icon: (
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+        ),
+      },
+      {
+        value: "approve",
+        label: "Aprobar",
+        onClick: () => handleApproveAction(reservation),
+        icon: (
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        ),
+      },
+      {
+        value: "reject",
+        label: "Rechazar",
+        onClick: () => handleRejectAction(reservation),
+        variant: "danger",
+        icon: (
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ),
+      },
+    ]
+  }
+
+  function handleApproveAction(reservation: Reservation) {
+    setConfirmDialog({
+      isOpen: true,
+      reservation,
+      action: "approve",
+    })
+  }
+
+  function handleRejectAction(reservation: Reservation) {
+    setConfirmDialog({
+      isOpen: true,
+      reservation,
+      action: "reject",
+    })
+  }
+
+  // Wrappers for ReservationTable compatibility
+  function handleApproveById(id: string) {
+    const reservation = reservations.find((r) => r.id === id)
+    if (reservation) {
+      handleApproveAction(reservation)
+    }
+  }
+
+  function handleRejectById(id: string) {
+    const reservation = reservations.find((r) => r.id === id)
+    if (reservation) {
+      handleRejectAction(reservation)
+    }
+  }
+
+  async function handleConfirmAction() {
+    if (!confirmDialog.reservation || !confirmDialog.action) return
+
+    setIsProcessing(true)
     try {
-      const response = await fetch(`/api/admin/reservations/${id}`, {
+      const response = await fetch(`/api/admin/reservations/${confirmDialog.reservation.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "approve" }),
+        body: JSON.stringify({
+          action: confirmDialog.action,
+          reason: confirmDialog.action === "reject" ? "No disponible" : undefined,
+        }),
       })
 
       if (response.ok) {
+        toast(
+          confirmDialog.action === "approve"
+            ? "Reserva aprobada correctamente"
+            : "Reserva rechazada",
+          "success"
+        )
         await loadReservations()
+      } else {
+        toast("Error al procesar la acción", "error")
       }
     } catch (error) {
-      console.error("Error approving reservation:", error)
+      console.error("Error processing action:", error)
+      toast("Error de conexión", "error")
+    } finally {
+      setIsProcessing(false)
+      setConfirmDialog({ isOpen: false, reservation: null, action: null })
     }
   }
 
-  async function handleReject(id: string) {
-    const reason = prompt("Razón del rechazo (opcional):")
-    if (reason === null) return
-
-    try {
-      const response = await fetch(`/api/admin/reservations/${id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "reject", reason }),
-      })
-
-      if (response.ok) {
-        await loadReservations()
-      }
-    } catch (error) {
-      console.error("Error rejecting reservation:", error)
-    }
-  }
-
-  function getStatusColor(status: string) {
-    switch (status) {
-      case "PENDIENTE":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-      case "CONFIRMADO":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-      case "CANCELADO":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-      case "NO_SHOW":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-      default:
-        return "bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200"
-    }
-  }
+  const paginatedReservations = filteredReservations.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <header className="bg-white shadow-sm dark:bg-slate-800">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">
-              Panel de Administración
-            </h1>
-            <button
+    <div className="min-h-screen bg-cream">
+      {/* Admin Header */}
+      <header className="border-b border-neutral-200 bg-white">
+        <Container size="xl">
+          <div className="flex items-center justify-between py-6">
+            <div className="flex items-center gap-8">
+              <Link href="/" className="font-display text-xl uppercase tracking-widest text-black hover:text-posit-red transition-colors">
+                El Posit
+              </Link>
+              <h1 className="font-display text-2xl uppercase tracking-wider">
+                Panel Admin
+              </h1>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => supabase.auth.signOut()}
-              className="rounded-md bg-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
             >
-              Cerrar Sesión
-            </button>
+              Cerrar Sesion
+            </Button>
           </div>
-        </div>
+        </Container>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Stats */}
-        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-4">
-          <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-slate-800">
-            <div className="text-2xl font-bold text-slate-900 dark:text-slate-50">
-              {stats.totalPending}
-            </div>
-            <div className="text-sm text-slate-600 dark:text-slate-400">
-              Pendientes Totales
-            </div>
+      <main className="py-8">
+        <Container size="xl">
+          {/* KPI Cards */}
+          <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <KPICard
+              title="Pendientes Totales"
+              value={stats.totalPending}
+              change={{ value: 12, trend: "up" }}
+              icon={
+                <svg className="h-6 w-6 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              }
+            />
+            <KPICard
+              title="Pendientes Hoy"
+              value={stats.todayPending}
+              change={{ value: 8, trend: "up" }}
+              icon={
+                <svg className="h-6 w-6 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              }
+            />
+            <KPICard
+              title="Sesiones Expiradas"
+              value={stats.expiredSessions}
+              change={{ value: -5, trend: "down" }}
+              icon={
+                <svg className="h-6 w-6 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
+            <KPICard
+              title="Próxima Hora"
+              value={stats.nextHour}
+              icon={
+                <svg className="h-6 w-6 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              }
+            />
           </div>
-          <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-slate-800">
-            <div className="text-2xl font-bold text-yellow-600">
-              {stats.todayPending}
-            </div>
-            <div className="text-sm text-slate-600 dark:text-slate-400">
-              Pendientes Hoy
-            </div>
-          </div>
-          <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-slate-800">
-            <div className="text-2xl font-bold text-orange-600">
-              {stats.expiredSessions}
-            </div>
-            <div className="text-sm text-slate-600 dark:text-slate-400">
-              Sesiones Expiradas
-            </div>
-          </div>
-          <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-slate-800">
-            <div className="text-2xl font-bold text-red-600">
-              {stats.nextHour}
-            </div>
-            <div className="text-sm text-slate-600 dark:text-slate-400">
-              Próxima Hora
-            </div>
-          </div>
-        </div>
 
-        {/* Filters */}
-        <div className="mb-6 flex gap-2">
-          <button
-            onClick={() => setFilter("all")}
-            className={`rounded-md px-4 py-2 text-sm font-medium ${
-              filter === "all"
-                ? "bg-slate-900 text-white dark:bg-slate-50 dark:text-slate-900"
-                : "bg-white text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            }`}
-          >
-            Todas
-          </button>
-          <button
-            onClick={() => setFilter("pending")}
-            className={`rounded-md px-4 py-2 text-sm font-medium ${
-              filter === "pending"
-                ? "bg-yellow-600 text-white"
-                : "bg-white text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            }`}
-          >
-            Pendientes
-          </button>
-          <button
-            onClick={() => setFilter("confirmed")}
-            className={`rounded-md px-4 py-2 text-sm font-medium ${
-              filter === "confirmed"
-                ? "bg-green-600 text-white"
-                : "bg-white text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            }`}
-          >
-            Confirmadas
-          </button>
-          <button
-            onClick={() => setFilter("cancelled")}
-            className={`rounded-md px-4 py-2 text-sm font-medium ${
-              filter === "cancelled"
-                ? "bg-red-600 text-white"
-                : "bg-white text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            }`}
-          >
-            Canceladas
-          </button>
-        </div>
+          {/* Filters and Search */}
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <FilterTabs
+              options={filterOptions}
+              value={filter}
+              onChange={setFilter}
+            />
+            <div className="w-full sm:w-80">
+              <SearchBar
+                onSearch={setSearchQuery}
+                placeholder="Buscar por nombre, código o teléfono..."
+              />
+            </div>
+          </div>
 
-        {/* Reservations Table */}
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-slate-600" />
-          </div>
-        ) : reservations.length === 0 ? (
-          <div className="rounded-lg bg-white p-12 text-center shadow-sm dark:bg-slate-800">
-            <p className="text-slate-600 dark:text-slate-400">No hay reservas para mostrar</p>
-          </div>
-        ) : (
-          <div className="overflow-hidden rounded-lg bg-white shadow-sm dark:bg-slate-800">
-            <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-              <thead className="bg-slate-50 dark:bg-slate-900">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Código
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Cliente
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Fecha/Hora
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Personas
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Estado
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Origen
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                {reservations.map((reservation) => (
-                  <tr key={reservation.id} className="hover:bg-slate-50 dark:hover:bg-slate-700">
-                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-slate-900 dark:text-slate-50">
-                      {reservation.reservationCode}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-slate-900 dark:text-slate-50">
-                        {reservation.customerName}
-                      </div>
-                      <div className="text-sm text-slate-500 dark:text-slate-400">
-                        {reservation.customerPhone}
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-900 dark:text-slate-50">
-                      {new Date(reservation.reservationDate).toLocaleDateString("es-ES", {
-                        day: "2-digit",
-                        month: "short",
-                      })}{" "}
-                      {reservation.reservationTime}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-900 dark:text-slate-50">
-                      {reservation.partySize}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(
-                          reservation.status
-                        )}`}
-                      >
-                        {reservation.status.toLowerCase()}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                      {reservation.source}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
-                      {reservation.status === "PENDIENTE" && (
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => handleApprove(reservation.id)}
-                            className="rounded bg-green-600 px-3 py-1 text-xs font-semibold text-white hover:bg-green-700"
-                          >
-                            Aprobar
-                          </button>
-                          <button
-                            onClick={() => handleReject(reservation.id)}
-                            className="rounded bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700"
-                          >
-                            Rechazar
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+          {/* Content */}
+          {loading ? (
+            <PageLoader text="Cargando reservas..." />
+          ) : paginatedReservations.length === 0 ? (
+            <div className="bg-white border border-neutral-200">
+              <EmptyReservations onRefresh={loadReservations} />
+            </div>
+          ) : (
+            <>
+              <ReservationTable
+                reservations={paginatedReservations}
+                onApprove={handleApproveById}
+                onReject={handleRejectById}
+                loading={loading}
+              />
+              <div className="mt-6 flex justify-center">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            </>
+          )}
+        </Container>
       </main>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false, reservation: null, action: null })}
+        onConfirm={handleConfirmAction}
+        title={
+          confirmDialog.action === "approve"
+            ? "Aprobar Reserva"
+            : "Rechazar Reserva"
+        }
+        message={
+          confirmDialog.action === "approve"
+            ? `¿Estás seguro de que deseas aprobar la reserva de ${confirmDialog.reservation?.customerName}?`
+            : `¿Estás seguro de que deseas rechazar la reserva de ${confirmDialog.reservation?.customerName}?`
+        }
+        confirmText={
+          confirmDialog.action === "approve"
+            ? "Aprobar"
+            : "Rechazar"
+        }
+        variant={confirmDialog.action === "approve" ? "info" : "danger"}
+        isConfirming={isProcessing}
+      />
+
+      {/* Admin Footer */}
+      <footer className="border-t border-neutral-200 bg-white py-6 mt-auto">
+        <Container size="xl">
+          <div className="flex items-center justify-between">
+            <p className="font-sans text-xs text-neutral-500">
+              Panel de Administracion - El Posit
+            </p>
+            <Link href="/" className="font-sans text-xs text-neutral-500 hover:text-black transition-colors">
+              Volver al inicio
+            </Link>
+          </div>
+        </Container>
+      </footer>
     </div>
   )
 }

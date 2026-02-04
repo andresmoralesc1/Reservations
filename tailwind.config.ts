@@ -9,6 +9,22 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // El Posit Brand Colors
+        cream: {
+          DEFAULT: "#F5F5F0",
+          50: "#FAFAF8",
+          100: "#F5F5F0",
+          200: "#EAEAE3",
+          300: "#D5D5CC",
+        },
+        posit: {
+          black: "#000000",
+          white: "#FFFFFF",
+          red: "#C41E3A",
+          "red-dark": "#9B1830",
+          "red-light": "#D94F65",
+        },
+        // CSS variable support
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -42,6 +58,25 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+      },
+      fontFamily: {
+        display: ["var(--font-display)", "sans-serif"],
+        serif: ["var(--font-serif)", "serif"],
+        sans: ["var(--font-sans)", "sans-serif"],
+      },
+      fontSize: {
+        "hero": ["5rem", { lineHeight: "1", letterSpacing: "-0.02em" }],
+        "display-lg": ["4rem", { lineHeight: "1.1", letterSpacing: "-0.02em" }],
+        "display-md": ["3rem", { lineHeight: "1.1", letterSpacing: "-0.01em" }],
+        "display-sm": ["2rem", { lineHeight: "1.2" }],
+      },
+      spacing: {
+        "18": "4.5rem",
+        "22": "5.5rem",
+        "30": "7.5rem",
+      },
+      maxWidth: {
+        "8xl": "90rem",
       },
       borderRadius: {
         lg: "var(--radius)",
