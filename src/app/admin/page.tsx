@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase-client"
 import { Container } from "@/components/Container"
-import { Button } from "@/components/Button"
 import { KPICard } from "@/components/KPICard"
 import { FilterTabs } from "@/components/FilterTabs"
 import { ReservationTable } from "@/components/ReservationTable"
@@ -71,7 +69,6 @@ export default function AdminPage() {
   const [isProcessing, setIsProcessing] = useState(false)
 
   const itemsPerPage = 10
-  const supabase = createClient()
 
   useEffect(() => {
     loadReservations()
@@ -243,13 +240,6 @@ export default function AdminPage() {
                 Panel Admin
               </h1>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => supabase.auth.signOut()}
-            >
-              Cerrar Sesion
-            </Button>
           </div>
         </Container>
       </header>
