@@ -36,7 +36,7 @@ type ViewMode = "list" | "layout"
 type Location = "all" | "patio" | "interior" | "terraza"
 
 // TODO: Get from environment or auth
-const RESTAURANT_ID = "default-restaurant-id"
+const RESTAURANT_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 
 export default function TablesPage() {
   const [tables, setTables] = useState<Table[]>([])

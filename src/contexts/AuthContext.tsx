@@ -85,7 +85,7 @@ const DEMO_USERS: User[] = [
     email: "admin@posit.com",
     name: "Admin User",
     role: "admin",
-    restaurantId: "default-restaurant-id",
+    restaurantId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     permissions: ROLE_PERMISSIONS.admin,
   },
   {
@@ -93,7 +93,7 @@ const DEMO_USERS: User[] = [
     email: "manager@posit.com",
     name: "Manager User",
     role: "manager",
-    restaurantId: "default-restaurant-id",
+    restaurantId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     permissions: ROLE_PERMISSIONS.manager,
   },
   {
@@ -101,7 +101,7 @@ const DEMO_USERS: User[] = [
     email: "staff@posit.com",
     name: "Staff User",
     role: "staff",
-    restaurantId: "default-restaurant-id",
+    restaurantId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     permissions: ROLE_PERMISSIONS.staff,
   },
 ]

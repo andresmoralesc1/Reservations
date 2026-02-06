@@ -79,7 +79,7 @@ export default function AnalyticsPage() {
     setLoading(true)
     try {
       const params = new URLSearchParams()
-      params.set("restaurantId", user?.restaurantId || "default-restaurant-id")
+      params.set("restaurantId", user?.restaurantId || "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
 
       if (period === "custom" && customRange) {
         params.set("startDate", customRange.start)
