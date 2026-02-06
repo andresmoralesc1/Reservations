@@ -10,15 +10,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Deploy to Vercel
-        run: |
-          # Trigger deployment via Vercel API
-          curl -X POST "https://api.vercel.com/v1/integrations/deploy" \
-            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "name": "reservations",
-              "owner": "andresmoralesc1",
-              "repo": "Reservations",
-              "branch": "main"
-            }'
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ vars.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ vars.VERCEL_PROJECT_ID }}
+          vercel-args: "--prod"
+          working-directory: ./
