@@ -24,6 +24,7 @@
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.38.4",
     "ioredis": "^5.5.0",
+    "lucide-react": "^0.563.0",
     "nanoid": "^5.0.9",
     "next": "^16.1.6",
     "postgres": "^3.4.5",
