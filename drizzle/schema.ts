@@ -20,6 +20,18 @@ export const tables = pgTable("tables", {
   capacity: integer("capacity").notNull(),
   location: text("location"), // 'patio', 'interior', 'terraza'
   isAccessible: boolean("is_accessible").default(false),
+
+  // Visual layout fields
+  shape: text("shape").notNull().default("rectangular"), // 'circular', 'cuadrada', 'rectangular', 'barra'
+  positionX: integer("position_x").default(0), // Posición X en el canvas (px)
+  positionY: integer("position_y").default(0), // Posición Y en el canvas (px)
+  rotation: integer("rotation").default(0), // Rotación en grados (0-360)
+  width: integer("width").default(100), // Ancho en px (para rectangular/cuadrada/barra)
+  height: integer("height").default(80), // Alto en px (para rectangular/cuadrada)
+  diameter: integer("diameter").default(80), // Diámetro en px (para circular)
+  stoolCount: integer("stool_count").default(0), // Número de sillas (para barra)
+  stoolPositions: jsonb("stool_positions").$type<number[]>(), // Posiciones de sillas en barra
+
   createdAt: timestamp("created_at").defaultNow(),
 })
 

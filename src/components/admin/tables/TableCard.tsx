@@ -4,13 +4,24 @@ import { useState } from "react"
 import { Modal } from "@/components/Modal"
 import { Button } from "@/components/Button"
 import { toast } from "@/components/Toast"
+import { TableShape, TableShapeType } from "./TableShape"
 
 export interface Table {
   id: string
+  restaurantId: string
   tableNumber: string
   capacity: number
-  location: "patio" | "interior" | "terraza"
+  location: "patio" | "interior" | "terraza" | null
   isAccessible: boolean
+  shape: string | null
+  positionX: number
+  positionY: number
+  rotation: number
+  width: number | null
+  height: number | null
+  diameter: number | null
+  stoolCount: number | null
+  stoolPositions: number[] | null
   createdAt: string
 }
 
@@ -25,17 +36,20 @@ export function TableCard({ table, hasReservations, onEdit, onDelete }: TableCar
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
-  const locationLabels = {
+  const locationLabels: Record<string, string> = {
     patio: "Patio",
     interior: "Interior",
     terraza: "Terraza",
   }
 
-  const locationColors = {
+  const locationColors: Record<string, string> = {
     patio: "bg-emerald-100 text-emerald-800",
     interior: "bg-amber-100 text-amber-800",
     terraza: "bg-blue-100 text-blue-800",
   }
+
+  const getLocationLabel = (loc: string | null) => locationLabels[loc || ""] || "Sin ubicación"
+  const getLocationColor = (loc: string | null) => locationColors[loc || ""] || "bg-gray-100 text-gray-800"
 
   async function handleDelete() {
     if (hasReservations) {
@@ -79,9 +93,23 @@ export function TableCard({ table, hasReservations, onEdit, onDelete }: TableCar
               </span>
             )}
           </div>
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${locationColors[table.location]}`}>
-            {locationLabels[table.location]}
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getLocationColor(table.location)}`}>
+            {getLocationLabel(table.location)}
           </span>
+        </div>
+
+        {/* Table Shape Visual */}
+        <div className="flex justify-center mb-3">
+          <div className="scale-50 origin-center">
+            <TableShape
+              shape={(table.shape as TableShapeType) || "rectangular"}
+              width={table.shape === "circular" ? 60 : table.shape === "cuadrada" ? 60 : table.shape === "barra" ? 100 : 90}
+              height={table.shape === "circular" ? 60 : table.shape === "cuadrada" ? 60 : table.shape === "barra" ? 30 : 50}
+              diameter={60}
+              rotation={0}
+              isSelected={false}
+            />
+          </div>
         </div>
 
         {/* Capacity */}
@@ -91,6 +119,10 @@ export function TableCard({ table, hasReservations, onEdit, onDelete }: TableCar
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
             <span>{table.capacity} personas</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs">Forma:</span>
+            <span className="text-xs font-medium capitalize">{table.shape || "rectangular"}</span>
           </div>
         </div>
 

@@ -5,17 +5,19 @@ import { Modal } from "@/components/Modal"
 import { Button } from "@/components/Button"
 import { Input } from "@/components/Input"
 import { toast } from "@/components/Toast"
+import { TableShapePreview, TableShapeType } from "./TableShape"
 
 export interface Table {
   id: string
   tableNumber: string
   capacity: number
-  location: "patio" | "interior" | "terraza"
+  location: "patio" | "interior" | "terraza" | null
   isAccessible: boolean
   createdAt: string
+  shape?: string | null
 }
 
-type WizardStep = 1 | 2 | 3 | 4
+type WizardStep = 1 | 2 | 3 | 4 | 5
 
 interface TableWizardModalProps {
   isOpen: boolean
@@ -28,6 +30,7 @@ interface TableWizardModalProps {
 interface FormData {
   location: "patio" | "interior" | "terraza" | null
   capacity: number | null
+  shape: TableShapeType
   tableNumber: string
   isAccessible: boolean
   notes: string
@@ -36,6 +39,7 @@ interface FormData {
 const INITIAL_FORM: FormData = {
   location: null,
   capacity: null,
+  shape: "rectangular",
   tableNumber: "",
   isAccessible: false,
   notes: "",
@@ -48,6 +52,13 @@ const LOCATION_OPTIONS = [
 ]
 
 const CAPACITY_OPTIONS = [2, 4, 6, 8, 10, 12]
+
+const SHAPE_OPTIONS: { value: TableShapeType; label: string; description: string }[] = [
+  { value: "circular", label: "Circular", description: "Ideal para 2-4 personas" },
+  { value: "cuadrada", label: "Cuadrada", description: "Ideal para 4-6 personas" },
+  { value: "rectangular", label: "Rectangular", description: "Ideal para 6+ personas" },
+  { value: "barra", label: "Barra", description: "Para sillas de barra" },
+]
 
 export function TableWizardModal({
   isOpen,
@@ -68,11 +79,12 @@ export function TableWizardModal({
         setFormData({
           location: editTable.location,
           capacity: editTable.capacity,
+          shape: (editTable.shape as TableShapeType) || "rectangular",
           tableNumber: editTable.tableNumber,
           isAccessible: editTable.isAccessible,
           notes: "",
         })
-        setStep(2) // Skip location step when editing
+        setStep(3) // Skip location and capacity when editing
       } else {
         setFormData(INITIAL_FORM)
         setStep(1)
@@ -118,6 +130,7 @@ export function TableWizardModal({
           tableNumber: formData.tableNumber,
           capacity: formData.capacity,
           location: formData.location,
+          shape: formData.shape,
           isAccessible: formData.isAccessible,
         }),
       })
@@ -143,8 +156,10 @@ export function TableWizardModal({
       case 2:
         return formData.capacity !== null && formData.capacity > 0
       case 3:
-        return formData.tableNumber.trim().length > 0
+        return true // Shape is always selected
       case 4:
+        return formData.tableNumber.trim().length > 0
+      case 5:
         return true
       default:
         return false
@@ -152,7 +167,7 @@ export function TableWizardModal({
   }
 
   function nextStep() {
-    if (canProceed() && step < 4) {
+    if (canProceed() && step < 5) {
       setStep((step + 1) as WizardStep)
     }
   }
@@ -166,8 +181,9 @@ export function TableWizardModal({
   const steps = [
     { number: 1, label: "Ubicación", completed: formData.location !== null },
     { number: 2, label: "Capacidad", completed: formData.capacity !== null },
-    { number: 3, label: "Configuración", completed: formData.tableNumber.length > 0 },
-    { number: 4, label: "Confirmar", completed: false },
+    { number: 3, label: "Forma", completed: true },
+    { number: 4, label: "Configuración", completed: formData.tableNumber.length > 0 },
+    { number: 5, label: "Confirmar", completed: false },
   ]
 
   return (
@@ -195,7 +211,7 @@ export function TableWizardModal({
             >
               Cancelar
             </Button>
-            {step < 4 ? (
+            {step < 5 ? (
               <Button
                 variant="primary"
                 size="md"
@@ -307,6 +323,28 @@ export function TableWizardModal({
       {step === 3 && (
         <div className="space-y-4">
           <h3 className="font-display text-lg uppercase tracking-wider text-black">
+            ¿Qué forma tiene la mesa?
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
+            {SHAPE_OPTIONS.map((option) => (
+              <TableShapePreview
+                key={option.value}
+                shape={option.value}
+                label={option.label}
+                isSelected={formData.shape === option.value}
+                onClick={() => updateFormData("shape", option.value)}
+              />
+            ))}
+          </div>
+          <p className="text-sm text-neutral-500 text-center mt-2">
+            {SHAPE_OPTIONS.find((o) => o.value === formData.shape)?.description}
+          </p>
+        </div>
+      )}
+
+      {step === 4 && (
+        <div className="space-y-4">
+          <h3 className="font-display text-lg uppercase tracking-wider text-black">
             Configuración de la mesa
           </h3>
           <div>
@@ -339,7 +377,7 @@ export function TableWizardModal({
         </div>
       )}
 
-      {step === 4 && (
+      {step === 5 && (
         <div className="space-y-4">
           <h3 className="font-display text-lg uppercase tracking-wider text-black">
             Confirmar datos de la mesa
@@ -354,6 +392,12 @@ export function TableWizardModal({
             <div className="flex justify-between">
               <span className="text-neutral-500">Capacidad:</span>
               <span className="font-medium">{formData.capacity} personas</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-neutral-500">Forma:</span>
+              <span className="font-medium">
+                {SHAPE_OPTIONS.find((o) => o.value === formData.shape)?.label}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-neutral-500">Número:</span>

@@ -42,12 +42,36 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { restaurantId, tableNumber, capacity, location, isAccessible } = body
+    const {
+      restaurantId,
+      tableNumber,
+      capacity,
+      location,
+      isAccessible,
+      shape,
+      positionX,
+      positionY,
+      rotation,
+      width,
+      height,
+      diameter,
+      stoolCount,
+      stoolPositions,
+    } = body
 
     // Validation
     if (!restaurantId || !tableNumber || !capacity || !location) {
       return NextResponse.json(
         { error: "Faltan campos requeridos" },
+        { status: 400 }
+      )
+    }
+
+    // Validate shape
+    const validShapes = ["circular", "cuadrada", "rectangular", "barra"]
+    if (shape && !validShapes.includes(shape)) {
+      return NextResponse.json(
+        { error: "Forma inválida. Debe ser: circular, cuadrada, rectangular o barra" },
         { status: 400 }
       )
     }
@@ -89,6 +113,15 @@ export async function POST(request: NextRequest) {
         capacity,
         location,
         isAccessible: isAccessible || false,
+        shape: shape || "rectangular",
+        positionX: positionX ?? 0,
+        positionY: positionY ?? 0,
+        rotation: rotation ?? 0,
+        width: width ?? (shape === "circular" ? 80 : shape === "cuadrada" ? 80 : 120),
+        height: height ?? (shape === "circular" ? 80 : shape === "cuadrada" ? 80 : 80),
+        diameter: diameter ?? 80,
+        stoolCount: stoolCount ?? 0,
+        stoolPositions: stoolPositions ?? null,
       })
       .returning()
 

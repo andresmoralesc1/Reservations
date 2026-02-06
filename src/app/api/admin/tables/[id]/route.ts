@@ -51,7 +51,21 @@ export async function PUT(
   try {
     const { id } = await params
     const body = await request.json()
-    const { tableNumber, capacity, location, isAccessible } = body
+    const {
+      tableNumber,
+      capacity,
+      location,
+      isAccessible,
+      shape,
+      positionX,
+      positionY,
+      rotation,
+      width,
+      height,
+      diameter,
+      stoolCount,
+      stoolPositions,
+    } = body
 
     // Check if table exists
     const existing = await db.query.tables.findFirst({
@@ -85,6 +99,15 @@ export async function PUT(
     if (capacity !== undefined) updates.capacity = capacity
     if (location !== undefined) updates.location = location
     if (isAccessible !== undefined) updates.isAccessible = isAccessible
+    if (shape !== undefined) updates.shape = shape
+    if (positionX !== undefined) updates.positionX = positionX
+    if (positionY !== undefined) updates.positionY = positionY
+    if (rotation !== undefined) updates.rotation = rotation
+    if (width !== undefined) updates.width = width
+    if (height !== undefined) updates.height = height
+    if (diameter !== undefined) updates.diameter = diameter
+    if (stoolCount !== undefined) updates.stoolCount = stoolCount
+    if (stoolPositions !== undefined) updates.stoolPositions = stoolPositions
 
     const [updated] = await db
       .update(tables)

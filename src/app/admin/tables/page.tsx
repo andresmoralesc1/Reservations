@@ -10,16 +10,29 @@ import { TableStatsCards } from "@/components/admin/tables/TableStatsCards"
 import { LocationTabs } from "@/components/admin/tables/LocationTabs"
 import { TableWizardModal } from "@/components/admin/tables/TableWizardModal"
 import { BulkTableModal } from "@/components/admin/tables/BulkTableModal"
+import { TableLayoutEditor } from "@/components/admin/tables/TableLayoutEditor"
+import { Table as TableType } from "@/drizzle/schema"
 
 export interface Table {
   id: string
+  restaurantId: string
   tableNumber: string
   capacity: number
-  location: "patio" | "interior" | "terraza"
+  location: "patio" | "interior" | "terraza" | null
   isAccessible: boolean
+  shape: string | null
+  positionX: number
+  positionY: number
+  rotation: number
+  width: number | null
+  height: number | null
+  diameter: number | null
+  stoolCount: number | null
+  stoolPositions: number[] | null
   createdAt: string
 }
 
+type ViewMode = "list" | "layout"
 type Location = "all" | "patio" | "interior" | "terraza"
 
 // TODO: Get from environment or auth
@@ -37,6 +50,7 @@ export default function TablesPage() {
   const [occupiedTableIds, setOccupiedTableIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [locationFilter, setLocationFilter] = useState<Location>("all")
+  const [viewMode, setViewMode] = useState<ViewMode>("list")
   const [showWizard, setShowWizard] = useState(false)
   const [showBulk, setShowBulk] = useState(false)
   const [editTable, setEditTable] = useState<Table | undefined>()
@@ -101,6 +115,49 @@ export default function TablesPage() {
     setTables((prev) => prev.filter((t) => t.id !== tableId))
   }
 
+  async function handleUpdateTable(id: string, updates: Partial<TableType>) {
+    try {
+      const response = await fetch(`/api/admin/tables/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      })
+
+      if (!response.ok) {
+        throw new Error("Error updating table")
+      }
+
+      const data = await response.json()
+      setTables((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, ...data.table } : t))
+      )
+    } catch (error) {
+      console.error("Error updating table:", error)
+      toast("Error al actualizar la mesa", "error")
+      throw error
+    }
+  }
+
+  async function handleDeleteTableFromEditor(id: string) {
+    try {
+      const response = await fetch(`/api/admin/tables/${id}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Error deleting table")
+      }
+
+      setTables((prev) => prev.filter((t) => t.id !== id))
+      toast("Mesa eliminada correctamente", "success")
+    } catch (error: any) {
+      console.error("Error deleting table:", error)
+      toast(error.message || "Error al eliminar la mesa", "error")
+      throw error
+    }
+  }
+
   const filteredTables = tables.filter((t) =>
     locationFilter === "all" || t.location === locationFilter
   )
@@ -126,12 +183,16 @@ export default function TablesPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="md" onClick={() => setShowBulk(true)}>
-            + Varias
-          </Button>
-          <Button variant="primary" size="md" onClick={handleCreateTable}>
-            + Agregar Mesa
-          </Button>
+          {viewMode === "list" && (
+            <>
+              <Button variant="outline" size="md" onClick={() => setShowBulk(true)}>
+                + Varias
+              </Button>
+              <Button variant="primary" size="md" onClick={handleCreateTable}>
+                + Agregar Mesa
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -144,16 +205,56 @@ export default function TablesPage() {
         utilizationRate={stats.utilizationRate}
       />
 
-      {/* Location Filter */}
-      <LocationTabs value={locationFilter} onChange={setLocationFilter} />
+      {/* View Mode Tabs */}
+      <div className="flex border-b border-gray-200">
+        <button
+          onClick={() => setViewMode("list")}
+          className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+            viewMode === "list"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Vista Lista
+        </button>
+        <button
+          onClick={() => setViewMode("layout")}
+          className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+            viewMode === "layout"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Editor Visual
+        </button>
+      </div>
 
-      {/* Tables Grid */}
-      <TableGrid
-        tables={filteredTables}
-        occupiedTableIds={occupiedTableIds}
-        onEdit={handleEditTable}
-        onDelete={handleDeleteTable}
-      />
+      {/* Content based on view mode */}
+      {viewMode === "list" ? (
+        <>
+          {/* Location Filter */}
+          <LocationTabs value={locationFilter} onChange={setLocationFilter} />
+
+          {/* Tables Grid */}
+          <TableGrid
+            tables={filteredTables}
+            occupiedTableIds={occupiedTableIds}
+            onEdit={handleEditTable}
+            onDelete={handleDeleteTable}
+          />
+        </>
+      ) : (
+        <div className="border border-gray-200 rounded-lg overflow-hidden" style={{ height: "70vh" }}>
+          <TableLayoutEditor
+            tables={tables as any}
+            onTablesChange={setTables as any}
+            onCreateTable={handleCreateTable}
+            onUpdateTable={handleUpdateTable}
+            onDeleteTable={handleDeleteTableFromEditor}
+            restaurantId={RESTAURANT_ID}
+          />
+        </div>
+      )}
 
       {/* Wizard Modal */}
       <TableWizardModal
