@@ -2,6 +2,8 @@ import type { Metadata } from "next"
 import { Inter, Oswald, Playfair_Display } from "next/font/google"
 import "./globals.css"
 import { ToastProvider } from "@/components/Toast"
+import { AuthProvider } from "@/contexts/AuthContext"
+import { ToastProvider as ToastWithUndoProvider } from "@/components/ToastWithUndo"
 
 const oswald = Oswald({
   subsets: ["latin"],
@@ -24,6 +26,13 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "El Posit - Reservas",
   description: "Sistema de reservas - Cocina Marinera Tradicional",
+  manifest: "/manifest.json",
+  themeColor: "#000000",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "El Posit",
+  },
 }
 
 export default function RootLayout({
@@ -34,8 +43,11 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${oswald.variable} ${playfair.variable} ${inter.variable}`}>
       <body className="font-sans">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <ToastProvider />
+        <ToastWithUndoProvider />
       </body>
     </html>
   )
