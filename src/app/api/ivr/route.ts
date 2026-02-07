@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { reservationSessions } from "@/drizzle/schema"
-import { eq } from "drizzle-orm"
+import { reservationSessions, reservations, restaurants } from "@/drizzle/schema"
+import { eq, and, isNull } from "drizzle-orm"
 import { getRedis } from "@/lib/redis"
 import { nanoid } from "nanoid"
 import { z } from "zod"
@@ -15,6 +15,7 @@ type ConversationStep =
   | "ask_time"
   | "ask_party_size"
   | "ask_name"
+  | "ask_special_requests"
   | "confirm_details"
   | "complete"
   | "error"
@@ -28,6 +29,7 @@ interface IVRSessionState {
     partySize?: number
     customerName?: string
     phoneNumber?: string
+    specialRequests?: string
   }
   errors: string[]
 }
@@ -69,6 +71,19 @@ export async function POST(request: NextRequest) {
 async function handleStartSession(body: unknown) {
   const validatedData = startCallSchema.parse(body)
 
+  // Get restaurant ID - use provided one or find first active restaurant
+  let restaurantId = validatedData.restaurantId
+  if (!restaurantId) {
+    const restaurant = await db.query.restaurants.findFirst()
+    if (!restaurant) {
+      return NextResponse.json(
+        { error: "No hay restaurantes disponibles" },
+        { status: 400 }
+      )
+    }
+    restaurantId = restaurant.id
+  }
+
   // Generate unique session ID
   const sessionId = nanoid()
 
@@ -77,7 +92,7 @@ async function handleStartSession(body: unknown) {
     step: "greeting",
     data: {
       phoneNumber: validatedData.phoneNumber,
-      restaurantId: validatedData.restaurantId,
+      restaurantId,
     },
     errors: [],
   }
@@ -87,7 +102,7 @@ async function handleStartSession(body: unknown) {
   await db.insert(reservationSessions).values({
     sessionId,
     phoneNumber: validatedData.phoneNumber,
-    restaurantId: validatedData.restaurantId,
+    restaurantId,
     conversationState: sessionState,
     collectedData: {},
     expiresAt,
@@ -137,14 +152,23 @@ async function handleProcessInput(body: unknown) {
   }
 
   // Process input based on current step
+  console.log("[IVR] Processing input for session:", sessionId.sessionId, "current step:", sessionState.step)
   const result = await processIVRInput(sessionState, validatedData.input, validatedData.inputType)
+  console.log("[IVR] New step:", result.state.step)
 
-  // Update session state
+  // Update session state in Redis (and also in DB as backup)
   await getRedis().setex(
     `ivr:${sessionId.sessionId}`,
     IVR_SESSION_TTL,
     JSON.stringify(result.state)
   )
+
+  // Also update in database as backup
+  const updateResult = await db.update(reservationSessions)
+    .set({ conversationState: result.state })
+    .where(eq(reservationSessions.sessionId, sessionId.sessionId))
+    .returning()
+  console.log("[IVR] DB update result:", updateResult.length > 0 ? "success" : "failed")
 
   return NextResponse.json(result.response)
 }
@@ -164,6 +188,44 @@ async function processIVRInput(
   }
 }> {
   const input_lower = input.toLowerCase().trim()
+
+  // Helper function to create reservation
+  async function createReservation(data: typeof state.data): Promise<string | null> {
+    try {
+      // Get first restaurant ID if not provided
+      let restaurantId = data.restaurantId
+      if (!restaurantId) {
+        const restaurant = await db.query.restaurants.findFirst()
+        if (!restaurant) {
+          console.error("No restaurant found")
+          return null
+        }
+        restaurantId = restaurant.id
+      }
+
+      // Generate unique reservation code
+      const reservationCode = `RES-${nanoid(5).toUpperCase()}`
+
+      // Create reservation
+      await db.insert(reservations).values({
+        reservationCode,
+        customerName: data.customerName!,
+        customerPhone: data.phoneNumber!,
+        restaurantId,
+        reservationDate: data.date!,
+        reservationTime: data.time!,
+        partySize: data.partySize!,
+        specialRequests: data.specialRequests || null,
+        status: "PENDIENTE",
+        source: "IVR",
+      })
+
+      return reservationCode
+    } catch (error) {
+      console.error("Error creating reservation:", error)
+      return null
+    }
+  }
 
   switch (state.step) {
     case "greeting":
@@ -269,11 +331,40 @@ async function processIVRInput(
       }
 
       state.data.customerName = name
-      state.step = "confirm_details"
+      state.step = "ask_special_requests"
       return {
         state,
         response: {
-          message: `Perfecto. Confirmando su reserva:\n\nFecha: ${state.data.date}\nHora: ${state.data.time}\nPersonas: ${state.data.partySize}\nNombre: ${name}\n\n¿Es correcto? Digamos sí para confirmar o no para modificar.`,
+          message: `Gracias, ${name}. ¿Tiene alguna observación especial? Por ejemplo: si necesita silla de ruedas, si tiene alguna alergia, si va con mascota, o cualquier otra necesidad especial. Si no tiene ninguna, diga 'no' o 'ninguna'.`,
+          expectedInput: "text",
+          hints: "Puede decir: silla de ruedas, alergia al marisco, voy con perro, o 'no'",
+        },
+      }
+    }
+
+    case "ask_special_requests": {
+      const specialInput = input.trim().toLowerCase()
+
+      // Check if user says no/none/continue
+      if (specialInput === "no" || specialInput === "ninguna" || specialInput === "ninguno" ||
+          specialInput === "no gracias" || specialInput === "no tengo" ||
+          specialInput.includes("no tengo nada") || specialInput.includes("no necessary")) {
+        // No special requests, continue to confirmation
+        state.data.specialRequests = undefined
+      } else {
+        // Save the special request
+        state.data.specialRequests = input.trim()
+      }
+
+      state.step = "confirm_details"
+      const specialRequestText = state.data.specialRequests
+        ? `\nObservaciones: ${state.data.specialRequests}`
+        : ""
+
+      return {
+        state,
+        response: {
+          message: `Perfecto. Confirmando su reserva:\n\nFecha: ${state.data.date}\nHora: ${state.data.time}\nPersonas: ${state.data.partySize}\nNombre: ${state.data.customerName}${specialRequestText}\n\n¿Es correcto? Digamos sí para confirmar o no para modificar.`,
           expectedInput: "confirmation",
         },
       }
@@ -281,10 +372,19 @@ async function processIVRInput(
 
     case "confirm_details": {
       if (input_lower.includes("sí") || input_lower.includes("si") || input_lower.includes("yes") || input_lower === "1") {
-        // Create reservation
-        // TODO: Call the reservations API to create the actual reservation
+        // Create the actual reservation in database
+        const reservationCode = await createReservation(state.data)
+
+        if (!reservationCode) {
+          return {
+            state,
+            response: {
+              message: "Lo siento, hubo un error al crear su reserva. Por favor, intente nuevamente o llame más tarde.",
+            },
+          }
+        }
+
         state.step = "complete"
-        const reservationCode = `RES-${Math.random().toString(36).substring(2, 7).toUpperCase()}`
 
         return {
           state,
@@ -299,6 +399,7 @@ async function processIVRInput(
         state.step = "ask_date"
         state.data = {
           phoneNumber: state.data.phoneNumber,
+          restaurantId: state.data.restaurantId,
         }
         return {
           state,
@@ -365,7 +466,9 @@ function parseTimeInput(input: string): string | null {
     const match = input.match(pattern)
     if (match) {
       // Return time in HH:MM format
-      const hours = match[1] || match[2]
+      // Pattern 1: (\d{1,2}):(\d{2}) -> match[1]=hours, match[2]=minutes
+      // Pattern 2: (\d{1,2})\s*(?:pm|am...) -> match[1]=hours
+      const hours = match[1]
       const minutes = match[2] || "00"
       return `${String(hours).padStart(2, "0")}:${minutes}`
     }
