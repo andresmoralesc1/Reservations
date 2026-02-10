@@ -76,10 +76,17 @@ export default function AnalyticsPage() {
   ], true)
 
   const loadAnalytics = useCallback(async () => {
+    // Validar que el usuario tenga restaurantId
+    if (!user?.restaurantId) {
+      toast("No se pudo identificar el restaurante", "error")
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     try {
       const params = new URLSearchParams()
-      params.set("restaurantId", user?.restaurantId || "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+      params.set("restaurantId", user.restaurantId)
 
       if (period === "custom" && customRange) {
         params.set("startDate", customRange.start)
@@ -94,28 +101,35 @@ export default function AnalyticsPage() {
       }
 
       const response = await fetch(`/api/admin/analytics?${params}`)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Error al cargar analíticas")
+      }
+
       const analyticsData = await response.json()
       setData(analyticsData)
     } catch (error) {
       console.error("Error loading analytics:", error)
-      toast("Error al cargar analíticas", "error")
+      toast(error instanceof Error ? error.message : "Error al cargar analíticas", "error")
     } finally {
       setLoading(false)
     }
   }, [period, customRange, user])
 
-  // Poll for updates every 30 seconds
-  usePolling(
-    loadAnalytics,
-    () => {},
-    { interval: 30000, enabled: true }
-  )
-
+  // Cargar analíticas cuando cambian los filtros o el usuario
   useEffect(() => {
     if (user?.restaurantId) {
       loadAnalytics()
     }
   }, [period, customRange, user?.restaurantId])
+
+  // Poll para actualizaciones automáticas (solo si hay datos cargados)
+  usePolling(
+    loadAnalytics,
+    () => {},
+    { interval: 30000, enabled: !!data }
+  )
 
   function handleExport() {
     if (!data) return
@@ -364,7 +378,9 @@ export default function AnalyticsPage() {
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Object.entries(data.sourceBreakdown).map(([source, count]) => {
-            const percentage = Math.round((count / data.summary.totalReservations) * 100)
+            const percentage = data.summary.totalReservations > 0
+              ? Math.round((count / data.summary.totalReservations) * 100)
+              : 0
 
             return (
               <div key={source} className="text-center p-4 bg-neutral-50 rounded-lg">

@@ -50,31 +50,31 @@ export function HourlyBarChart({ data, maxCount }: HourlyBarChartProps) {
               <div className="w-full h-28 bg-neutral-100 rounded-sm relative overflow-hidden">
                 {item.count > 0 && (
                   <>
-                    {/* Confirmed portion */}
+                    {/* Cancelled portion (top) */}
+                    {cancelledHeight > 0 && (
+                      <div
+                        className="absolute left-0 right-0 bg-red-500 transition-all duration-300"
+                        style={{
+                          height: `${cancelledHeight}px`,
+                          bottom: `${confirmedHeight + pendingHeight}px`,
+                        }}
+                      />
+                    )}
+                    {/* Pending portion (middle) */}
+                    {pendingHeight > 0 && (
+                      <div
+                        className="absolute left-0 right-0 bg-amber-500 transition-all duration-300"
+                        style={{
+                          height: `${pendingHeight}px`,
+                          bottom: `${confirmedHeight}px`,
+                        }}
+                      />
+                    )}
+                    {/* Confirmed portion (bottom) */}
                     {confirmedHeight > 0 && (
                       <div
                         className="absolute bottom-0 left-0 right-0 bg-emerald-500 transition-all duration-300"
                         style={{ height: `${confirmedHeight}px` }}
-                      />
-                    )}
-                    {/* Pending portion */}
-                    {pendingHeight > 0 && (
-                      <div
-                        className="absolute bottom-0 left-0 right-0 bg-amber-500 transition-all duration-300"
-                        style={{
-                          height: `${pendingHeight}px`,
-                          marginTop: `${confirmedHeight}px`,
-                        }}
-                      />
-                    )}
-                    {/* Cancelled portion */}
-                    {cancelledHeight > 0 && (
-                      <div
-                        className="absolute bottom-0 left-0 right-0 bg-red-500 transition-all duration-300"
-                        style={{
-                          height: `${cancelledHeight}px`,
-                          marginTop: `${confirmedHeight + pendingHeight}px`,
-                        }}
                       />
                     )}
                   </>

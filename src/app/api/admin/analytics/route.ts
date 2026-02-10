@@ -131,8 +131,9 @@ export async function GET(request: NextRequest) {
 
     // Table utilization
     const totalCapacity = allTables.reduce((sum, t) => sum + t.capacity, 0)
-    const avgOccupancy = totalCapacity > 0
-      ? Math.round((totalCovers / (totalCapacity * Object.keys(dailyBreakdown).length)) * 100)
+    const daysWithData = Object.keys(dailyBreakdown).length
+    const avgOccupancy = (totalCapacity > 0 && daysWithData > 0)
+      ? Math.round((totalCovers / (totalCapacity * daysWithData)) * 100)
       : 0
 
     // No show rate
@@ -174,7 +175,10 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error fetching analytics:", error)
     return NextResponse.json(
-      { error: "Error al obtener analíticas" },
+      {
+        error: "Error al obtener analíticas",
+        details: error instanceof Error ? error.message : "Error desconocido"
+      },
       { status: 500 }
     )
   }
