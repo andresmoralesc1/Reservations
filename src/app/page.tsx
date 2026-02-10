@@ -35,7 +35,7 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <Hero
-        backgroundImage="https://images.pexels.com/photos/7262901/pexels-photo-7262901.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
+        backgroundVideo="https://videos.pexels.com/video-files/27917166/27917166-hd_1920_1080_30fps.mp4"
         overlay
       >
         <HeroTitle>
