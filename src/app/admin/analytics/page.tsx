@@ -76,15 +76,14 @@ export default function AnalyticsPage() {
   ], true)
 
   const loadAnalytics = useCallback(async () => {
-    // Validar que el usuario tenga restaurantId
-    if (!user?.restaurantId) {
-      toast("No se pudo identificar el restaurante", "error")
-      setLoading(false)
-      return
-    }
-
     setLoading(true)
     try {
+      // Validar que el usuario tenga restaurantId
+      if (!user?.restaurantId) {
+        toast("No se pudo identificar el restaurante", "error")
+        return
+      }
+
       const params = new URLSearchParams()
       params.set("restaurantId", user.restaurantId)
 
@@ -115,14 +114,12 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false)
     }
-  }, [period, customRange, user])
+  }, [period, customRange, user?.restaurantId])
 
   // Cargar analíticas cuando cambian los filtros o el usuario
   useEffect(() => {
-    if (user?.restaurantId) {
-      loadAnalytics()
-    }
-  }, [period, customRange, user?.restaurantId])
+    loadAnalytics()
+  }, [loadAnalytics])
 
   // Poll para actualizaciones automáticas (solo si hay datos cargados)
   usePolling(
