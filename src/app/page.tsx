@@ -32,7 +32,7 @@ const RESTAURANTS = [
 export default function HomePage() {
   return (
     <>
-      <Header variant="transparent" />
+      <Header />
 
       {/* Hero Section */}
       <HeroWithVideo

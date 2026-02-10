@@ -11,15 +11,9 @@ interface HeaderProps {
 export function Header({ variant = "light" }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  const textColor = variant === "light" ? "text-black" : "text-white"
-  const bgColor = {
-    "light": "bg-cream",
-    "dark": "bg-black",
-    "transparent": "bg-transparent",
-  }[variant]
-
+  // Always use black background and white text
   return (
-    <header className={cn("fixed top-0 left-0 right-0 z-50 px-6 py-4", bgColor, textColor)}>
+    <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 bg-black text-white">
       <div className="mx-auto flex max-w-8xl items-center justify-between">
         {/* Hamburger Menu Button */}
         <button
@@ -28,18 +22,15 @@ export function Header({ variant = "light" }: HeaderProps) {
           aria-label="Menu"
         >
           <span className={cn(
-            "h-0.5 w-6 transition-all duration-300",
-            variant === "light" ? "bg-black" : "bg-white",
+            "h-0.5 w-6 bg-white transition-all duration-300",
             isMenuOpen && "translate-y-2 rotate-45"
           )} />
           <span className={cn(
-            "h-0.5 w-6 transition-all duration-300",
-            variant === "light" ? "bg-black" : "bg-white",
+            "h-0.5 w-6 bg-white transition-all duration-300",
             isMenuOpen && "opacity-0"
           )} />
           <span className={cn(
-            "h-0.5 w-6 transition-all duration-300",
-            variant === "light" ? "bg-black" : "bg-white",
+            "h-0.5 w-6 bg-white transition-all duration-300",
             isMenuOpen && "-translate-y-2 -rotate-45"
           )} />
         </button>
