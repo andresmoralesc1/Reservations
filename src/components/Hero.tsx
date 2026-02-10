@@ -3,25 +3,44 @@ import { ReactNode } from "react"
 
 interface HeroProps {
   backgroundImage?: string
+  backgroundVideo?: string
   overlay?: boolean
   className?: string
   children: ReactNode
 }
 
-export function Hero({ backgroundImage, overlay = true, className, children }: HeroProps) {
+export function Hero({ backgroundImage, backgroundVideo, overlay = true, className, children }: HeroProps) {
   return (
     <section
       className={cn(
-        "relative flex min-h-screen items-center justify-center",
-        !backgroundImage && "bg-black",
+        "relative flex min-h-screen items-center justify-center overflow-hidden",
+        !backgroundImage && !backgroundVideo && "bg-black",
         className
       )}
-      style={backgroundImage ? {
-        backgroundImage: `url(${backgroundImage})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center"
-      } : undefined}
     >
+      {backgroundVideo && (
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 h-full w-full object-cover"
+        >
+          <source src={backgroundVideo} type="video/mp4" />
+        </video>
+      )}
+
+      {backgroundImage && !backgroundVideo && (
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url(${backgroundImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center"
+          }}
+        />
+      )}
+
       {overlay && (
         <div className="absolute inset-0 bg-black/50" />
       )}

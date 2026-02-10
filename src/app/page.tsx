@@ -1,18 +1,44 @@
 import Link from "next/link"
 import { Header } from "@/components/Header"
 import { Hero, HeroTitle, HeroSubtitle } from "@/components/Hero"
+import { HeroWithVideo } from "@/components/HeroWithVideo"
 import { Container } from "@/components/Container"
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/Card"
 import { Button } from "@/components/Button"
 import { Badge } from "@/components/Badge"
+import { RestaurantImage } from "@/components/RestaurantImage"
+
+const RESTAURANTS = [
+  {
+    value: "cambrils",
+    label: "El Posit - Cambrils",
+    imageQuery: "chef cooking onion preparation kitchen",
+    imageUrl: "https://images.pexels.com/photos/14164521/pexels-photo-14164521.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
+  },
+  {
+    value: "tarragona",
+    label: "El Posit - Tarragona",
+    imageQuery: "gourmet food salad restaurant dish",
+    imageUrl: "https://images.pexels.com/photos/5616321/pexels-photo-5616321.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
+  },
+  {
+    value: "vila-seca",
+    label: "El Posit - Vila-Seca",
+    imageQuery: "fresh seafood oysters lemon ice gourmet",
+    imageUrl: "https://images.pexels.com/photos/29058866/pexels-photo-29058866.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
+  },
+]
 
 export default function HomePage() {
   return (
     <>
-      <Header variant="transparent" />
+      <Header />
 
       {/* Hero Section */}
-      <Hero overlay>
+      <HeroWithVideo
+        videoId={27917166}
+        fallbackImage="https://images.pexels.com/photos/8352788/pexels-photo-8352788.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
+      >
         <HeroTitle>
           COCINA<br />MARINERA
         </HeroTitle>
@@ -31,7 +57,7 @@ export default function HomePage() {
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/70">
           <span className="progress-indicator">01 —— 03</span>
         </div>
-      </Hero>
+      </HeroWithVideo>
 
       {/* Features Section */}
       <section className="section-light py-24" id="sistema">
@@ -48,9 +74,11 @@ export default function HomePage() {
 
           <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-3">
             {/* IVR Card */}
-            <Card variant="outlined" className="text-center hover:border-black transition-colors">
+            <Card variant="outlined" className="group text-center hover:border-black hover:shadow-lg transition-all duration-300 cursor-default">
               <CardContent className="py-10">
-                <div className="mb-6 text-5xl">📞</div>
+                <div className="mb-6 text-4xl sm:text-5xl group-hover:scale-110 transition-transform duration-300" role="img" aria-label="Teléfono">
+                  📞
+                </div>
                 <CardTitle>IVR Inteligente</CardTitle>
                 <CardDescription className="text-center">
                   Sistema de respuesta de voz con reconocimiento automatico para reservas telefonicas 24/7
@@ -59,10 +87,11 @@ export default function HomePage() {
             </Card>
 
             {/* WhatsApp Card */}
-            <Card variant="outlined" className="text-center hover:border-black transition-colors">
+            <Card variant="outlined" className="group text-center hover:border-black hover:shadow-lg transition-all duration-300 cursor-default">
               <CardContent className="py-10">
-                <Badge variant="promo" className="mb-6">Nuevo</Badge>
-                <div className="mb-6 text-5xl">💬</div>
+                <div className="mb-6 text-4xl sm:text-5xl group-hover:scale-110 transition-transform duration-300" role="img" aria-label="Chat">
+                  💬
+                </div>
                 <CardTitle>WhatsApp</CardTitle>
                 <CardDescription className="text-center">
                   Confirmaciones automaticas con botones interactivos y recordatorios personalizados
@@ -71,9 +100,11 @@ export default function HomePage() {
             </Card>
 
             {/* Dashboard Card */}
-            <Card variant="outlined" className="text-center hover:border-black transition-colors">
+            <Card variant="outlined" className="group text-center hover:border-black hover:shadow-lg transition-all duration-300 cursor-default">
               <CardContent className="py-10">
-                <div className="mb-6 text-5xl">📊</div>
+                <div className="mb-6 text-4xl sm:text-5xl group-hover:scale-110 transition-transform duration-300" role="img" aria-label="Gráfico">
+                  📊
+                </div>
                 <CardTitle>Dashboard</CardTitle>
                 <CardDescription className="text-center">
                   Panel de administracion completo con estadisticas y gestion en tiempo real
@@ -110,7 +141,7 @@ export default function HomePage() {
         </Container>
       </section>
 
-      {/* Locations Section */}
+      {/* Locations Section with Pexels Images */}
       <section className="section-light py-24" id="restaurantes">
         <Container>
           <div className="text-center mb-16">
@@ -123,64 +154,81 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {/* Location Cards */}
-            {["CAMBRILS", "TARRAGONA", "VILA-SECA"].map((location) => (
-              <div key={location} className="text-center group cursor-pointer">
-                <div className="aspect-[4/3] bg-neutral-200 mb-6 overflow-hidden">
-                  <div className="w-full h-full bg-gradient-to-br from-neutral-300 to-neutral-400 group-hover:scale-105 transition-transform duration-500" />
+            {RESTAURANTS.map((location) => (
+              <div key={location.value} className="text-center group cursor-pointer">
+                <div className="aspect-[4/3] mb-6 overflow-hidden">
+                  <RestaurantImage
+                    imageUrl={location.imageUrl}
+                    query={location.imageQuery}
+                    alt={location.label}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    priority
+                  />
                 </div>
-                <h3 className="font-display text-xl uppercase tracking-wide">{location}</h3>
+                <h3 className="font-display text-xl uppercase tracking-wide">
+                  {location.label.split(" - ")[1]}
+                </h3>
                 <p className="font-serif text-sm text-neutral-500 mt-2">Cocina marinera</p>
               </div>
             ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <div className="flex items-center justify-center gap-4">
-              <button className="w-10 h-10 border border-black flex items-center justify-center hover:bg-black hover:text-white transition-colors font-sans">
-                ←
-              </button>
-              <span className="font-display text-sm tracking-widest">01 —— 03</span>
-              <button className="w-10 h-10 border border-black flex items-center justify-center hover:bg-black hover:text-white transition-colors font-sans">
-                →
-              </button>
-            </div>
           </div>
         </Container>
       </section>
 
       {/* Footer */}
-      <footer className="bg-black text-white py-16">
+      <footer className="bg-black text-white py-16" role="contentinfo">
         <Container>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-12">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-12">
             <div>
-              <h4 className="font-display text-2xl uppercase tracking-widest mb-4">El Posit</h4>
-              <p className="font-serif text-white/70 text-sm">
+              <h4 className="font-display text-2xl uppercase tracking-widest mb-4 text-white">El Posit</h4>
+              <p className="font-serif text-white/90 text-sm">
                 Cocina marinera tradicional desde 1980
               </p>
             </div>
             <div>
-              <h5 className="font-display text-sm uppercase tracking-wider mb-4">Enlaces</h5>
-              <nav className="flex flex-col gap-2">
-                <Link href="/admin" className="font-sans text-sm text-white/70 hover:text-white transition-colors">
+              <h5 className="font-display text-sm uppercase tracking-wider mb-4 text-white">Enlaces</h5>
+              <nav className="flex flex-col gap-2" aria-label="Enlaces del sitio">
+                <Link href="/admin" className="font-sans text-sm text-white/90 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded px-2 py-1 transition-colors">
                   Panel Admin
                 </Link>
-                <Link href="/api/docs" className="font-sans text-sm text-white/70 hover:text-white transition-colors">
+                <Link href="/api/docs" className="font-sans text-sm text-white/90 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded px-2 py-1 transition-colors">
                   API Docs
                 </Link>
               </nav>
             </div>
             <div>
-              <h5 className="font-display text-sm uppercase tracking-wider mb-4">Contacto</h5>
-              <p className="font-sans text-sm text-white/70">
-                info@elposit.com<br />
-                +34 977 00 00 00
+              <h5 className="font-display text-sm uppercase tracking-wider mb-4 text-white">Legal</h5>
+              <nav className="flex flex-col gap-2" aria-label="Enlaces legales">
+                <Link href="/privacidad" className="font-sans text-sm text-white/90 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded px-2 py-1 transition-colors">
+                  Política de Privacidad
+                </Link>
+                <Link href="/terminos" className="font-sans text-sm text-white/90 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded px-2 py-1 transition-colors">
+                  Términos de Uso
+                </Link>
+                <Link href="/cookies" className="font-sans text-sm text-white/90 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded px-2 py-1 transition-colors">
+                  Política de Cookies
+                </Link>
+              </nav>
+            </div>
+            <div>
+              <h5 className="font-display text-sm uppercase tracking-wider mb-4 text-white">Contacto</h5>
+              <p className="font-sans text-sm text-white/90">
+                <a href="mailto:info@elposit.com" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded px-1 transition-colors">
+                  info@elposit.com
+                </a>
+                <br />
+                <a href="tel:+34977000000" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded px-1 transition-colors">
+                  +34 977 00 00 00
+                </a>
               </p>
             </div>
           </div>
-          <div className="border-t border-white/20 mt-12 pt-8 text-center">
-            <p className="font-sans text-xs text-white/50">
-              © 2024 El Posit. Todos los derechos reservados.
+          <div className="border-t border-white/20 mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p className="font-sans text-xs text-white/80">
+              © 2026 El Posit. Todos los derechos reservados.
+            </p>
+            <p className="font-sans text-xs text-white/80">
+              Hecho con ❤️ en España
             </p>
           </div>
         </Container>
