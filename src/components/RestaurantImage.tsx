@@ -5,7 +5,8 @@ import { searchPhotos } from "@/lib/pexels"
 import type { PexelsImage } from "@/lib/pexels"
 
 interface RestaurantImageProps {
-  query: string
+  query?: string
+  imageUrl?: string
   alt: string
   className?: string
   orientation?: "landscape" | "portrait" | "square"
@@ -14,6 +15,7 @@ interface RestaurantImageProps {
 
 export function RestaurantImage({
   query,
+  imageUrl,
   alt,
   className = "",
   orientation = "landscape",
@@ -24,9 +26,22 @@ export function RestaurantImage({
   const [error, setError] = useState(false)
 
   useEffect(() => {
+    // If imageUrl is provided, use it directly
+    if (imageUrl) {
+      setLoading(false)
+      return
+    }
+
+    // Otherwise search by query
+    if (!query) {
+      setError(true)
+      setLoading(false)
+      return
+    }
+
     async function fetchImage() {
       try {
-        const photos = await searchPhotos(query, { per_page: 1, orientation })
+        const photos = await searchPhotos(query as string, { per_page: 1, orientation })
         if (photos.length > 0) {
           setImage(photos[0])
         } else {
@@ -40,11 +55,22 @@ export function RestaurantImage({
     }
 
     fetchImage()
-  }, [query, orientation])
+  }, [query, orientation, imageUrl])
 
   if (loading) {
     return (
       <div className={`bg-neutral-200 animate-pulse ${className}`} />
+    )
+  }
+
+  if (imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        alt={alt}
+        className={className}
+        loading={priority ? "eager" : "lazy"}
+      />
     )
   }
 

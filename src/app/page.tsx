@@ -8,9 +8,24 @@ import { Badge } from "@/components/Badge"
 import { RestaurantImage } from "@/components/RestaurantImage"
 
 const RESTAURANTS = [
-  { value: "cambrils", label: "El Posit - Cambrils", imageQuery: "seafood restaurant spain mediterranean terrace" },
-  { value: "tarragona", label: "El Posit - Tarragona", imageQuery: "restaurant interior elegant spain tapas" },
-  { value: "vila-seca", label: "El Posit - Vila-Seca", imageQuery: "paella seafood traditional spain restaurant" },
+  {
+    value: "cambrils",
+    label: "El Posit - Cambrils",
+    imageQuery: "luxury restaurant mediterranean seaside terrace fine dining",
+    imageUrl: "https://images.pexels.com/photos/941861/pexels-photo-941861.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
+  },
+  {
+    value: "tarragona",
+    label: "El Posit - Tarragona",
+    imageQuery: "elegant restaurant interior warm lighting cozy atmosphere spanish tapas",
+    imageUrl: "https://images.pexels.com/photos/12650876/pexels-photo-12650876.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
+  },
+  {
+    value: "vila-seca",
+    label: "El Posit - Vila-Seca",
+    imageQuery: "gourmet seafood paella spanish cuisine traditional restaurant",
+    imageUrl: "https://images.pexels.com/photos/20536247/pexels-photo-20536247.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
+  },
 ]
 
 export default function HomePage() {
@@ -20,7 +35,7 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <Hero
-        backgroundImage="https://images.pexels.com/photos/5946212/pexels-photo-5946212.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
+        backgroundImage="https://images.pexels.com/photos/7262901/pexels-photo-7262901.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
         overlay
       >
         <HeroTitle>
@@ -137,6 +152,7 @@ export default function HomePage() {
               <div key={location.value} className="text-center group cursor-pointer">
                 <div className="aspect-[4/3] mb-6 overflow-hidden">
                   <RestaurantImage
+                    imageUrl={location.imageUrl}
                     query={location.imageQuery}
                     alt={location.label}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
