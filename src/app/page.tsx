@@ -37,7 +37,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <HeroWithVideo
         videoId={27917166}
-        fallbackImage="https://images.pexels.com/photos/769289/pexels-photo-769289.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
+        fallbackImage="https://images.pexels.com/photos/8352788/pexels-photo-8352788.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
       >
         <HeroTitle>
           COCINA<br />MARINERA
@@ -167,25 +167,13 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-
-          <div className="text-center mt-12">
-            <div className="flex items-center justify-center gap-4">
-              <button className="w-10 h-10 border border-black flex items-center justify-center hover:bg-black hover:text-white transition-colors font-sans">
-                ←
-              </button>
-              <span className="font-display text-sm tracking-widest">01 —— 03</span>
-              <button className="w-10 h-10 border border-black flex items-center justify-center hover:bg-black hover:text-white transition-colors font-sans">
-                →
-              </button>
-            </div>
-          </div>
         </Container>
       </section>
 
       {/* Footer */}
       <footer className="bg-black text-white py-16">
         <Container>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-12">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-12">
             <div>
               <h4 className="font-display text-2xl uppercase tracking-widest mb-4">El Posit</h4>
               <p className="font-serif text-white/70 text-sm">
@@ -204,6 +192,20 @@ export default function HomePage() {
               </nav>
             </div>
             <div>
+              <h5 className="font-display text-sm uppercase tracking-wider mb-4">Legal</h5>
+              <nav className="flex flex-col gap-2">
+                <Link href="/privacidad" className="font-sans text-sm text-white/70 hover:text-white transition-colors">
+                  Política de Privacidad
+                </Link>
+                <Link href="/terminos" className="font-sans text-sm text-white/70 hover:text-white transition-colors">
+                  Términos de Uso
+                </Link>
+                <Link href="/cookies" className="font-sans text-sm text-white/70 hover:text-white transition-colors">
+                  Política de Cookies
+                </Link>
+              </nav>
+            </div>
+            <div>
               <h5 className="font-display text-sm uppercase tracking-wider mb-4">Contacto</h5>
               <p className="font-sans text-sm text-white/70">
                 info@elposit.com<br />
@@ -211,9 +213,12 @@ export default function HomePage() {
               </p>
             </div>
           </div>
-          <div className="border-t border-white/20 mt-12 pt-8 text-center">
+          <div className="border-t border-white/20 mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="font-sans text-xs text-white/50">
               © 2024 El Posit. Todos los derechos reservados.
+            </p>
+            <p className="font-sans text-xs text-white/50">
+              Hecho con ❤️ en España
             </p>
           </div>
         </Container>
