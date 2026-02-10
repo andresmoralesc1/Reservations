@@ -76,14 +76,14 @@ export default function AnalyticsPage() {
   ], true)
 
   const loadAnalytics = useCallback(async () => {
+    // Validar que el usuario tenga restaurantId
+    if (!user?.restaurantId) {
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     try {
-      // Validar que el usuario tenga restaurantId
-      if (!user?.restaurantId) {
-        toast("No se pudo identificar el restaurante", "error")
-        return
-      }
-
       const params = new URLSearchParams()
       params.set("restaurantId", user.restaurantId)
 
@@ -117,9 +117,13 @@ export default function AnalyticsPage() {
   }, [period, customRange, user?.restaurantId])
 
   // Cargar analíticas cuando cambian los filtros o el usuario
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     loadAnalytics()
-  }, [loadAnalytics])
+    // Solo queremos que se ejecute cuando cambien period, customRange o user?.restaurantId
+    // loadAnalytics se reconstruye con estas dependencias, pero no queremos incluirlo en el array
+    // para evitar un ciclo infinito
+  }, [period, customRange, user?.restaurantId])
 
   // Poll para actualizaciones automáticas (solo si hay datos cargados)
   usePolling(
