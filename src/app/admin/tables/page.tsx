@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
+import { useAuth } from "@/contexts/AuthContext"
 import { Container } from "@/components/Container"
 import { Button } from "@/components/Button"
 import { LoadingSpinner } from "@/components/LoadingSpinner"
@@ -35,10 +36,9 @@ export interface Table {
 type ViewMode = "list" | "layout"
 type Location = "all" | "patio" | "interior" | "terraza"
 
-// TODO: Get from environment or auth
-const RESTAURANT_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-
 export default function TablesPage() {
+  const { user } = useAuth()
+  const restaurantId = user?.restaurantId
   const [tables, setTables] = useState<Table[]>([])
   const [stats, setStats] = useState({
     total: 0,
@@ -56,22 +56,28 @@ export default function TablesPage() {
   const [editTable, setEditTable] = useState<Table | undefined>()
 
   const loadData = useCallback(async () => {
+    if (!restaurantId) {
+      toast("No se pudo identificar el restaurante", "error")
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     try {
       // Load tables
-      const tablesResponse = await fetch(`/api/admin/tables?restaurantId=${RESTAURANT_ID}`)
+      const tablesResponse = await fetch(`/api/admin/tables?restaurantId=${restaurantId}`)
       const tablesData = await tablesResponse.json()
       setTables(tablesData.tables || [])
 
       // Load stats
-      const statsResponse = await fetch(`/api/admin/tables/stats?restaurantId=${RESTAURANT_ID}`)
+      const statsResponse = await fetch(`/api/admin/tables/stats?restaurantId=${restaurantId}`)
       const statsData = await statsResponse.json()
       setStats(statsData)
 
       // Get occupied tables from today's reservations
       const today = new Date().toISOString().split("T")[0]
       const reservationsResponse = await fetch(
-        `/api/admin/reservations?date=${today}&restaurantId=${RESTAURANT_ID}`
+        `/api/admin/reservations?date=${today}&restaurantId=${restaurantId}`
       )
       const reservationsData = await reservationsResponse.json()
 
@@ -90,11 +96,13 @@ export default function TablesPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [restaurantId])
 
   useEffect(() => {
-    loadData()
-  }, [loadData])
+    if (restaurantId) {
+      loadData()
+    }
+  }, [loadData, restaurantId])
 
   function handleEditTable(table: Table) {
     setEditTable(table)
@@ -251,7 +259,7 @@ export default function TablesPage() {
             onCreateTable={handleCreateTable}
             onUpdateTable={handleUpdateTable}
             onDeleteTable={handleDeleteTableFromEditor}
-            restaurantId={RESTAURANT_ID}
+            restaurantId={restaurantId || ""}
           />
         </div>
       )}
@@ -264,7 +272,7 @@ export default function TablesPage() {
           loadData()
           handleWizardClose()
         }}
-        restaurantId={RESTAURANT_ID}
+        restaurantId={restaurantId || ""}
         editTable={editTable}
       />
 
@@ -276,7 +284,7 @@ export default function TablesPage() {
           loadData()
           setShowBulk(false)
         }}
-        restaurantId={RESTAURANT_ID}
+        restaurantId={restaurantId || ""}
       />
     </div>
   )
