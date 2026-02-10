@@ -54,6 +54,10 @@ export async function GET(request: NextRequest) {
     // Fill in the data
     for (const res of todayReservations) {
       const hour = parseInt(res.reservationTime.split(":")[0], 10)
+
+      // Only include hours within our range (12-23)
+      if (hour < 12 || hour > 23) continue
+
       if (!hourlyData[hour]) continue
 
       hourlyData[hour].count += 1

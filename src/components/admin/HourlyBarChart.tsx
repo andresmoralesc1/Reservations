@@ -31,6 +31,10 @@ export function HourlyBarChart({ data, maxCount }: HourlyBarChartProps) {
             <div className="h-2 w-2 rounded-full bg-amber-500" />
             <span className="text-neutral-600">Pendientes</span>
           </div>
+          <div className="flex items-center gap-1.5">
+            <div className="h-2 w-2 rounded-full bg-red-500" />
+            <span className="text-neutral-600">Canceladas</span>
+          </div>
         </div>
       </div>
 
@@ -39,6 +43,7 @@ export function HourlyBarChart({ data, maxCount }: HourlyBarChartProps) {
           const height = maxCount > 0 ? (item.count / maxCount) * 100 : 0
           const confirmedHeight = item.count > 0 ? (item.confirmed / item.count) * height : 0
           const pendingHeight = item.count > 0 ? (item.pending / item.count) * height : 0
+          const cancelledHeight = item.count > 0 ? (item.cancelled / item.count) * height : 0
 
           return (
             <div key={item.hour} className="flex-1 flex flex-col items-center gap-1">
@@ -59,6 +64,16 @@ export function HourlyBarChart({ data, maxCount }: HourlyBarChartProps) {
                         style={{
                           height: `${pendingHeight}px`,
                           marginTop: `${confirmedHeight}px`,
+                        }}
+                      />
+                    )}
+                    {/* Cancelled portion */}
+                    {cancelledHeight > 0 && (
+                      <div
+                        className="absolute bottom-0 left-0 right-0 bg-red-500 transition-all duration-300"
+                        style={{
+                          height: `${cancelledHeight}px`,
+                          marginTop: `${confirmedHeight + pendingHeight}px`,
                         }}
                       />
                     )}

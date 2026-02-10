@@ -55,17 +55,18 @@ export async function GET(request: NextRequest) {
         ) / 10
       : 0
 
-    // Occupancy rate (tables with reservations / total tables)
-    const occupiedTableIds = new Set<string>()
-    for (const res of todayReservations) {
-      if (res.tableIds && res.status !== "CANCELADO") {
-        for (const tableId of res.tableIds) {
-          occupiedTableIds.add(tableId)
-        }
-      }
-    }
-    const occupancyRate = allTables.length > 0
-      ? Math.round((occupiedTableIds.size / allTables.length) * 100)
+    // Occupancy rate: based on covers vs total capacity
+    // Calculate total capacity of all tables
+    const totalCapacity = allTables.reduce((sum, t) => sum + t.capacity, 0)
+
+    // Calculate actual covers from non-cancelled reservations
+    const totalCovers = todayReservations
+      .filter((r) => r.status !== "CANCELADO")
+      .reduce((sum, r) => sum + r.partySize, 0)
+
+    // Occupancy = (covers / total capacity) * 100
+    const occupancyRate = totalCapacity > 0
+      ? Math.min(100, Math.round((totalCovers / totalCapacity) * 100))
       : 0
 
     // Get pending stats for all future reservations
@@ -93,9 +94,6 @@ export async function GET(request: NextRequest) {
       const reservationDateTime = new Date(`${r.reservationDate}T${r.reservationTime}`)
       return reservationDateTime <= oneHourFromNow && r.status !== "CANCELADO"
     }).length
-
-    // Total covers (people) today
-    const totalCovers = validReservations.reduce((sum, r) => sum + r.partySize, 0)
 
     return NextResponse.json({
       // Today's stats
