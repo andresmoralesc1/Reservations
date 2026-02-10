@@ -11,20 +11,20 @@ const RESTAURANTS = [
   {
     value: "cambrils",
     label: "El Posit - Cambrils",
-    imageQuery: "luxury restaurant mediterranean seaside terrace fine dining",
-    imageUrl: "https://images.pexels.com/photos/941861/pexels-photo-941861.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
+    imageQuery: "chef cooking onion preparation kitchen",
+    imageUrl: "https://images.pexels.com/photos/14164521/pexels-photo-14164521.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
   },
   {
     value: "tarragona",
     label: "El Posit - Tarragona",
-    imageQuery: "elegant restaurant interior warm lighting cozy atmosphere spanish tapas",
-    imageUrl: "https://images.pexels.com/photos/12650876/pexels-photo-12650876.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
+    imageQuery: "gourmet food salad restaurant dish",
+    imageUrl: "https://images.pexels.com/photos/5616321/pexels-photo-5616321.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
   },
   {
     value: "vila-seca",
     label: "El Posit - Vila-Seca",
-    imageQuery: "gourmet seafood paella spanish cuisine traditional restaurant",
-    imageUrl: "https://images.pexels.com/photos/20536247/pexels-photo-20536247.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
+    imageQuery: "fresh seafood oysters lemon ice gourmet",
+    imageUrl: "https://images.pexels.com/photos/29058866/pexels-photo-29058866.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
   },
 ]
 
