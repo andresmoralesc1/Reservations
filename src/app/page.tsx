@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Header } from "@/components/Header"
 import { Hero, HeroTitle, HeroSubtitle } from "@/components/Hero"
+import { HeroWithVideo } from "@/components/HeroWithVideo"
 import { Container } from "@/components/Container"
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/Card"
 import { Button } from "@/components/Button"
@@ -34,9 +35,9 @@ export default function HomePage() {
       <Header variant="transparent" />
 
       {/* Hero Section */}
-      <Hero
-        backgroundImage="https://images.pexels.com/photos/769289/pexels-photo-769289.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
-        overlay
+      <HeroWithVideo
+        videoId={27917166}
+        fallbackImage="https://images.pexels.com/photos/769289/pexels-photo-769289.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
       >
         <HeroTitle>
           COCINA<br />MARINERA
@@ -56,7 +57,7 @@ export default function HomePage() {
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/70">
           <span className="progress-indicator">01 —— 03</span>
         </div>
-      </Hero>
+      </HeroWithVideo>
 
       {/* Features Section */}
       <section className="section-light py-24" id="sistema">
