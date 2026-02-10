@@ -5,6 +5,13 @@ import { Container } from "@/components/Container"
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/Card"
 import { Button } from "@/components/Button"
 import { Badge } from "@/components/Badge"
+import { RestaurantImage } from "@/components/RestaurantImage"
+
+const RESTAURANTS = [
+  { value: "cambrils", label: "El Posit - Cambrils", imageQuery: "seafood restaurant spain mediterranean terrace" },
+  { value: "tarragona", label: "El Posit - Tarragona", imageQuery: "restaurant interior elegant spain tapas" },
+  { value: "vila-seca", label: "El Posit - Vila-Seca", imageQuery: "paella seafood traditional spain restaurant" },
+]
 
 export default function HomePage() {
   return (
@@ -12,7 +19,10 @@ export default function HomePage() {
       <Header variant="transparent" />
 
       {/* Hero Section */}
-      <Hero overlay>
+      <Hero
+        backgroundImage="https://images.pexels.com/photos/5946212/pexels-photo-5946212.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
+        overlay
+      >
         <HeroTitle>
           COCINA<br />MARINERA
         </HeroTitle>
@@ -110,7 +120,7 @@ export default function HomePage() {
         </Container>
       </section>
 
-      {/* Locations Section */}
+      {/* Locations Section with Pexels Images */}
       <section className="section-light py-24" id="restaurantes">
         <Container>
           <div className="text-center mb-16">
@@ -123,13 +133,19 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {/* Location Cards */}
-            {["CAMBRILS", "TARRAGONA", "VILA-SECA"].map((location) => (
-              <div key={location} className="text-center group cursor-pointer">
-                <div className="aspect-[4/3] bg-neutral-200 mb-6 overflow-hidden">
-                  <div className="w-full h-full bg-gradient-to-br from-neutral-300 to-neutral-400 group-hover:scale-105 transition-transform duration-500" />
+            {RESTAURANTS.map((location) => (
+              <div key={location.value} className="text-center group cursor-pointer">
+                <div className="aspect-[4/3] mb-6 overflow-hidden">
+                  <RestaurantImage
+                    query={location.imageQuery}
+                    alt={location.label}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    priority
+                  />
                 </div>
-                <h3 className="font-display text-xl uppercase tracking-wide">{location}</h3>
+                <h3 className="font-display text-xl uppercase tracking-wide">
+                  {location.label.split(" - ")[1]}
+                </h3>
                 <p className="font-serif text-sm text-neutral-500 mt-2">Cocina marinera</p>
               </div>
             ))}
