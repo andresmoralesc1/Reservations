@@ -1,14 +1,13 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/Button"
 import { LoadingSpinner } from "@/components/LoadingSpinner"
 import { toast } from "@/components/Toast"
 import { KPICard } from "@/components/KPICard"
 import { useKeyboardShortcuts, SHORTCUTS } from "@/hooks/useKeyboardShortcuts"
-import { usePolling } from "@/hooks/usePolling"
-import { startOfDay, endOfDay, subDays, format } from "date-fns"
+import { format } from "date-fns"
 import { es } from "date-fns/locale"
 
 interface AnalyticsData {
@@ -120,17 +119,18 @@ export default function AnalyticsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     loadAnalytics()
-    // Solo queremos que se ejecute cuando cambien period, customRange o user?.restaurantId
-    // loadAnalytics se reconstruye con estas dependencias, pero no queremos incluirlo en el array
-    // para evitar un ciclo infinito
   }, [period, customRange, user?.restaurantId])
 
   // Poll para actualizaciones automáticas (solo si hay datos cargados)
-  usePolling(
-    loadAnalytics,
-    () => {},
-    { interval: 30000, enabled: !!data }
-  )
+  useEffect(() => {
+    if (!data) return
+
+    const interval = setInterval(() => {
+      loadAnalytics()
+    }, 30000)
+
+    return () => clearInterval(interval)
+  }, [data, period, customRange, user?.restaurantId])
 
   function handleExport() {
     if (!data) return
