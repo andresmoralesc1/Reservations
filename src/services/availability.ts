@@ -125,9 +125,8 @@ export class AvailabilityChecker {
       eq(reservations.restaurantId, restaurantId),
       eq(reservations.reservationDate, date),
       sql`${reservations.reservationTime} < ${endTime}`,
-      sql`(
-        ${reservations.reservationTime} || '+' || '120 minutes' > ${startTime}
-      )`,
+      // Check if existing reservation + 120min duration overlaps with requested time
+      sql`(${reservations.reservationTime}::time + interval '120 minutes' > ${startTime}::time)`,
       or(
         eq(reservations.status, "PENDIENTE"),
         eq(reservations.status, "CONFIRMADO")

@@ -26,6 +26,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "El Posit - Reservas",
   description: "Sistema de reservas - Cocina Marinera Tradicional",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+  },
   manifest: "/manifest.json",
   themeColor: "#000000",
   appleWebApp: {

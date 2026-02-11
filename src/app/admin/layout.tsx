@@ -7,15 +7,22 @@ import { Container } from "@/components/Container"
 import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/Button"
 import { useKeyboardShortcuts, SHORTCUTS } from "@/hooks/useKeyboardShortcuts"
+import { Menu, X } from "lucide-react"
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const { user, loading, hasPermission } = useAuth()
+  const { user, loading, hasPermission, logout } = useAuth()
   const pathname = usePathname()
   const router = useRouter()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // Close mobile menu when route changes
+  React.useEffect(() => {
+    setMobileMenuOpen(false)
+  }, [pathname])
 
   const navItems = [
     { href: "/admin", label: "Dashboard", shortcut: "1" },
@@ -68,44 +75,41 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-cream">
-      {/* Admin Header */}
+      {/* Admin Header - Responsive */}
       <header className="border-b border-neutral-200 bg-white sticky top-0 z-40">
         <Container size="xl">
           <div className="flex items-center justify-between py-4">
-            <div className="flex items-center gap-8">
-              <Link href="/" className="font-display text-xl uppercase tracking-widest text-black hover:text-posit-red transition-colors">
-                El Posit
-              </Link>
-              <nav className="flex items-center gap-1">
-                {visibleNavItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`
-                      font-display text-sm uppercase tracking-wider px-4 py-2 rounded-lg transition-colors relative
-                      ${pathname === item.href
-                        ? "bg-black text-white"
-                        : "text-black hover:bg-black/5"
-                      }
-                    `}
-                  >
-                    {item.label}
-                    {item.shortcut && (
-                      <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-neutral-400">
-                        {item.shortcut}
-                      </span>
-                    )}
-                  </Link>
-                ))}
-              </nav>
-            </div>
+            {/* Logo */}
+            <Link href="/" className="font-display text-xl uppercase tracking-widest text-black hover:text-posit-red transition-colors">
+              El Posit
+            </Link>
+
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-1">
+              {visibleNavItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`
+                    font-display text-sm uppercase tracking-wider px-4 py-2 rounded-lg transition-colors relative
+                    ${pathname === item.href
+                      ? "bg-black text-white"
+                      : "text-black hover:bg-black/5"
+                    }
+                  `}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+
+            {/* Right side - User info + actions */}
             <div className="flex items-center gap-4">
-              <span className="font-sans text-sm text-neutral-600">
+              <span className="hidden sm:block font-sans text-sm text-neutral-600">
                 {user.name} ({user.role})
               </span>
               <button
                 onClick={() => {
-                  const { logout } = useAuth()
                   logout()
                   window.location.href = "/"
                 }}
@@ -113,9 +117,48 @@ export default function AdminLayout({
               >
                 Salir
               </button>
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 rounded-lg hover:bg-black/5 active:scale-95 transition-all"
+                aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+                aria-expanded={mobileMenuOpen}
+              >
+                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
             </div>
           </div>
         </Container>
+
+        {/* Mobile Menu Overlay */}
+        {mobileMenuOpen && (
+          <div
+            className="md:hidden border-t border-neutral-200 bg-white py-4"
+            role="navigation"
+            aria-label="Navegación móvil"
+          >
+            <Container size="xl">
+              <nav className="flex flex-col gap-1">
+                {visibleNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`
+                      font-display text-sm uppercase tracking-wider px-4 py-3 rounded-lg transition-colors
+                      ${pathname === item.href
+                        ? "bg-black text-white"
+                        : "text-black hover:bg-black/5"
+                      }
+                    `}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+            </Container>
+          </div>
+        )}
       </header>
 
       {/* Main Content */}
@@ -145,11 +188,11 @@ export default function AdminLayout({
       {/* Keyboard Shortcuts Help Modal */}
       {showHelp && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
           onClick={() => setShowHelp(false)}
         >
           <div
-            className="bg-white shadow-xl rounded-lg p-6 max-w-md w-full"
+            className="bg-white shadow-xl rounded-lg p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="font-display text-xl uppercase tracking-wider text-black mb-4">

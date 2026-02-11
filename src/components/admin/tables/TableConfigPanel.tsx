@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react"
 import { Table } from "@/drizzle/schema"
 import { TableShapePreview, TableShapeType } from "./TableShape"
-import { Trash2, Save } from "lucide-react"
+import { Trash2, Save, X } from "lucide-react"
 
 interface TableConfigPanelProps {
   table: Table
   onUpdate: (updates: Partial<Table>) => void
   onDelete: () => void
   onClose?: () => void
+  // When used in mobile bottom sheet, don't show close button
+  isMobileBottomSheet?: boolean
 }
 
 export const TableConfigPanel: React.FC<TableConfigPanelProps> = ({
@@ -15,6 +17,7 @@ export const TableConfigPanel: React.FC<TableConfigPanelProps> = ({
   onUpdate,
   onDelete,
   onClose,
+  isMobileBottomSheet = false,
 }) => {
   const [tableNumber, setTableNumber] = useState(table.tableNumber)
   const [capacity, setCapacity] = useState(table.capacity)
@@ -81,15 +84,17 @@ export const TableConfigPanel: React.FC<TableConfigPanelProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-xl p-6 w-80 max-h-[90vh] overflow-y-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Configurar Mesa</h2>
-        {onClose && (
+    <div className="bg-white rounded-lg shadow-xl p-4 sm:p-6 w-full sm:w-80 max-h-[90vh] overflow-y-auto">
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900">Configurar Mesa</h2>
+        {/* Only show close button on desktop (not in mobile bottom sheet) */}
+        {onClose && !isMobileBottomSheet && (
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+            aria-label="Cerrar"
           >
-            ✕
+            <X className="w-5 h-5" />
           </button>
         )}
       </div>

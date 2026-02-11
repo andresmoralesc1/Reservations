@@ -50,8 +50,8 @@ export const DraggableTable: React.FC<DraggableTableProps> = ({
 
   const positionStyle: React.CSSProperties = {
     position: "absolute",
-    left: `${table.positionX}px`,
-    top: `${table.positionY}px`,
+    left: `${table.positionX ?? 50}px`, // Default to 50px if null
+    top: `${table.positionY ?? 50}px`, // Default to 50px if null
     transform: `translate(${x}px, ${y}px) scale(${zoom})`,
     transformOrigin: "center center",
     cursor: isDraggingKit ? "grabbing" : "grab",

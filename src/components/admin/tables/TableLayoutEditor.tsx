@@ -14,7 +14,7 @@ import {
 import { Table } from "@/drizzle/schema"
 import { DraggableTable } from "./DraggableTable"
 import { TableConfigPanel } from "./TableConfigPanel"
-import { Plus, ZoomIn, ZoomOut, Maximize2, Grid3x3 } from "lucide-react"
+import { Plus, ZoomIn, ZoomOut, Maximize2, Grid3x3, CheckCircle2, Loader2, LayoutGrid, Layers } from "lucide-react"
 
 interface TableLayoutEditorProps {
   tables: Table[]
@@ -27,6 +27,9 @@ interface TableLayoutEditorProps {
 
 const CANVAS_WIDTH = 2000
 const CANVAS_HEIGHT = 1500
+
+// Debug helper
+const DEBUG_MODE = false
 
 export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
   tables,
@@ -41,6 +44,15 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
   const [showGrid, setShowGrid] = useState(true)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [showSaved, setShowSaved] = useState(false)
+
+  // Auto-hide saved indicator after 2 seconds
+  useEffect(() => {
+    if (showSaved) {
+      const timer = setTimeout(() => setShowSaved(false), 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [showSaved])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -76,11 +88,16 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
         )
         onTablesChange(updatedTables)
 
-        // Persist to server
+        // Persist to server with autosave indicator
+        setIsSaving(true)
+        setShowSaved(false)
         try {
           await onUpdateTable(tableId, { positionX: newX, positionY: newY })
+          setShowSaved(true)
         } catch (error) {
           console.error("Error updating table position:", error)
+        } finally {
+          setIsSaving(false)
         }
       }
     },
@@ -97,14 +114,19 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
 
   const handleRotate = useCallback(
     async (tableId: string, degrees: number) => {
+      setIsSaving(true)
+      setShowSaved(false)
       try {
         await onUpdateTable(tableId, { rotation: degrees })
         const updatedTables = tables.map((t) =>
           t.id === tableId ? { ...t, rotation: degrees } : t
         )
         onTablesChange(updatedTables)
+        setShowSaved(true)
       } catch (error) {
         console.error("Error rotating table:", error)
+      } finally {
+        setIsSaving(false)
       }
     },
     [tables, onTablesChange, onUpdateTable]
@@ -145,53 +167,140 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
     [selectedTableId, tables, onTablesChange, onDeleteTable]
   )
 
+  // Auto-arrange tables in a grid
+  const handleAutoArrange = useCallback(async () => {
+    const GRID_START_X = 50
+    const GRID_START_Y = 50
+    const GRID_SPACING_X = 150
+    const GRID_SPACING_Y = 150
+    const COLS = 8
+
+    const updatedTables = await Promise.all(
+      tables.map(async (table, index) => {
+        const col = index % COLS
+        const row = Math.floor(index / COLS)
+        const newX = GRID_START_X + (col * GRID_SPACING_X)
+        const newY = GRID_START_Y + (row * GRID_SPACING_Y)
+
+        // Update in database
+        await onUpdateTable(table.id, { positionX: newX, positionY: newY })
+
+        return {
+          ...table,
+          positionX: newX,
+          positionY: newY,
+        }
+      })
+    )
+
+    onTablesChange(updatedTables)
+    setShowSaved(true)
+    setTimeout(() => setShowSaved(false), 2000)
+  }, [tables, onTablesChange, onUpdateTable])
+
   const activeTable = tables.find((t) => t.id === activeId)
+
+  // Debug: log tables info
+  useEffect(() => {
+    if (DEBUG_MODE) {
+      console.log("TableLayoutEditor - tables:", tables)
+      console.log("TableLayoutEditor - tables count:", tables.length)
+    }
+  }, [tables])
+
+  // If no tables, show message
+  if (tables.length === 0) {
+    return (
+      <div className="flex h-full items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <p className="text-lg text-gray-600 mb-4">No hay mesas configuradas</p>
+          <button
+            onClick={onCreateTable}
+            className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            + Crear Primera Mesa
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-full">
       {/* Canvas Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Toolbar */}
-        <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        {/* Toolbar - Mobile Responsive */}
+        <div className="bg-white border-b border-gray-200 px-2 sm:px-4 py-2 sm:py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+          {/* Left side - Actions */}
+          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
             <button
               onClick={onCreateTable}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex-shrink-0"
             >
-              <Plus className="w-4 h-4" />
-              Nueva Mesa
+              <Plus className="w-4 h-4 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Nueva Mesa</span>
+              <span className="sr-only sm:not-sr-only">Crear</span>
             </button>
+            <button
+              onClick={handleAutoArrange}
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors flex-shrink-0 min-h-[44px]"
+              title="Organizar mesas en grilla automáticamente"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span className="hidden sm:inline">Auto-Organizar</span>
+              <span className="sr-only sm:not-sr-only">Organizar</span>
+            </button>
+
+            {/* Autosave indicator - mobile friendly */}
+            {isSaving && (
+              <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-600 ml-2 sm:ml-4 flex-shrink-0">
+                <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                <span className="hidden sm:inline">Guardando...</span>
+              </div>
+            )}
+            {showSaved && !isSaving && (
+              <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-green-600 ml-2 sm:ml-4 flex-shrink-0">
+                <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Guardado</span>
+              </div>
+            )}
+
+            {/* Table count - hide on very small screens */}
+            <div className="hidden sm:flex text-sm text-gray-600 ml-4 border-l border-gray-300 pl-4 flex-shrink-0">
+              {tables.length} mesas
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Right side - Zoom controls - stack vertically on mobile */}
+          <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto justify-end">
             <button
               onClick={() => setZoom((z) => Math.max(0.5, z - 0.1))}
-              className="p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              className="min-h-[44px] sm:min-h-0 p-2 sm:p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               title="Reducir zoom"
             >
               <ZoomOut className="w-4 h-4" />
             </button>
-            <span className="text-sm font-medium text-gray-700 min-w-[60px] text-center">
+            <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[50px] sm:min-w-[60px] text-center">
               {Math.round(zoom * 100)}%
             </span>
             <button
               onClick={() => setZoom((z) => Math.min(2, z + 0.1))}
-              className="p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              className="min-h-[44px] sm:min-h-0 p-2 sm:p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               title="Aumentar zoom"
             >
               <ZoomIn className="w-4 h-4" />
             </button>
-            <div className="w-px h-6 bg-gray-300 mx-2" />
+            <div className="hidden sm:block w-px h-6 bg-gray-300 mx-2" />
             <button
               onClick={() => setZoom(1)}
-              className="p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              className="min-h-[44px] sm:min-h-0 p-2 sm:p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               title="Restablecer zoom"
             >
               <Maximize2 className="w-4 h-4" />
             </button>
             <button
               onClick={() => setShowGrid(!showGrid)}
-              className={`p-2 border rounded-md transition-colors ${
+              className={`min-h-[44px] sm:min-h-0 p-2 sm:p-2 border rounded-md transition-colors ${
                 showGrid
                   ? "border-blue-500 bg-blue-50 text-blue-600"
                   : "border-gray-300 hover:bg-gray-50"
@@ -260,16 +369,49 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
         </DndContext>
       </div>
 
-      {/* Config Panel */}
+      {/* Config Panel - Mobile bottom sheet, Desktop side panel */}
       {selectedTable && (
-        <div className="w-80 border-l border-gray-200 bg-gray-50 p-4 overflow-y-auto">
-          <TableConfigPanel
-            table={selectedTable}
-            onUpdate={handleUpdateTable}
-            onDelete={handleDeleteTable}
-            onClose={() => setSelectedTableId(null)}
+        <>
+          {/* Mobile overlay */}
+          <div
+            className="md:hidden fixed inset-0 bg-black/50 z-50"
+            onClick={() => setSelectedTableId(null)}
           />
-        </div>
+          {/* Mobile bottom sheet */}
+          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 rounded-t-2xl shadow-xl z-50 max-h-[70vh] overflow-y-auto">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-display text-lg uppercase tracking-wider text-black">
+                  Configurar Mesa
+                </h3>
+                <button
+                  onClick={() => setSelectedTableId(null)}
+                  className="p-2 hover:bg-gray-100 rounded-md"
+                  aria-label="Cerrar"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <TableConfigPanel
+                table={selectedTable}
+                onUpdate={handleUpdateTable}
+                onDelete={handleDeleteTable}
+                onClose={() => setSelectedTableId(null)}
+                isMobileBottomSheet={true}
+              />
+            </div>
+          </div>
+          {/* Desktop side panel */}
+          <div className="hidden md:block w-80 border-l border-gray-200 bg-gray-50 p-4 overflow-y-auto">
+            <TableConfigPanel
+              table={selectedTable}
+              onUpdate={handleUpdateTable}
+              onDelete={handleDeleteTable}
+              onClose={() => setSelectedTableId(null)}
+              isMobileBottomSheet={false}
+            />
+          </div>
+        </>
       )}
     </div>
   )
