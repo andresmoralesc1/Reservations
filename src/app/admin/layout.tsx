@@ -110,10 +110,16 @@ export default function AdminLayout({
               </span>
               <button
                 onClick={() => {
-                  logout()
-                  window.location.href = "/"
+                  try {
+                    logout()
+                    router.push("/")
+                  } catch (error) {
+                    console.error("Error logging out:", error)
+                    // Fallback to window.location
+                    window.location.href = "/"
+                  }
                 }}
-                className="font-sans text-sm text-neutral-500 hover:text-black transition-colors"
+                className="font-sans text-sm text-neutral-500 hover:text-black transition-colors cursor-pointer"
               >
                 Salir
               </button>

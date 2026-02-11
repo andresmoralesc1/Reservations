@@ -14,7 +14,7 @@ import {
 import { Table } from "@/drizzle/schema"
 import { DraggableTable } from "./DraggableTable"
 import { TableConfigPanel } from "./TableConfigPanel"
-import { Plus, ZoomIn, ZoomOut, Maximize2, Grid3x3, CheckCircle2, Loader2, LayoutGrid, Layers } from "lucide-react"
+import { Plus, ZoomIn, ZoomOut, Maximize2, Grid3x3, CheckCircle2, Loader2, LayoutGrid, Layers, X } from "lucide-react"
 
 interface TableLayoutEditorProps {
   tables: Table[]
