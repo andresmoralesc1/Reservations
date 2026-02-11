@@ -29,7 +29,7 @@ const CANVAS_WIDTH = 2000
 const CANVAS_HEIGHT = 1500
 
 // Debug helper
-const DEBUG_MODE = false
+const DEBUG_MODE = true
 
 export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
   tables,

@@ -22,6 +22,11 @@ export const DraggableTable: React.FC<DraggableTableProps> = ({
   onRotate,
   zoom = 1,
 }) => {
+  // Debug log
+  React.useEffect(() => {
+    console.log("DraggableTable rendering:", table.tableNumber, { positionX: table.positionX, positionY: table.positionY, shape: table.shape })
+  }, [table])
+
   const [localRotation, setLocalRotation] = useState(table.rotation || 0)
 
   const {
