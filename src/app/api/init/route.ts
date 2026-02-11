@@ -21,6 +21,15 @@ export async function GET() {
       })
     }
 
+    // Check if ANY restaurant exists
+    const anyRestaurant = await db.query.restaurants.findFirst()
+
+    if (anyRestaurant) {
+      // Update existing restaurant to use the demo ID
+      // Note: We need to delete and recreate because we can't update the primary key
+      await db.delete(restaurants).where(eq(restaurants.id, anyRestaurant.id))
+    }
+
     // Create default restaurant with the demo ID
     const [created] = await db
       .insert(restaurants)
@@ -37,11 +46,12 @@ export async function GET() {
     return NextResponse.json({
       restaurant: created,
       created: true,
+      updated: !!anyRestaurant,
     })
   } catch (error) {
     console.error("Error initializing restaurant:", error)
     return NextResponse.json(
-      { error: "Error al inicializar restaurante" },
+      { error: "Error al inicializar restaurante", details: String(error) },
       { status: 500 }
     )
   }
