@@ -122,27 +122,37 @@ export function TableWizardModal({
         ? `/api/admin/tables/${editTable.id}`
         : "/api/admin/tables"
 
+      const payload = {
+        restaurantId,
+        tableNumber: formData.tableNumber,
+        capacity: formData.capacity,
+        location: formData.location,
+        shape: formData.shape,
+        isAccessible: formData.isAccessible,
+      }
+
+      console.log("Creating table with payload:", payload)
+      console.log("URL:", url)
+
       const response = await fetch(url, {
         method: editTable ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          restaurantId,
-          tableNumber: formData.tableNumber,
-          capacity: formData.capacity,
-          location: formData.location,
-          shape: formData.shape,
-          isAccessible: formData.isAccessible,
-        }),
+        body: JSON.stringify(payload),
       })
+
+      console.log("Response status:", response.status)
+
+      const data = await response.json()
+      console.log("Response data:", data)
 
       if (response.ok) {
         toast(editTable ? "Mesa actualizada" : "Mesa creada", "success")
         onSave()
       } else {
-        const data = await response.json()
         toast(data.error || "Error al guardar", "error")
       }
     } catch (error) {
+      console.error("Error creating table:", error)
       toast("Error de conexión", "error")
     } finally {
       setIsSubmitting(false)

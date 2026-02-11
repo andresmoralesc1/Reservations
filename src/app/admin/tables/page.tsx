@@ -56,6 +56,8 @@ export default function TablesPage() {
   const [editTable, setEditTable] = useState<Table | undefined>()
 
   const loadData = useCallback(async () => {
+    console.log("loadData called, restaurantId:", restaurantId)
+
     if (!restaurantId) {
       toast("No se pudo identificar el restaurante", "error")
       setLoading(false)
@@ -66,7 +68,9 @@ export default function TablesPage() {
     try {
       // Load tables
       const tablesResponse = await fetch(`/api/admin/tables?restaurantId=${restaurantId}`)
+      console.log("Tables response status:", tablesResponse.status)
       const tablesData = await tablesResponse.json()
+      console.log("Tables data:", tablesData)
       setTables(tablesData.tables || [])
 
       // Load stats
