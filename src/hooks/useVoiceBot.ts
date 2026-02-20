@@ -31,6 +31,18 @@ export interface VoiceBotActions {
 
 const PIPECAT_SERVER_URL = process.env.NEXT_PUBLIC_PIPECAT_URL || "http://localhost:7860";
 
+// Detectar si estamos en HTTPS y ajustar la URL del servidor si es necesario
+function getSecureServerUrl(): string {
+  // Si la página está cargada sobre HTTPS, usar wss://
+  if (typeof window !== "undefined" && window.location.protocol === "https:") {
+    // Si la URL configurada es http://, convertirla a https:// para que el cliente la convierta a wss://
+    if (PIPECAT_SERVER_URL.startsWith("http://")) {
+      return PIPECAT_SERVER_URL.replace("http://", "https://");
+    }
+  }
+  return PIPECAT_SERVER_URL;
+}
+
 export function useVoiceBot(): VoiceBotState & VoiceBotActions {
   const clientRef = useRef<PipecatClient | null>(null);
 
@@ -91,7 +103,9 @@ export function useVoiceBot(): VoiceBotState & VoiceBotActions {
 
     try {
       setError(null);
-      const client = createPipecatClient(PIPECAT_SERVER_URL, events);
+      const serverUrl = getSecureServerUrl();
+      console.log("[useVoiceBot] Connecting to:", serverUrl);
+      const client = createPipecatClient(serverUrl, events);
       clientRef.current = client;
       await client.connect();
     } catch (err) {
