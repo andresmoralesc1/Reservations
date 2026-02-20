@@ -40,3 +40,7 @@ export * from "./Chip"
 // Utility Components
 export * from "./SearchBar"
 export * from "./LoadingSpinner"
+
+// Voice Components
+export * from "./VoiceWidget"
+export * from "./VoiceAssistant"

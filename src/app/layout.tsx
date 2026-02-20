@@ -4,6 +4,7 @@ import "./globals.css"
 import { ToastProvider } from "@/components/Toast"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { ToastProvider as ToastWithUndoProvider } from "@/components/ToastWithUndo"
+import { VoiceWidget } from "@/components/VoiceWidget"
 
 const oswald = Oswald({
   subsets: ["latin"],
@@ -53,6 +54,7 @@ export default function RootLayout({
         </AuthProvider>
         <ToastProvider />
         <ToastWithUndoProvider />
+        <VoiceWidget />
       </body>
     </html>
   )
