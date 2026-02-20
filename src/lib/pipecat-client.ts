@@ -250,12 +250,19 @@ export class PipecatClient {
 
       this.ws!.onerror = (error) => {
         clearTimeout(timeout);
-        reject(new Error(`WebSocket error: ${error}`));
+        console.error("[PipecatClient] WebSocket error:", error);
+        console.error("[PipecatClient] WebSocket URL:", wsUrl);
+        console.error("[PipecatClient] WebSocket state:", this.ws?.readyState);
+        reject(new Error(`WebSocket error: ${JSON.stringify(error)}`));
       };
 
-      this.ws!.onclose = () => {
+      this.ws!.onclose = (event) => {
+        console.log("[PipecatClient] WebSocket closed:", {
+          code: event.code,
+          reason: event.reason,
+          wasClean: event.wasClean,
+        });
         if (this._isConnected) {
-          console.log("[PipecatClient] WebSocket closed");
           this.disconnect();
         }
       };
