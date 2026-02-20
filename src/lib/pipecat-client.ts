@@ -42,7 +42,7 @@ export interface PipecatClientEvents {
 }
 
 export interface PipecatClientConfig {
-  serverUrl: string; // ej: "http://localhost:7860" o "http://voicebot.neuralflow.space:7860"
+  serverUrl: string; // ej: "http://localhost:7860" o "https://voicebot.neuralflow.space"
   events?: PipecatClientEvents;
   enableAudio?: boolean; // Habilitar entrada/salida de audio
 }
@@ -70,7 +70,10 @@ export class PipecatClient {
   private audioLevelInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(config: PipecatClientConfig) {
-    this.serverUrl = config.serverUrl.replace(/^http/, "ws");
+    // Convertir http:// a ws:// y https:// a wss://
+    this.serverUrl = config.serverUrl.replace(/^https?:/, (match) =>
+      match === "https:" ? "wss:" : "ws:"
+    );
     this.events = config.events;
     this.enableAudio = config.enableAudio ?? true;
   }
