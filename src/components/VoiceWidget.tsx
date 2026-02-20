@@ -2,17 +2,18 @@
  * VoiceWidget Component
  *
  * Widget flotante para el asistente de voz.
- * Se muestra como un botón en la esquina inferior derecha y se expande al hacer click.
+ * Usa el cliente WebRTC prebuilt de Pipecat en un iframe.
  */
 
 "use client";
 
 import { useState, useEffect } from "react";
-import { Mic, X, Minimize2 } from "lucide-react";
-import { VoiceAssistant } from "./VoiceAssistant";
+import { Mic, X, Minimize2, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type WidgetState = "collapsed" | "expanded" | "minimized";
+
+const PIPECAT_CLIENT_URL = process.env.NEXT_PUBLIC_PIPECAT_URL || "https://voicebot.neuralflow.space";
 
 export function VoiceWidget() {
   const [widgetState, setWidgetState] = useState<WidgetState>("collapsed");
@@ -64,29 +65,48 @@ export function VoiceWidget() {
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
-      {/* Widget expandido - Modal completo */}
+      {/* Widget expandido - Modal con iframe */}
       {widgetState === "expanded" && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-lg">
-            {/* Header con botones de minimizar/cerrar */}
-            <div className="flex justify-end space-x-2 mb-2">
-              <button
-                onClick={() => setWidgetState("minimized")}
-                className="p-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
-                title="Minimizar"
-              >
-                <Minimize2 className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setWidgetState("collapsed")}
-                className="p-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
-                title="Cerrar"
-              >
-                <X className="h-4 w-4" />
-              </button>
+          <div className="w-full max-w-lg bg-slate-900 rounded-2xl shadow-2xl overflow-hidden">
+            {/* Header con botones */}
+            <div className="flex items-center justify-between p-4 bg-slate-800 border-b border-slate-700">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-500/20 rounded-lg">
+                  <Mic className="h-5 w-5 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-white">Asistente de Voz</p>
+                  <p className="text-xs text-slate-400">Haz tu reserva por voz</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <a
+                  href="/asistente"
+                  target="_blank"
+                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white"
+                  title="Abrir en página completa"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+                <button
+                  onClick={() => setWidgetState("collapsed")}
+                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white"
+                  title="Cerrar"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
-            <VoiceAssistant embedded={true} />
+            {/* iframe con el cliente de Pipecat */}
+            <iframe
+              src={`${PIPECAT_CLIENT_URL}/client/`}
+              className="w-full h-[400px] bg-slate-900"
+              title="Asistente de Voz"
+              allow="microphone; camera"
+              referrerPolicy="no-referrer"
+            />
           </div>
         </div>
       )}
@@ -129,10 +149,14 @@ export function VoiceWidget() {
             </div>
           </div>
 
-          {/* Vista mini del asistente */}
-          <div className="p-4">
-            <VoiceAssistant embedded={true} className="bg-transparent shadow-none" />
-          </div>
+          {/* iframe mini */}
+          <iframe
+            src={`${PIPECAT_CLIENT_URL}/client/`}
+            className="w-full h-[150px] bg-slate-900"
+            title="Asistente de Voz"
+            allow="microphone; camera"
+            referrerPolicy="no-referrer"
+          />
         </div>
       )}
 
@@ -142,7 +166,7 @@ export function VoiceWidget() {
           onClick={() => setWidgetState("expanded")}
           className={cn(
             "group relative p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full shadow-lg transition-all hover:scale-110 active:scale-95",
-            pulse && "animate-pulse-shadow"
+            pulse && "animate-pulse"
           )}
           title="Abrir asistente de voz"
         >
