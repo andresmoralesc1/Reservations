@@ -74,6 +74,8 @@ export class PipecatClient {
     this.serverUrl = config.serverUrl.replace(/^https?:/, (match) =>
       match === "https:" ? "wss:" : "ws:"
     );
+    console.log("[PipecatClient] URL original:", config.serverUrl);
+    console.log("[PipecatClient] URL convertida:", this.serverUrl);
     this.events = config.events;
     this.enableAudio = config.enableAudio ?? true;
   }
