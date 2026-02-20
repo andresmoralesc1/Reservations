@@ -14,7 +14,10 @@ import {
 import { Table } from "@/drizzle/schema"
 import { DraggableTable } from "./DraggableTable"
 import { TableConfigPanel } from "./TableConfigPanel"
-import { Plus, ZoomIn, ZoomOut, Maximize2, Grid3x3, CheckCircle2, Loader2, LayoutGrid, Layers, X } from "lucide-react"
+import { TableTemplatesBar, TableTemplate } from "./TableTemplatesBar"
+import { KeyboardShortcutsHint } from "./KeyboardShortcutsHint"
+import { SnappingIndicator } from "./SnappingIndicator"
+import { Plus, ZoomIn, ZoomOut, Maximize2, Grid3x3, CheckCircle2, Loader2, LayoutGrid, Copy, X, Info } from "lucide-react"
 
 interface TableLayoutEditorProps {
   tables: Table[]
@@ -27,6 +30,10 @@ interface TableLayoutEditorProps {
 
 const CANVAS_WIDTH = 2000
 const CANVAS_HEIGHT = 1500
+
+// Grid snapping configuration
+const GRID_SIZE = 20 // Snap to 20px grid
+const SNAP_THRESHOLD = 10 // Snap within 10px
 
 // Debug helper
 const DEBUG_MODE = true
@@ -42,9 +49,12 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null)
   const [zoom, setZoom] = useState(1)
   const [showGrid, setShowGrid] = useState(true)
+  const [snapToGrid, setSnapToGrid] = useState(true)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [showSaved, setShowSaved] = useState(false)
+  const [showShortcuts, setShowShortcuts] = useState(false)
+  const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 })
 
   // Auto-hide saved indicator after 2 seconds
   useEffect(() => {
@@ -64,9 +74,30 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
 
   const selectedTable = tables.find((t) => t.id === selectedTableId)
 
+  // Snap position to grid
+  const snapToGridPosition = useCallback((x: number, y: number) => {
+    if (!snapToGrid) return { x, y }
+
+    const snappedX = Math.round(x / GRID_SIZE) * GRID_SIZE
+    const snappedY = Math.round(y / GRID_SIZE) * GRID_SIZE
+
+    // Only snap if within threshold
+    const shouldSnapX = Math.abs(x - snappedX) < SNAP_THRESHOLD
+    const shouldSnapY = Math.abs(y - snappedY) < SNAP_THRESHOLD
+
+    return {
+      x: shouldSnapX ? snappedX : x,
+      y: shouldSnapY ? snappedY : y,
+    }
+  }, [snapToGrid])
+
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string)
-  }, [])
+    const table = tables.find((t) => t.id === event.active.id)
+    if (table) {
+      setDragPosition({ x: table.positionX ?? 0, y: table.positionY ?? 0 })
+    }
+  }, [tables])
 
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
@@ -79,8 +110,13 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
       const table = tables.find((t) => t.id === tableId)
 
       if (table) {
-        const newX = Math.max(0, Math.min(CANVAS_WIDTH - 100, (table.positionX ?? 0) + delta.x))
-        const newY = Math.max(0, Math.min(CANVAS_HEIGHT - 100, (table.positionY ?? 0) + delta.y))
+        const rawX = (table.positionX ?? 0) + delta.x
+        const rawY = (table.positionY ?? 0) + delta.y
+
+        // Apply grid snapping
+        const snapped = snapToGridPosition(rawX, rawY)
+        const newX = Math.max(0, Math.min(CANVAS_WIDTH - 100, snapped.x))
+        const newY = Math.max(0, Math.min(CANVAS_HEIGHT - 100, snapped.y))
 
         // Optimistic update
         const updatedTables = tables.map((t) =>
@@ -101,7 +137,7 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
         }
       }
     },
-    [tables, onTablesChange, onUpdateTable]
+    [tables, onTablesChange, onUpdateTable, snapToGridPosition]
   )
 
   const handleSelectTable = useCallback((tableId: string) => {
@@ -111,6 +147,135 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
   const handleDeselect = useCallback(() => {
     setSelectedTableId(null)
   }, [])
+
+  // Handle adding table from template
+  const handleAddTableFromTemplate = useCallback(
+    async (template: TableTemplate) => {
+      setIsSaving(true)
+      setShowSaved(false)
+
+      try {
+        // Find next available table number
+        const existingNumbers = tables.map((t) =>
+          parseInt(t.tableNumber) || 0
+        )
+        const maxNumber = Math.max(0, ...existingNumbers)
+        const newTableNumber = String(maxNumber + 1)
+
+        // Calculate position (snap to grid, avoid overlapping)
+        const startX = 50
+        const startY = 50
+        const snapped = snapToGridPosition(startX, startY)
+
+        // Create table via API
+        const response = await fetch("/api/admin/tables", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            restaurantId,
+            tableNumber: newTableNumber,
+            capacity: template.capacity,
+            location: "interior",
+            shape: template.shape,
+            positionX: snapped.x,
+            positionY: snapped.y,
+            rotation: 0,
+            width: template.width,
+            height: template.height,
+            diameter: template.diameter,
+            isAccessible: false,
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error("Error creating table")
+        }
+
+        const data = await response.json()
+        const newTable = data.table
+
+        // Optimistic update
+        onTablesChange([...tables, newTable])
+        setShowSaved(true)
+
+        // Auto-select the new table
+        setSelectedTableId(newTable.id)
+      } catch (error) {
+        console.error("Error adding table from template:", error)
+      } finally {
+        setIsSaving(false)
+      }
+    },
+    [tables, restaurantId, snapToGridPosition, onTablesChange]
+  )
+
+  // Handle duplicating selected table
+  const handleDuplicateTable = useCallback(
+    async () => {
+      if (!selectedTableId) return
+
+      const table = tables.find((t) => t.id === selectedTableId)
+      if (!table) return
+
+      setIsSaving(true)
+      setShowSaved(false)
+
+      try {
+        // Find next available table number
+        const existingNumbers = tables.map((t) =>
+          parseInt(t.tableNumber) || 0
+        )
+        const maxNumber = Math.max(0, ...existingNumbers)
+        const newTableNumber = String(maxNumber + 1)
+
+        // Offset position slightly
+        const offsetX = (table.positionX ?? 0) + 50
+        const offsetY = (table.positionY ?? 0) + 50
+        const snapped = snapToGridPosition(offsetX, offsetY)
+
+        // Create duplicate via API
+        const response = await fetch("/api/admin/tables", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            restaurantId,
+            tableNumber: newTableNumber,
+            capacity: table.capacity,
+            location: table.location,
+            shape: table.shape,
+            positionX: snapped.x,
+            positionY: snapped.y,
+            rotation: table.rotation,
+            width: table.width,
+            height: table.height,
+            diameter: table.diameter,
+            stoolCount: table.stoolCount,
+            stoolPositions: table.stoolPositions,
+            isAccessible: table.isAccessible,
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error("Error duplicating table")
+        }
+
+        const data = await response.json()
+        const newTable = data.table
+
+        // Optimistic update
+        onTablesChange([...tables, newTable])
+        setShowSaved(true)
+
+        // Auto-select the new table
+        setSelectedTableId(newTable.id)
+      } catch (error) {
+        console.error("Error duplicating table:", error)
+      } finally {
+        setIsSaving(false)
+      }
+    },
+    [selectedTableId, tables, restaurantId, snapToGridPosition, onTablesChange]
+  )
 
   const handleRotate = useCallback(
     async (tableId: string, degrees: number) => {
@@ -208,6 +373,29 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
     }
   }, [tables])
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+D to duplicate
+      if (e.ctrlKey && e.key === "d" && selectedTableId) {
+        e.preventDefault()
+        handleDuplicateTable()
+      }
+      // Delete to remove selected table
+      if (e.key === "Delete" && selectedTableId) {
+        e.preventDefault()
+        handleDeleteTable()
+      }
+      // Escape to deselect
+      if (e.key === "Escape" && selectedTableId) {
+        setSelectedTableId(null)
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [selectedTableId, handleDuplicateTable, handleDeleteTable])
+
   // If no tables, show message
   if (tables.length === 0) {
     return (
@@ -226,7 +414,14 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full relative">
+      {/* Snapping Indicator */}
+      <SnappingIndicator
+        isActive={!!activeId}
+        snapToGrid={snapToGrid}
+        position={dragPosition}
+      />
+
       {/* Canvas Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Toolbar - Mobile Responsive */}
@@ -236,11 +431,22 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
             <button
               onClick={onCreateTable}
               className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex-shrink-0"
+              title="Crear mesa personalizada"
             >
               <Plus className="w-4 h-4 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Nueva Mesa</span>
+              <span className="hidden sm:inline">Personalizada</span>
               <span className="sr-only sm:not-sr-only">Crear</span>
             </button>
+            {selectedTable && (
+              <button
+                onClick={handleDuplicateTable}
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex-shrink-0"
+                title="Duplicar mesa seleccionada (Ctrl+D)"
+              >
+                <Copy className="w-4 h-4" />
+                <span className="hidden sm:inline">Duplicar</span>
+              </button>
+            )}
             <button
               onClick={handleAutoArrange}
               className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors flex-shrink-0 min-h-[44px]"
@@ -269,6 +475,19 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
             <div className="hidden sm:flex text-sm text-gray-600 ml-4 border-l border-gray-300 pl-4 flex-shrink-0">
               {tables.length} mesas
             </div>
+
+            {/* Shortcuts help button */}
+            <button
+              onClick={() => setShowShortcuts(!showShortcuts)}
+              className={`ml-2 min-h-[44px] sm:min-h-0 p-2 sm:p-2 border rounded-md transition-colors ${
+                showShortcuts
+                  ? "border-indigo-500 bg-indigo-50 text-indigo-600"
+                  : "border-gray-300 hover:bg-gray-50"
+              }`}
+              title="Ver atajos de teclado"
+            >
+              <Info className="w-4 h-4" />
+            </button>
           </div>
 
           {/* Right side - Zoom controls - stack vertically on mobile */}
@@ -309,8 +528,28 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
             >
               <Grid3x3 className="w-4 h-4" />
             </button>
+            <button
+              onClick={() => setSnapToGrid(!snapToGrid)}
+              className={`hidden sm:block min-h-[44px] sm:min-h-0 p-2 sm:p-2 border rounded-md transition-colors ${
+                snapToGrid
+                  ? "border-purple-500 bg-purple-50 text-purple-600"
+                  : "border-gray-300 hover:bg-gray-50"
+              }`}
+              title="Alinear a grid (Snapping)"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
           </div>
         </div>
+
+        {/* Table Templates Bar - Predefined tables */}
+        <TableTemplatesBar
+          onAddTable={handleAddTableFromTemplate}
+          disabled={isSaving}
+        />
+
+        {/* Keyboard Shortcuts Hint */}
+        {showShortcuts && <KeyboardShortcutsHint />}
 
         {/* Canvas */}
         <DndContext
