@@ -223,7 +223,8 @@ export class PipecatClient {
    * Conecta el WebSocket de señalización
    */
   private async connectWebSocket(): Promise<void> {
-    const wsUrl = `${this.serverUrl}/`;
+    // No agregar trailing slash - el servidor redirige / a /client/
+    const wsUrl = this.serverUrl;
     this.ws = new WebSocket(wsUrl);
 
     return new Promise((resolve, reject) => {
