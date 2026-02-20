@@ -1,18 +1,19 @@
 /**
  * Asistente de Voz - Página dedicada
  *
- * Página principal del asistente de voz para hacer reservas.
+ * Usa el cliente WebRTC prebuilt de Pipecat en un iframe.
  */
 
 import { Metadata } from "next";
-import { VoiceAssistant } from "@/components/VoiceAssistant";
-import { Mic, Phone, Calendar, Clock, Users } from "lucide-react";
+import { Mic, Calendar, Clock, Users } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Asistente de Voz | El Posit",
   description:
     "Haz tu reserva por voz con nuestro asistente inteligente. Disponible 24/7.",
 };
+
+const PIPECAT_CLIENT_URL = process.env.NEXT_PUBLIC_PIPECAT_URL || "https://voicebot.neuralflow.space";
 
 export default function AsistentePage() {
   return (
@@ -59,8 +60,21 @@ export default function AsistentePage() {
             </p>
           </div>
 
-          {/* Voice Assistant */}
-          <VoiceAssistant />
+          {/* Voice Assistant iframe */}
+          <div className="bg-slate-800/30 rounded-2xl border border-slate-700/50 overflow-hidden">
+            <div className="bg-slate-800/50 px-4 py-3 border-b border-slate-700/50">
+              <p className="text-sm text-slate-400">
+                🔇 Haz clic en el iframe y presiona el botón del micrófono para comenzar
+              </p>
+            </div>
+            <iframe
+              src={`${PIPECAT_CLIENT_URL}/client/`}
+              className="w-full h-[500px] bg-slate-900"
+              title="Asistente de Voz"
+              allow="microphone; camera"
+              referrerPolicy="no-referrer"
+            />
+          </div>
 
           {/* Features */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
@@ -71,13 +85,13 @@ export default function AsistentePage() {
                 reserva al instante."
             />
             <FeatureCard
-              icon={<Phone className="h-6 w-6" />}
+              icon={<Clock className="h-6 w-6" />}
               title="Consultar y Modificar"
               description="Consulta tus reservas con el código y modifícalas si
                 tus planes cambian."
             />
             <FeatureCard
-              icon={<Clock className="h-6 w-6" />}
+              icon={<Users className="h-6 w-6" />}
               title="Disponible 24/7"
               description="Nuestro asistente nunca duerme. Haz tu reserva cuando
                 quieras."
@@ -96,8 +110,7 @@ export default function AsistentePage() {
               </li>
               <li className="flex items-start">
                 <span className="text-blue-400 mr-2">•</span>
-                Usa fechas claras: "mañana", "el 15 de febrero", "próximo
-                martes"
+                Usa fechas claras: "mañana", "el 15 de febrero", "próximo martes"
               </li>
               <li className="flex items-start">
                 <span className="text-blue-400 mr-2">•</span>
