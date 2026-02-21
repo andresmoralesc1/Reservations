@@ -1,5 +1,4 @@
 import React from "react"
-import { useDndContext } from "@dnd-kit/core"
 import { Table } from "@/drizzle/schema"
 import { TableShape } from "./TableShape"
 import { BarStools } from "./BarStool"
@@ -10,35 +9,28 @@ interface DragOverlayTableProps {
 }
 
 export const DragOverlayTable: React.FC<DragOverlayTableProps> = ({ table, zoom }) => {
-  const { active } = useDndContext()
-
   const width = table.width ?? (table.shape === "circular" ? 80 : table.shape === "cuadrada" ? 80 : 120)
   const height = table.height ?? (table.shape === "circular" ? 80 : table.shape === "cuadrada" ? 80 : 80)
   const diameter = table.diameter ?? 80
 
-  // Calculate the transform from the active draggable node
-  const transform = active?.node.current?.transform
-    ? {
-        x: active.node.current.transform.matrix[12],
-        y: active.node.current.transform.matrix[13],
-      }
-    : null
+  // Calculate center offset to center the element under cursor
+  const offsetX = width / 2
+  const offsetY = height / 2
 
   return (
     <div
-      className="opacity-50 pointer-events-none"
       style={{
-        position: "fixed",
-        left: transform ? `${transform.x}px` : `${table.positionX ?? 50}px`,
-        top: transform ? `${transform.y}px` : `${table.positionY ?? 50}px`,
+        // Center the table on the cursor position
+        marginLeft: `-${offsetX}px`,
+        marginTop: `-${offsetY}px`,
+        // Apply zoom for visual consistency
         transform: `scale(${zoom})`,
         transformOrigin: "center center",
-        zIndex: 1000,
         pointerEvents: "none",
       }}
     >
       <div
-        className="relative group"
+        className="opacity-50 relative"
         style={{
           cursor: "grabbing",
         }}
