@@ -1,0 +1,7 @@
+{
+  "name": "reservations-system",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "installCommand": "npm install"
+}
