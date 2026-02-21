@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     const resultList = await db.query.tables.findMany({
       where: conditions.length > 0 ? and(...conditions) : undefined,
-      orderBy: [sql`CAST(${tables.tableNumber} AS INTEGER)`],
+      orderBy: [tables.tableNumber],
     })
 
     return NextResponse.json({
