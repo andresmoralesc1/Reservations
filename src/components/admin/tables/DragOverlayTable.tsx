@@ -23,9 +23,8 @@ export const DragOverlayTable: React.FC<DragOverlayTableProps> = ({ table, zoom 
         // Center the table on the cursor position
         marginLeft: `-${offsetX}px`,
         marginTop: `-${offsetY}px`,
-        // Apply zoom for visual consistency
-        transform: `scale(${zoom})`,
-        transformOrigin: "center center",
+        // IMPORTANT: Don't apply zoom in DragOverlay
+        // The cursor position is calculated without zoom, so we must match that
         pointerEvents: "none",
       }}
     >
