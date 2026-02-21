@@ -22,6 +22,7 @@ import { useGridSnapping } from "./editor/hooks/useGridSnapping"
 import { useTableOperations } from "./editor/hooks/useTableOperations"
 import { useTableDrag } from "./editor/hooks/useTableDrag"
 import { CANVAS_CONFIG } from "./editor/config/canvas.config"
+import { DragOverlayTable } from "./DragOverlayTable"
 
 interface TableLayoutEditorProps {
   tables: Table[]
@@ -405,17 +406,10 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
 
           <DragOverlay>
             {activeTable ? (
-              <div className="opacity-50">
-                <DraggableTable
-                  table={activeTable}
-                  isSelected={false}
-                  onSelect={() => {}}
-                  onPositionChange={() => {}}
-                  onRotate={() => {}}
-                  zoom={zoom}
-                  isDragging={true}
-                />
-              </div>
+              <DragOverlayTable
+                table={activeTable}
+                zoom={zoom}
+              />
             ) : null}
           </DragOverlay>
         </DndContext>
