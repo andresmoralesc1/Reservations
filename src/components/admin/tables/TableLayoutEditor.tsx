@@ -382,17 +382,24 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
                 backgroundSize: "20px 20px",
               }}
             >
-              {tables.map((table) => (
-                <DraggableTable
-                  key={table.id}
-                  table={table}
-                  isSelected={selectedTableId === table.id}
-                  onSelect={() => handleSelectTable(table.id)}
-                  onPositionChange={() => {}}
-                  onRotate={(degrees) => handleRotate(table.id, degrees)}
-                  zoom={zoom}
-                />
-              ))}
+              {tables.map((table) => {
+                // Don't render the table if it's being dragged (it's shown in DragOverlay)
+                if (dragState.activeId === table.id) {
+                  return null
+                }
+
+                return (
+                  <DraggableTable
+                    key={table.id}
+                    table={table}
+                    isSelected={selectedTableId === table.id}
+                    onSelect={() => handleSelectTable(table.id)}
+                    onPositionChange={() => {}}
+                    onRotate={(degrees) => handleRotate(table.id, degrees)}
+                    zoom={zoom}
+                  />
+                )
+              })}
             </div>
           </div>
 
