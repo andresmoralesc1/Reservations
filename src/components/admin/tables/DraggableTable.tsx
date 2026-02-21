@@ -12,6 +12,7 @@ interface DraggableTableProps {
   onPositionChange: (x: number, y: number) => void
   onRotate?: (degrees: number) => void
   zoom?: number
+  isDragging?: boolean  // New prop to indicate if in DragOverlay
 }
 
 export const DraggableTable: React.FC<DraggableTableProps> = ({
@@ -21,6 +22,7 @@ export const DraggableTable: React.FC<DraggableTableProps> = ({
   onPositionChange,
   onRotate,
   zoom = 1,
+  isDragging = false,
 }) => {
   // Debug log
   React.useEffect(() => {
@@ -53,11 +55,14 @@ export const DraggableTable: React.FC<DraggableTableProps> = ({
   const x = transform?.x ?? 0
   const y = transform?.y ?? 0
 
+  // When in DragOverlay (isDragging=true), don't apply scale so it follows cursor correctly
   const positionStyle: React.CSSProperties = {
     position: "absolute",
     left: `${table.positionX ?? 50}px`, // Default to 50px if null
     top: `${table.positionY ?? 50}px`, // Default to 50px if null
-    transform: `translate(${x}px, ${y}px) scale(${zoom})`,
+    transform: isDragging
+      ? `translate(${x}px, ${y}px)`
+      : `translate(${x}px, ${y}px) scale(${zoom})`,
     transformOrigin: "center center",
     cursor: isDraggingKit ? "grabbing" : "grab",
     zIndex: isSelected ? 100 : 1,

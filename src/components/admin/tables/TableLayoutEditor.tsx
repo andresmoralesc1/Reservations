@@ -411,7 +411,9 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
                   isSelected={false}
                   onSelect={() => {}}
                   onPositionChange={() => {}}
+                  onRotate={() => {}}
                   zoom={zoom}
+                  isDragging={true}
                 />
               </div>
             ) : null}
