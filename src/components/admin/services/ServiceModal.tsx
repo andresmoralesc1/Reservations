@@ -220,11 +220,21 @@ export function ServiceModal({
         body: JSON.stringify(payload),
       })
 
+      console.log("Response status:", response.status)
+
       const data = await response.json()
+      console.log("Response data:", data)
+
+      if (!response.ok) {
+        console.error("HTTP error:", response.status, data)
+        throw new Error(data.error || `Error HTTP ${response.status}`)
+      }
 
       if (data.success) {
+        console.log("Service saved successfully, calling onSave...")
         onSave()
       } else {
+        console.error("Error saving service:", data)
         setErrors([data.error || "Error al guardar el servicio"])
         if (data.details) {
           setErrors(data.details)
