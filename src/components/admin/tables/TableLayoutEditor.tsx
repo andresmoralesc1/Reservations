@@ -18,6 +18,7 @@ import { TableConfigPanel } from "./TableConfigPanel"
 import { TableTemplatesBar, TableTemplate } from "./TableTemplatesBar"
 import { KeyboardShortcutsHint } from "./KeyboardShortcutsHint"
 import { SnappingIndicator } from "./SnappingIndicator"
+import { SectionTabs, SectionType } from "./SectionTabs"
 import { Plus, ZoomIn, ZoomOut, Maximize2, Grid3x3, CheckCircle2, Loader2, LayoutGrid, Copy, X, Info } from "lucide-react"
 import { useGridSnapping } from "./editor/hooks/useGridSnapping"
 import { useTableOperations } from "./editor/hooks/useTableOperations"
@@ -50,6 +51,7 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
   const [showGrid, setShowGrid] = useState(true)
   const [snapToGrid, setSnapToGrid] = useState(true)
   const [showShortcuts, setShowShortcuts] = useState(false)
+  const [selectedSection, setSelectedSection] = useState<SectionType>('all')
 
   // Grid snapping hook
   const { snapAndConstrainToCanvas, calculatePosition } = useGridSnapping({
@@ -92,6 +94,26 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
   )
 
   const selectedTable = tables.find((t) => t.id === selectedTableId)
+
+  // Calculate section counts
+  const sectionCounts = {
+    all: tables.length,
+    interior: tables.filter(t => t.location === 'interior').length,
+    patio: tables.filter(t => t.location === 'patio').length,
+    terraza: tables.filter(t => t.location === 'terraza').length,
+  }
+
+  const sections = [
+    { value: 'all' as SectionType, label: 'Todas', count: sectionCounts.all },
+    { value: 'interior' as SectionType, label: 'Interior', count: sectionCounts.interior },
+    { value: 'patio' as SectionType, label: 'Patio', count: sectionCounts.patio },
+    { value: 'terraza' as SectionType, label: 'Terraza', count: sectionCounts.terraza },
+  ]
+
+  // Filter tables by selected section
+  const filteredTables = selectedSection === 'all'
+    ? tables
+    : tables.filter(t => t.location === selectedSection)
 
   const handleSelectTable = useCallback((tableId: string) => {
     setSelectedTableId(tableId)
@@ -165,11 +187,13 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
 
   // Auto-arrange tables in a grid
   const handleAutoArrange = useCallback(async () => {
-    const updatedTables = await autoArrangeTables(tables, onUpdateTable)
+    // Only arrange tables in the current section (or all if 'all' is selected)
+    const tablesToArrange = selectedSection === 'all' ? tables : filteredTables
+    const updatedTables = await autoArrangeTables(tablesToArrange, onUpdateTable)
     onTablesChange(updatedTables)
-  }, [tables, onUpdateTable, autoArrangeTables])
+  }, [tables, filteredTables, selectedSection, onUpdateTable, autoArrangeTables])
 
-  const activeTable = tables.find((t) => t.id === dragState.activeId)
+  const activeTable = filteredTables.find((t) => t.id === dragState.activeId)
 
   // Debug: log tables info
   useEffect(() => {
@@ -262,6 +286,13 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
               <span className="hidden sm:inline">Auto-Organizar</span>
               <span className="sr-only sm:not-sr-only">Organizar</span>
             </button>
+
+            {/* Section Tabs */}
+            <SectionTabs
+              sections={sections}
+              selectedSection={selectedSection}
+              onSectionChange={setSelectedSection}
+            />
 
             {/* Autosave indicator - mobile friendly */}
             {opsState.isSaving && (
@@ -384,7 +415,7 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
                 backgroundSize: "20px 20px",
               }}
             >
-              {tables.map((table) => {
+              {filteredTables.map((table) => {
                 // Don't render the table if it's being dragged (it's shown in DragOverlay)
                 if (dragState.activeId === table.id) {
                   return null
