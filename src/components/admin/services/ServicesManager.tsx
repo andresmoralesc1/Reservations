@@ -148,8 +148,15 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
 
   const handleModalSave = async () => {
     console.log("Service saved, refreshing...")
-    await fetchServices()
-    handleModalClose()
+    try {
+      await fetchServices()
+      console.log("Services refreshed successfully")
+      setModalOpen(false)
+      setEditingService(null)
+    } catch (error) {
+      console.error("Error refreshing services:", error)
+      alert("Error al actualizar la lista de servicios")
+    }
   }
 
   const formatTime = (time: string) => {
@@ -184,14 +191,19 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
             <h2 className="font-display text-xl uppercase tracking-wider text-black">
               Servicios
             </h2>
-            <Button variant="primary" size="md" onClick={handleCreate}>
-              + Crear Servicio
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="md" onClick={fetchServices}>
+                ↻ Refrescar
+              </Button>
+              <Button variant="primary" size="md" onClick={handleCreate}>
+                + Crear Servicio
+              </Button>
+            </div>
           </div>
 
           {/* Debug info */}
           <div className="mt-2 text-xs text-neutral-400">
-            Restaurant ID: {restaurantId || "No disponible"} | Services: {services.length}
+            Restaurant ID: {restaurantId || "No disponible"} | Services: {services.length} | Loading: {loading.toString()}
           </div>
 
           {/* Filters */}

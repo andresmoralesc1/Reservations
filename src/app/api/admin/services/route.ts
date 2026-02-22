@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
         },
         orderBy: [desc(services.createdAt)],
       })
+      console.log("Services found:", allServices.length)
     } catch (dbError: any) {
       // Table might not exist yet
       console.error("Database error (table might not exist):", dbError.message)
@@ -208,6 +209,8 @@ export async function POST(request: NextRequest) {
         availableTableIds,
       })
       .returning()
+
+    console.log("Service created:", newService[0])
 
     return NextResponse.json({
       success: true,
