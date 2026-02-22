@@ -10,6 +10,7 @@ import {
   useSensor,
   useSensors,
   DragStartEvent,
+  Modifiers,
 } from "@dnd-kit/core"
 import { Table } from "@/drizzle/schema"
 import { DraggableTable } from "./DraggableTable"

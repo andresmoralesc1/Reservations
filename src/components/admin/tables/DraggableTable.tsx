@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react"
+import React, { useState } from "react"
 import { useDraggable } from "@dnd-kit/core"
 import { Table } from "@/drizzle/schema"
 import { TableShape } from "./TableShape"
@@ -12,7 +12,7 @@ interface DraggableTableProps {
   onPositionChange: (x: number, y: number) => void
   onRotate?: (degrees: number) => void
   zoom?: number
-  isDragging?: boolean  // New prop to indicate if in DragOverlay
+  isDragging?: boolean
 }
 
 export const DraggableTable: React.FC<DraggableTableProps> = ({
@@ -31,9 +31,6 @@ export const DraggableTable: React.FC<DraggableTableProps> = ({
 
   const [localRotation, setLocalRotation] = useState(table.rotation || 0)
 
-  // Reference to the actual table shape element for centering
-  const tableRef = useRef<HTMLDivElement>(null)
-
   const {
     attributes,
     listeners,
@@ -46,18 +43,6 @@ export const DraggableTable: React.FC<DraggableTableProps> = ({
       table,
       onPositionChange,
     },
-    // Use the table shape element as the drag anchor for centering
-    getPointerPosition: (event) => {
-      // Get the center of the element being dragged
-      const rect = tableRef.current?.getBoundingClientRect()
-      if (rect) {
-        return {
-          x: event.clientX - (rect.left + rect.width / 2),
-          y: event.clientY - (rect.top + rect.height / 2)
-        }
-      }
-      return { x: 0, y: 0 }
-    }
   })
 
   const handleRotate = (e: React.MouseEvent) => {
@@ -118,15 +103,14 @@ export const DraggableTable: React.FC<DraggableTableProps> = ({
         )}
 
         {/* Table shape */}
-        <div ref={tableRef}>
-          <TableShape
-            shape={table.shape as any}
-            width={width}
-            height={height}
-            diameter={diameter}
-            rotation={localRotation}
-            isSelected={isSelected}
-          >
+        <TableShape
+          shape={table.shape as any}
+          width={width}
+          height={height}
+          diameter={diameter}
+          rotation={localRotation}
+          isSelected={isSelected}
+        >
           {/* Table number */}
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
@@ -139,13 +123,12 @@ export const DraggableTable: React.FC<DraggableTableProps> = ({
           {table.shape === "barra" && table.stoolCount && table.stoolCount > 0 && (
             <BarStools count={table.stoolCount} barWidth={width} />
           )}
-          </TableShape>
+        </TableShape>
 
-          {/* Selection outline */}
-          {isSelected && (
-            <div className="absolute inset-0 -m-2 border-2 border-dashed border-blue-500 rounded-lg pointer-events-none" />
-          )}
-        </div>
+        {/* Selection outline */}
+        {isSelected && (
+          <div className="absolute inset-0 -m-2 border-2 border-dashed border-blue-500 rounded-lg pointer-events-none" />
+        )}
     </div>
   )
 }
