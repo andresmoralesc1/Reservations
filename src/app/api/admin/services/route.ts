@@ -169,24 +169,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check for overlapping services
-    const existingServices = await db.query.services.findMany({
-      where: and(
-        eq(services.restaurantId, restaurantId),
-        eq(services.dayType, dayType),
-        eq(services.startTime, startTime)
-      ),
-    })
+    // Check for overlapping services (TEMPORALMENTE DESACTIVADO PARA DEBUGGING)
+    // const existingServices = await db.query.services.findMany({
+    //   where: and(
+    //     eq(services.restaurantId, restaurantId),
+    //     eq(services.dayType, dayType),
+    //     eq(services.startTime, startTime)
+    //   ),
+    // })
 
-    if (existingServices.length > 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Ya existe un servicio configurado para este restaurante, día y hora",
-        },
-        { status: 409 }
-      )
-    }
+    // if (existingServices.length > 0) {
+    //   return NextResponse.json(
+    //     {
+    //       success: false,
+    //       error: "Ya existe un servicio configurado para este restaurante, día y hora",
+    //     },
+    //     { status: 409 }
+    //   )
+    // }
+
+    console.log("Creating service with params:", { restaurantId, dayType, startTime, serviceType })
 
     // Create the service
     const newService = await db
