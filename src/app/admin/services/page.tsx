@@ -1,9 +1,11 @@
 "use client"
 
 import { useAuth } from "@/contexts/AuthContext"
+import { ServicesManager } from "@/components/admin/services/ServicesManager"
 
 export default function ServicesPage() {
   const { user } = useAuth()
+  const restaurantId = user?.restaurantId
 
   return (
     <div className="space-y-6">
@@ -17,15 +19,8 @@ export default function ServicesPage() {
         </p>
       </div>
 
-      {/* Services Manager - Comentar temporalmente */}
-      <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-8">
-        <p className="text-neutral-600">
-          Sistema de Services cargando... Restaurant ID: {user?.restaurantId || "No encontrado"}
-        </p>
-        <p className="text-sm text-neutral-400 mt-2">
-          Si ves esto, la página funciona. Próximamente: lista de services.
-        </p>
-      </div>
+      {/* Services Manager */}
+      <ServicesManager restaurantId={restaurantId} />
     </div>
   )
 }
