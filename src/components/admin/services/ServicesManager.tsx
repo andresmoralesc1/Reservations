@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/Button"
 import { Modal } from "@/components/Modal"
 import { ServiceModal } from "./ServiceModal"
+import { Service as SchemaService } from "@/drizzle/schema"
 
 interface Service {
   id: string
@@ -18,6 +19,9 @@ interface Service {
   defaultDurationMinutes: number
   bufferMinutes: number
   slotGenerationMode: string
+  dateRange: { start: string; end: string } | null
+  manualSlots: string[] | null
+  availableTableIds: string[] | null
   createdAt: string
   updatedAt: string
   restaurant?: {

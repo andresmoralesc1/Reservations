@@ -4,19 +4,13 @@ import { services } from "@/drizzle/schema"
 import { eq, and } from "drizzle-orm"
 import { servicesAvailability } from "@/lib/availability/services-availability"
 
-interface RouteContext {
-  params: {
-    id: string
-  }
-}
-
 /**
  * GET /api/admin/services/[id]
  * Get a single service by ID
  */
-export async function GET(request: NextRequest, context: RouteContext) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = context.params
+    const { id } = await context.params
 
     const service = await db.query.services.findFirst({
       where: eq(services.id, id),
@@ -61,9 +55,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
  * PUT /api/admin/services/[id]
  * Update a service
  */
-export async function PUT(request: NextRequest, context: RouteContext) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = context.params
+    const { id } = await context.params
     const body = await request.json()
 
     // Check if service exists
@@ -188,9 +182,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
  * DELETE /api/admin/services/[id]
  * Delete a service (soft delete by setting isActive = false)
  */
-export async function DELETE(request: NextRequest, context: RouteContext) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = context.params
+    const { id } = await context.params
 
     // Check if service exists
     const existingService = await db.query.services.findFirst({

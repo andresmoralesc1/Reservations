@@ -21,7 +21,7 @@ export interface Service {
   restaurantId: string
   name: string
   description: string | null
-  isActive: boolean
+  isActive: boolean | null
   serviceType: ServiceType
   season: Season
   dayType: DayType
@@ -33,8 +33,8 @@ export interface Service {
   dateRange: { start: string; end: string } | null
   manualSlots: string[] | null
   availableTableIds: string[] | null
-  createdAt: Date
-  updatedAt: Date
+  createdAt: Date | null
+  updatedAt: Date | null
 }
 
 export interface Table {
@@ -43,7 +43,7 @@ export interface Table {
   tableNumber: string
   capacity: number
   location: string | null
-  isAccessible: boolean
+  isAccessible: boolean | null
 }
 
 export class ServicesAvailability {
@@ -132,12 +132,12 @@ export class ServicesAvailability {
 
     // Filter services that match the date and time
     const matchingServices = allServices.filter((service) => {
-      const dateMatches = this.isDateMatchingService(date, service)
-      const timeMatches = this.isTimeWithinService(time, service)
+      const dateMatches = this.isDateMatchingService(date, service as Service)
+      const timeMatches = this.isTimeWithinService(time, service as Service)
       return dateMatches && timeMatches
     })
 
-    return matchingServices
+    return matchingServices as Service[]
   }
 
   /**
