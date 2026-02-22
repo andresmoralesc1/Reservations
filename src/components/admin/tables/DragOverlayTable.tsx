@@ -13,18 +13,11 @@ export const DragOverlayTable: React.FC<DragOverlayTableProps> = ({ table, zoom 
   const height = table.height ?? (table.shape === "circular" ? 80 : table.shape === "cuadrada" ? 80 : 80)
   const diameter = table.diameter ?? 80
 
-  // Calculate center offset to center the element under cursor
-  const offsetX = width / 2
-  const offsetY = height / 2
-
   return (
     <div
       style={{
-        // Center the table on the cursor position
-        marginLeft: `-${offsetX}px`,
-        marginTop: `-${offsetY}px`,
-        // IMPORTANT: Don't apply zoom in DragOverlay
-        // The cursor position is calculated without zoom, so we must match that
+        // DndKit handles positioning based on the drag anchor point
+        // No manual offset needed
         pointerEvents: "none",
       }}
     >
