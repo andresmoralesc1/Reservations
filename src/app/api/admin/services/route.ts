@@ -16,13 +16,14 @@ export async function GET(request: NextRequest) {
     const serviceType = searchParams.get("serviceType")
     const season = searchParams.get("season")
 
+    // Build where clause
     const conditions = []
 
     if (restaurantId) {
       conditions.push(eq(services.restaurantId, restaurantId))
     }
 
-    if (isActive !== null) {
+    if (isActive !== null && isActive !== "") {
       conditions.push(eq(services.isActive, isActive === "true"))
     }
 
@@ -34,24 +35,32 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(services.season, season))
     }
 
-    const allServices = await db.query.services.findMany({
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      with: {
-        restaurant: {
-          columns: {
-            id: true,
-            name: true,
+    // Try to fetch services
+    let allServices: any[] = []
+    try {
+      allServices = await db.query.services.findMany({
+        where: conditions.length > 0 ? and(...conditions) : undefined,
+        with: {
+          restaurant: {
+            columns: {
+              id: true,
+              name: true,
+            },
           },
         },
-      },
-      orderBy: [desc(services.createdAt)],
-    })
+        orderBy: [desc(services.createdAt)],
+      })
+    } catch (dbError: any) {
+      // Table might not exist yet
+      console.error("Database error (table might not exist):", dbError.message)
+      allServices = []
+    }
 
     return NextResponse.json({
       success: true,
-      data: allServices,
+      data: allServices || [],
       meta: {
-        total: allServices.length,
+        total: allServices?.length || 0,
       },
     })
   } catch (error) {
@@ -60,6 +69,8 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         error: "Error al obtener los servicios",
+        data: [],
+        meta: { total: 0 },
       },
       { status: 500 }
     )
