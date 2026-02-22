@@ -19,7 +19,7 @@ import { TableTemplatesBar, TableTemplate } from "./TableTemplatesBar"
 import { KeyboardShortcutsHint } from "./KeyboardShortcutsHint"
 import { SnappingIndicator } from "./SnappingIndicator"
 import { SectionTabs, SectionType } from "./SectionTabs"
-import { Plus, ZoomIn, ZoomOut, Maximize2, Grid3x3, CheckCircle2, Loader2, LayoutGrid, Copy, X, Info } from "lucide-react"
+import { Plus, ZoomIn, ZoomOut, Maximize2, Grid3x3, CheckCircle2, Loader2, LayoutGrid, Copy, X, Info, AlertTriangle } from "lucide-react"
 import { useGridSnapping } from "./editor/hooks/useGridSnapping"
 import { useTableOperations } from "./editor/hooks/useTableOperations"
 import { useTableDrag } from "./editor/hooks/useTableDrag"
@@ -52,6 +52,7 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
   const [snapToGrid, setSnapToGrid] = useState(true)
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [selectedSection, setSelectedSection] = useState<SectionType>('all')
+  const [showAutoArrangeConfirm, setShowAutoArrangeConfirm] = useState(false)
 
   // Grid snapping hook
   const { snapAndConstrainToCanvas, calculatePosition } = useGridSnapping({
@@ -185,13 +186,19 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
     [selectedTableId, deleteTable]
   )
 
-  // Auto-arrange tables in a grid
-  const handleAutoArrange = useCallback(async () => {
+  // Auto-arrange tables in a grid - show confirmation first
+  const handleAutoArrange = useCallback(() => {
+    setShowAutoArrangeConfirm(true)
+  }, [])
+
+  // Execute auto-arrange after confirmation
+  const executeAutoArrange = useCallback(async () => {
+    setShowAutoArrangeConfirm(false)
     // Only arrange tables in the current section (or all if 'all' is selected)
     const tablesToArrange = selectedSection === 'all' ? tables : filteredTables
     const updatedTables = await autoArrangeTables(tablesToArrange, onUpdateTable)
     onTablesChange(updatedTables)
-  }, [tables, filteredTables, selectedSection, onUpdateTable, autoArrangeTables])
+  }, [tables, filteredTables, selectedSection, onUpdateTable, autoArrangeTables, onTablesChange])
 
   const activeTable = filteredTables.find((t) => t.id === dragState.activeId)
 
@@ -488,6 +495,62 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
               onClose={() => setSelectedTableId(null)}
               isMobileBottomSheet={false}
             />
+          </div>
+        </>
+      )}
+
+      {/* Auto-arrange confirmation modal */}
+      {showAutoArrangeConfirm && (
+        <>
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 bg-black/50 z-50"
+            onClick={() => setShowAutoArrangeConfirm(false)}
+          />
+          {/* Modal */}
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="flex-shrink-0">
+                  <AlertTriangle className="w-6 h-6 text-amber-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">
+                    Auto-organizar mesas
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Esto reorganizará todas las mesas en una cuadrícula. Se perderá la organización manual actual.
+                    {selectedSection !== 'all' && (
+                      <span className="block mt-2 font-medium text-gray-700">
+                        Solo se afectarán las mesas de la sección: <strong>{sections.find(s => s.value === selectedSection)?.label}</strong>
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">
+                Esto reorganizará todas las mesas en una cuadrícula. Se perderá la organización manual actual.
+                {selectedSection !== 'all' && (
+                  <span className="block mt-2 font-medium">
+                    Solo se afectarán las mesas de la sección: <strong>{sections.find(s => s.value === selectedSection)?.label}</strong>
+                  </span>
+                )}
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowAutoArrangeConfirm(false)}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={executeAutoArrange}
+                  className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Confirmar
+                </button>
+              </div>
+            </div>
           </div>
         </>
       )}
