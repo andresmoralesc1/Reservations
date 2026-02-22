@@ -60,6 +60,7 @@ export const SHORTCUTS = {
   NEXT_TAB: { key: "Tab", shiftKey: true, description: "Siguiente pestaña" },
   PREV_TAB: { key: "Tab", description: "Pestaña anterior" },
   NAV_DASHBOARD: { key: "1", description: "Ir a Dashboard" },
-  NAV_TABLES: { key: "2", description: "Ir a Mesas" },
-  NAV_ANALYTICS: { key: "3", description: "Ir a Analíticas" },
+  NAV_SERVICES: { key: "2", description: "Ir a Servicios" },
+  NAV_TABLES: { key: "3", description: "Ir a Mesas" },
+  NAV_ANALYTICS: { key: "4", description: "Ir a Analíticas" },
 }

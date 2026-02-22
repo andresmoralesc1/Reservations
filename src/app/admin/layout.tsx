@@ -26,8 +26,9 @@ export default function AdminLayout({
 
   const navItems = [
     { href: "/admin", label: "Dashboard", shortcut: "1" },
-    { href: "/admin/tables", label: "Mesas", shortcut: "2" },
-    { href: "/admin/analytics", label: "Analíticas", shortcut: "3", permission: "view_analytics" as const },
+    { href: "/admin/services", label: "Servicios", shortcut: "2" },
+    { href: "/admin/tables", label: "Mesas", shortcut: "3" },
+    { href: "/admin/analytics", label: "Analíticas", shortcut: "4", permission: "view_analytics" as const },
   ]
 
   // Filter nav items based on permissions
@@ -40,6 +41,10 @@ export default function AdminLayout({
     {
       ...SHORTCUTS.NAV_DASHBOARD,
       handler: () => router.push("/admin"),
+    },
+    {
+      ...SHORTCUTS.NAV_SERVICES,
+      handler: () => router.push("/admin/services"),
     },
     {
       ...SHORTCUTS.NAV_TABLES,
@@ -235,12 +240,16 @@ export default function AdminLayout({
                 <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">1</kbd>
               </div>
               <div className="flex justify-between">
-                <span className="text-neutral-600">Ir a Mesas</span>
+                <span className="text-neutral-600">Ir a Servicios</span>
                 <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">2</kbd>
               </div>
               <div className="flex justify-between">
-                <span className="text-neutral-600">Ir a Analíticas</span>
+                <span className="text-neutral-600">Ir a Mesas</span>
                 <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">3</kbd>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-600">Ir a Analíticas</span>
+                <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">4</kbd>
               </div>
             </div>
             <div className="mt-4 text-center">
