@@ -16,10 +16,13 @@ export async function GET(request: NextRequest) {
     const serviceType = searchParams.get("serviceType")
     const season = searchParams.get("season")
 
+    console.log("[GET /api/admin/services] Query params:", { restaurantId, isActive, serviceType, season })
+
     // Build where clause
     const conditions = []
 
     if (restaurantId) {
+      console.log("[GET /api/admin/services] Adding restaurantId condition:", restaurantId)
       conditions.push(eq(services.restaurantId, restaurantId))
     }
 
@@ -35,10 +38,12 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(services.season, season))
     }
 
+    console.log("[GET /api/admin/services] Conditions:", conditions.length)
+
     // Try to fetch services
     let allServices: any[] = []
     try {
-      allServices = await db.query.services.findMany({
+      const query = db.query.services.findMany({
         where: conditions.length > 0 ? and(...conditions) : undefined,
         with: {
           restaurant: {
@@ -50,10 +55,17 @@ export async function GET(request: NextRequest) {
         },
         orderBy: [desc(services.createdAt)],
       })
-      console.log("Services found:", allServices.length)
+
+      console.log("[GET /api/admin/services] Executing query...")
+      allServices = await query
+      console.log("[GET /api/admin/services] Services found:", allServices.length)
+
+      if (allServices.length > 0) {
+        console.log("[GET /api/admin/services] Sample service:", allServices[0])
+      }
     } catch (dbError: any) {
       // Table might not exist yet
-      console.error("Database error (table might not exist):", dbError.message)
+      console.error("[GET /api/admin/services] Database error:", dbError.message)
       allServices = []
     }
 
