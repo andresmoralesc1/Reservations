@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { reservations, customers, reservationHistory, tables } from "@/drizzle/schema"
+import { reservations, customers, reservationHistory, tables, services } from "@/drizzle/schema"
 import { eq, and, desc } from "drizzle-orm"
 import { generateReservationCode, normalizePhoneNumber } from "@/lib/utils"
 import { availabilityChecker } from "@/services/availability"
+import { servicesAvailability } from "@/lib/availability/services-availability"
 import { z } from "zod"
 
 // Validation schema for creating a reservation
@@ -104,8 +105,28 @@ export async function POST(request: NextRequest) {
     // Normalize phone number
     const normalizedPhone = normalizePhoneNumber(validatedData.customerPhone)
 
-    // Check availability
-    const availability = await availabilityChecker.checkAvailability({
+    // Check if there's an active service for the requested date/time
+    const activeServices = await servicesAvailability.getActiveServicesForDateTime(
+      validatedData.reservationDate,
+      validatedData.reservationTime,
+      validatedData.restaurantId
+    )
+
+    if (activeServices.length === 0) {
+      return NextResponse.json(
+        {
+          error: "No hay servicio configurado para esta fecha y hora",
+          message: "El restaurante no tiene servicio configurado para la fecha y hora solicitada",
+        },
+        { status: 400 }
+      )
+    }
+
+    // Use first matching service (following "first created wins" rule)
+    const activeService = activeServices[0]
+
+    // Check availability with services validation
+    const availability = await servicesAvailability.checkAvailabilityWithServices({
       restaurantId: validatedData.restaurantId,
       date: validatedData.reservationDate,
       time: validatedData.reservationTime,
@@ -115,8 +136,9 @@ export async function POST(request: NextRequest) {
     if (!availability.available) {
       return NextResponse.json(
         {
-          error: "No hay disponibilidad para la fecha y hora seleccionadas",
-          availability,
+          error: availability.message || "No hay disponibilidad para la fecha y hora seleccionadas",
+          service: availability.service,
+          alternativeSlots: availability.alternativeSlots,
         },
         { status: 409 }
       )
@@ -172,6 +194,9 @@ export async function POST(request: NextRequest) {
         sessionId: validatedData.sessionId,
         sessionExpiresAt,
         specialRequests: validatedData.specialRequests,
+        // Service info
+        serviceId: activeService.id,
+        estimatedDurationMinutes: activeService.defaultDurationMinutes,
       })
       .returning()
 
@@ -184,6 +209,8 @@ export async function POST(request: NextRequest) {
       metadata: {
         source: validatedData.source,
         sessionId: validatedData.sessionId,
+        serviceId: activeService.id,
+        serviceName: activeService.name,
       },
     })
 
