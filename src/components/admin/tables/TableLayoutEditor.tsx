@@ -261,128 +261,134 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
 
       {/* Canvas Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Toolbar - Mobile Responsive */}
-        <div className="bg-white border-b border-gray-200 px-2 sm:px-4 py-2 sm:py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
-          {/* Left side - Actions */}
-          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
-            <button
-              onClick={onCreateTable}
-              className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex-shrink-0"
-              title="Crear mesa personalizada"
-            >
-              <Plus className="w-4 h-4 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Personalizada</span>
-              <span className="sr-only sm:not-sr-only">Crear</span>
-            </button>
-            {selectedTable && (
+        {/* Main Toolbar - Actions and Controls */}
+        <div className="bg-white border-b border-gray-200 px-2 sm:px-4 py-2 sm:py-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+            {/* Left side - Action buttons */}
+            <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
               <button
-                onClick={handleDuplicateTable}
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex-shrink-0"
-                title="Duplicar mesa seleccionada (Ctrl+D)"
+                onClick={onCreateTable}
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex-shrink-0"
+                title="Crear mesa personalizada"
               >
-                <Copy className="w-4 h-4" />
-                <span className="hidden sm:inline">Duplicar</span>
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Personalizada</span>
+                <span className="sr-only sm:not-sr-only">Crear</span>
               </button>
-            )}
-            <button
-              onClick={handleAutoArrange}
-              className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors flex-shrink-0 min-h-[44px]"
-              title="Organizar mesas en grilla automáticamente"
-            >
-              <LayoutGrid className="w-4 h-4" />
-              <span className="hidden sm:inline">Auto-Organizar</span>
-              <span className="sr-only sm:not-sr-only">Organizar</span>
-            </button>
+              {selectedTable && (
+                <button
+                  onClick={handleDuplicateTable}
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex-shrink-0"
+                  title="Duplicar mesa seleccionada (Ctrl+D)"
+                >
+                  <Copy className="w-4 h-4" />
+                  <span className="hidden sm:inline">Duplicar</span>
+                </button>
+              )}
+              <button
+                onClick={handleAutoArrange}
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors flex-shrink-0"
+                title="Organizar mesas en grilla automáticamente"
+              >
+                <LayoutGrid className="w-4 h-4" />
+                <span className="hidden sm:inline">Auto-Organizar</span>
+              </button>
+            </div>
 
-            {/* Section Tabs */}
+            {/* Center side - Status indicators */}
+            <div className="flex items-center gap-3">
+              {/* Autosave indicator */}
+              {opsState.isSaving && (
+                <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-600 flex-shrink-0">
+                  <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                  <span className="hidden sm:inline">Guardando...</span>
+                </div>
+              )}
+              {opsState.showSaved && !opsState.isSaving && (
+                <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-green-600 flex-shrink-0">
+                  <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Guardado</span>
+                </div>
+              )}
+              {/* Table count */}
+              <div className="hidden sm:flex text-sm text-gray-600 flex-shrink-0">
+                <span className="font-medium">{tables.length}</span>
+                <span className="ml-1">mesas</span>
+              </div>
+            </div>
+
+            {/* Right side - View controls */}
+            <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto justify-end">
+              {/* Zoom controls */}
+              <button
+                onClick={() => setZoom((z) => Math.max(0.5, z - 0.1))}
+                className="min-h-[36px] sm:min-h-0 p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                title="Reducir zoom"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </button>
+              <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[45px] sm:min-w-[50px] text-center">
+                {Math.round(zoom * 100)}%
+              </span>
+              <button
+                onClick={() => setZoom((z) => Math.min(2, z + 0.1))}
+                className="min-h-[36px] sm:min-h-0 p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                title="Aumentar zoom"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </button>
+              <div className="hidden sm:block w-px h-5 bg-gray-300 mx-1" />
+              {/* View options */}
+              <button
+                onClick={() => setZoom(1)}
+                className="min-h-[36px] sm:min-h-0 p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                title="Restablecer zoom"
+              >
+                <Maximize2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setShowGrid(!showGrid)}
+                className={`min-h-[36px] sm:min-h-0 p-2 border rounded-md transition-colors ${
+                  showGrid
+                    ? "border-blue-500 bg-blue-50 text-blue-600"
+                    : "border-gray-300 hover:bg-gray-50"
+                }`}
+                title="Mostrar/ocultar grid"
+              >
+                <Grid3x3 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setSnapToGrid(!snapToGrid)}
+                className="hidden sm:block min-h-[36px] sm:min-h-0 p-2 border rounded-md transition-colors"
+                title={`Alinear a grid (${snapToGrid ? 'Activado' : 'Desactivado'})`}
+              >
+                <LayoutGrid className={`w-4 h-4 ${snapToGrid ? 'text-purple-600' : ''}`} />
+              </button>
+              <div className="w-px h-5 bg-gray-300 mx-1" />
+              {/* Help button */}
+              <button
+                onClick={() => setShowShortcuts(!showShortcuts)}
+                className={`min-h-[36px] sm:min-h-0 p-2 border rounded-md transition-colors ${
+                  showShortcuts
+                    ? "border-indigo-500 bg-indigo-50 text-indigo-600"
+                    : "border-gray-300 hover:bg-gray-50"
+                }`}
+                title="Ver atajos de teclado"
+              >
+                <Info className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Section Navigation Bar - Prominent and separated */}
+        <div className="bg-gray-50 border-b border-gray-200 px-2 sm:px-4 py-3">
+          <div className="flex items-center justify-center">
             <SectionTabs
               sections={sections}
               selectedSection={selectedSection}
               onSectionChange={setSelectedSection}
             />
-
-            {/* Autosave indicator - mobile friendly */}
-            {opsState.isSaving && (
-              <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-600 ml-2 sm:ml-4 flex-shrink-0">
-                <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
-                <span className="hidden sm:inline">Guardando...</span>
-              </div>
-            )}
-            {opsState.showSaved && !opsState.isSaving && (
-              <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-green-600 ml-2 sm:ml-4 flex-shrink-0">
-                <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">Guardado</span>
-              </div>
-            )}
-
-            {/* Table count - hide on very small screens */}
-            <div className="hidden sm:flex text-sm text-gray-600 ml-4 border-l border-gray-300 pl-4 flex-shrink-0">
-              {tables.length} mesas
-            </div>
-
-            {/* Shortcuts help button */}
-            <button
-              onClick={() => setShowShortcuts(!showShortcuts)}
-              className={`ml-2 min-h-[44px] sm:min-h-0 p-2 sm:p-2 border rounded-md transition-colors ${
-                showShortcuts
-                  ? "border-indigo-500 bg-indigo-50 text-indigo-600"
-                  : "border-gray-300 hover:bg-gray-50"
-              }`}
-              title="Ver atajos de teclado"
-            >
-              <Info className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Right side - Zoom controls - stack vertically on mobile */}
-          <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto justify-end">
-            <button
-              onClick={() => setZoom((z) => Math.max(0.5, z - 0.1))}
-              className="min-h-[44px] sm:min-h-0 p-2 sm:p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-              title="Reducir zoom"
-            >
-              <ZoomOut className="w-4 h-4" />
-            </button>
-            <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[50px] sm:min-w-[60px] text-center">
-              {Math.round(zoom * 100)}%
-            </span>
-            <button
-              onClick={() => setZoom((z) => Math.min(2, z + 0.1))}
-              className="min-h-[44px] sm:min-h-0 p-2 sm:p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-              title="Aumentar zoom"
-            >
-              <ZoomIn className="w-4 h-4" />
-            </button>
-            <div className="hidden sm:block w-px h-6 bg-gray-300 mx-2" />
-            <button
-              onClick={() => setZoom(1)}
-              className="min-h-[44px] sm:min-h-0 p-2 sm:p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-              title="Restablecer zoom"
-            >
-              <Maximize2 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setShowGrid(!showGrid)}
-              className={`min-h-[44px] sm:min-h-0 p-2 sm:p-2 border rounded-md transition-colors ${
-                showGrid
-                  ? "border-blue-500 bg-blue-50 text-blue-600"
-                  : "border-gray-300 hover:bg-gray-50"
-              }`}
-              title="Mostrar/ocultar grid"
-            >
-              <Grid3x3 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setSnapToGrid(!snapToGrid)}
-              className={`hidden sm:block min-h-[44px] sm:min-h-0 p-2 sm:p-2 border rounded-md transition-colors ${
-                snapToGrid
-                  ? "border-purple-500 bg-purple-50 text-purple-600"
-                  : "border-gray-300 hover:bg-gray-50"
-              }`}
-              title="Alinear a grid (Snapping)"
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
           </div>
         </div>
 
