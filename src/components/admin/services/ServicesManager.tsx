@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/Button"
 import { Modal } from "@/components/Modal"
 import { ServiceModal } from "./ServiceModal"
-import { Service as SchemaService } from "@/drizzle/schema"
 
 interface Service {
   id: string
