@@ -66,31 +66,27 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
   })
 
   const fetchServices = async () => {
+    console.log("Fetching services... restaurantId:", restaurantId)
     try {
       setLoading(true)
-      const params = new URLSearchParams()
+      setError(null)
 
+      const params = new URLSearchParams()
       if (restaurantId) {
         params.append("restaurantId", restaurantId)
       }
 
-      if (filters.isActive !== "all") {
-        params.append("isActive", filters.isActive)
-      }
+      const url = `/api/admin/services?${params.toString()}`
+      console.log("Fetching from:", url)
 
-      if (filters.serviceType !== "all") {
-        params.append("serviceType", filters.serviceType)
-      }
+      const response = await fetch(url)
+      console.log("Response status:", response.status)
 
-      if (filters.season !== "all") {
-        params.append("season", filters.season)
-      }
-
-      const response = await fetch(`/api/admin/services?${params.toString()}`)
       const data = await response.json()
+      console.log("Response data:", data)
 
       if (data.success) {
-        setServices(data.data)
+        setServices(data.data || [])
       } else {
         setError(data.error || "Error al cargar los servicios")
       }
@@ -103,15 +99,18 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
   }
 
   useEffect(() => {
+    console.log("ServicesManager mounted, restaurantId:", restaurantId)
     fetchServices()
-  }, [restaurantId, filters])
+  }, [restaurantId])
 
   const handleCreate = () => {
+    console.log("Creating new service")
     setEditingService(null)
     setModalOpen(true)
   }
 
   const handleEdit = (service: Service) => {
+    console.log("Editing service:", service.id)
     setEditingService(service)
     setModalOpen(true)
   }
@@ -148,6 +147,7 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
   }
 
   const handleModalSave = async () => {
+    console.log("Service saved, refreshing...")
     await fetchServices()
     handleModalClose()
   }
@@ -156,6 +156,8 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
     const [hours, minutes] = time.split(":")
     return `${hours}:${minutes}`
   }
+
+  console.log("ServicesManager state:", { loading, error, servicesCount: services.length })
 
   if (loading) {
     return (
@@ -168,6 +170,7 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
             <div className="h-16 bg-neutral-200 rounded"></div>
           </div>
         </div>
+        <p className="text-sm text-neutral-500 mt-4 text-center">Cargando servicios...</p>
       </div>
     )
   }
@@ -184,6 +187,11 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
             <Button variant="primary" size="md" onClick={handleCreate}>
               + Crear Servicio
             </Button>
+          </div>
+
+          {/* Debug info */}
+          <div className="mt-2 text-xs text-neutral-400">
+            Restaurant ID: {restaurantId || "No disponible"} | Services: {services.length}
           </div>
 
           {/* Filters */}
