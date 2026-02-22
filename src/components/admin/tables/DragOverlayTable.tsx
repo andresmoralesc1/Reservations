@@ -16,17 +16,13 @@ export const DragOverlayTable: React.FC<DragOverlayTableProps> = ({ table, zoom 
   return (
     <div
       style={{
-        // DndKit handles positioning based on the drag anchor point
-        // No manual offset needed
         pointerEvents: "none",
+        // Apply inverse scale to counteract canvas zoom for proper cursor alignment
+        transform: `scale(${1 / zoom})`,
+        transformOrigin: "center center",
       }}
     >
-      <div
-        className="opacity-50 relative"
-        style={{
-          cursor: "grabbing",
-        }}
-      >
+      <div className="opacity-50 relative" style={{ cursor: "grabbing" }}>
         {/* Accessibility indicator */}
         {table.isAccessible && (
           <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-blue-500 text-white p-1 rounded-full text-xs">

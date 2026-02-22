@@ -46,18 +46,6 @@ export const DraggableTable: React.FC<DraggableTableProps> = ({
       table,
       onPositionChange,
     },
-    // Use the table shape element as the drag anchor for centering
-    getPointerPosition: (event) => {
-      // Get the center of the element being dragged
-      const rect = tableRef.current?.getBoundingClientRect()
-      if (rect) {
-        return {
-          x: event.clientX - (rect.left + rect.width / 2),
-          y: event.clientY - (rect.top + rect.height / 2)
-        }
-      }
-      return { x: 0, y: 0 }
-    }
   })
 
   const handleRotate = (e: React.MouseEvent) => {
@@ -146,6 +134,7 @@ export const DraggableTable: React.FC<DraggableTableProps> = ({
             <div className="absolute inset-0 -m-2 border-2 border-dashed border-blue-500 rounded-lg pointer-events-none" />
           )}
         </div>
+      </div>
     </div>
   )
 }
