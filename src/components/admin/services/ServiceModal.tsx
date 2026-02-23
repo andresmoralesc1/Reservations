@@ -74,6 +74,7 @@ export function ServiceModal({
 
   const [errors, setErrors] = useState<string[]>([])
   const [isSaving, setIsSaving] = useState(false)
+  const [newSlotTime, setNewSlotTime] = useState("")
 
   // Load service data when editing
   useEffect(() => {
@@ -114,6 +115,7 @@ export function ServiceModal({
       })
     }
     setErrors([])
+    setNewSlotTime("")
   }, [service, isOpen])
 
   // Update time range when service type changes
@@ -252,11 +254,42 @@ export function ServiceModal({
   }
 
   const addManualSlot = () => {
-    const newSlot = "13:00" // Default, could be improved with a time picker
+    if (!newSlotTime) {
+      setErrors(["Por favor selecciona una hora para el turno"])
+      return
+    }
+
+    // Check if slot already exists
+    if (formData.manualSlots.includes(newSlotTime)) {
+      setErrors([`El turno ${newSlotTime} ya existe`])
+      return
+    }
+
+    // Validate time is within service range
+    const serviceTypeConfig = SERVICE_TYPES.find((st) => st.value === formData.serviceType)
+    if (serviceTypeConfig) {
+      const [slotH, slotM] = newSlotTime.split(":").map(Number)
+      const [startH, startM] = serviceTypeConfig.minTime.split(":").map(Number)
+      const [endH, endM] = serviceTypeConfig.maxTime.split(":").map(Number)
+
+      const slotMinutes = slotH * 60 + slotM
+      const minMinutes = startH * 60 + startM
+      const maxMinutes = endH * 60 + endM
+
+      if (slotMinutes < minMinutes || slotMinutes > maxMinutes) {
+        setErrors([
+          `El turno debe estar entre ${serviceTypeConfig.minTime} y ${serviceTypeConfig.maxTime}`
+        ])
+        return
+      }
+    }
+
     setFormData({
       ...formData,
-      manualSlots: [...formData.manualSlots, newSlot].sort(),
+      manualSlots: [...formData.manualSlots, newSlotTime].sort(),
     })
+    setNewSlotTime("")
+    setErrors([])
   }
 
   const removeManualSlot = (index: number) => {
@@ -509,34 +542,58 @@ export function ServiceModal({
           {/* Manual slots (only shown when mode is manual) */}
           {formData.slotGenerationMode === "manual" && (
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
                 Turnos Manuales
               </label>
-              <div className="space-y-2">
-                {formData.manualSlots.map((slot, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <span className="px-3 py-1 bg-neutral-100 rounded text-sm">
-                      {slot}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => removeManualSlot(index)}
-                      disabled={isSaving}
-                      className="text-red-600 hover:text-red-700 text-sm"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                ))}
+
+              {/* Add new slot */}
+              <div className="flex items-center gap-2 mb-3">
+                <input
+                  type="time"
+                  value={newSlotTime}
+                  onChange={(e) => setNewSlotTime(e.target.value)}
+                  className="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                  disabled={isSaving}
+                />
                 <button
                   type="button"
                   onClick={addManualSlot}
-                  disabled={isSaving}
-                  className="text-sm text-black hover:text-neutral-700"
+                  disabled={isSaving || !newSlotTime}
+                  className="px-4 py-2 bg-black text-white rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 >
-                  + Agregar turno
+                  + Agregar
                 </button>
               </div>
+
+              {/* List of existing slots */}
+              {formData.manualSlots.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-neutral-500">
+                    Turnos configurados: {formData.manualSlots.length}
+                  </p>
+                  {formData.manualSlots.map((slot, index) => (
+                    <div key={index} className="flex items-center gap-2 p-2 bg-neutral-50 rounded-lg">
+                      <span className="px-3 py-1 bg-white border border-neutral-200 rounded font-mono text-sm">
+                        {slot}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeManualSlot(index)}
+                        disabled={isSaving}
+                        className="ml-auto text-red-600 hover:text-red-700 text-sm"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {formData.manualSlots.length === 0 && (
+                <p className="text-sm text-neutral-400 italic">
+                  No hay turnos configurados. Agrega al menos uno.
+                </p>
+              )}
             </div>
           )}
 
