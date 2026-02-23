@@ -183,6 +183,27 @@ export const whatsappMessages = pgTable("whatsapp_messages", {
   createdAt: timestamp("created_at").defaultNow(),
 })
 
+export const tableBlocks = pgTable("table_blocks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tableId: uuid("table_id")
+    .notNull()
+    .references(() => tables.id, { onDelete: "cascade" }),
+  restaurantId: uuid("restaurant_id")
+    .notNull()
+    .references(() => restaurants.id, { onDelete: "cascade" }),
+  blockDate: text("block_date").notNull(), // YYYY-MM-DD
+  startTime: text("start_time").notNull(), // HH:MM
+  endTime: text("end_time").notNull(), // HH:MM
+  reason: text("reason").notNull(), // 'mantenimiento', 'evento_privado', 'reservado', 'otro'
+  notes: text("notes"), // Notas adicionales
+  createdBy: text("created_by").notNull(), // 'admin', 'system'
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  // Índices para búsquedas eficientes
+  tableIdx: index("table_blocks_table_idx").on(table.tableId),
+  restaurantDateIdx: index("table_blocks_restaurant_date_idx").on(table.restaurantId, table.blockDate),
+}))
+
 export type Restaurant = typeof restaurants.$inferSelect
 export type NewRestaurant = typeof restaurants.$inferInsert
 export type Table = typeof tables.$inferSelect
@@ -199,6 +220,8 @@ export type ReservationSession = typeof reservationSessions.$inferSelect
 export type NewReservationSession = typeof reservationSessions.$inferInsert
 export type WhatsappMessage = typeof whatsappMessages.$inferSelect
 export type NewWhatsappMessage = typeof whatsappMessages.$inferInsert
+export type TableBlock = typeof tableBlocks.$inferSelect
+export type NewTableBlock = typeof tableBlocks.$inferInsert
 
 // Drizzle Relations
 export const restaurantsRelations = relations(restaurants, ({ many }) => ({
@@ -206,6 +229,7 @@ export const restaurantsRelations = relations(restaurants, ({ many }) => ({
   services: many(services),
   reservations: many(reservations),
   reservationSessions: many(reservationSessions),
+  tableBlocks: many(tableBlocks),
 }))
 
 export const servicesRelations = relations(services, ({ one, many }) => ({
@@ -216,11 +240,12 @@ export const servicesRelations = relations(services, ({ one, many }) => ({
   reservations: many(reservations),
 }))
 
-export const tablesRelations = relations(tables, ({ one }) => ({
+export const tablesRelations = relations(tables, ({ one, many }) => ({
   restaurant: one(restaurants, {
     fields: [tables.restaurantId],
     references: [restaurants.id],
   }),
+  blocks: many(tableBlocks),
 }))
 
 export const customersRelations = relations(customers, ({ many }) => ({
@@ -262,6 +287,17 @@ export const whatsappMessagesRelations = relations(whatsappMessages, ({ one }) =
 export const reservationSessionsRelations = relations(reservationSessions, ({ one }) => ({
   restaurant: one(restaurants, {
     fields: [reservationSessions.restaurantId],
+    references: [restaurants.id],
+  }),
+}))
+
+export const tableBlocksRelations = relations(tableBlocks, ({ one }) => ({
+  table: one(tables, {
+    fields: [tableBlocks.tableId],
+    references: [tables.id],
+  }),
+  restaurant: one(restaurants, {
+    fields: [tableBlocks.restaurantId],
     references: [restaurants.id],
   }),
 }))

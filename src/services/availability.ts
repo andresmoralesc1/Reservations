@@ -1,5 +1,5 @@
 import { db } from "@/lib/db"
-import { tables, reservations, restaurants } from "@/drizzle/schema"
+import { tables, reservations, restaurants, tableBlocks } from "@/drizzle/schema"
 import { eq, and, gte, lte, sql, inArray, or } from "drizzle-orm"
 import { addMinutes, parse } from "date-fns"
 
@@ -56,6 +56,34 @@ export class AvailabilityChecker {
       }
     }
 
+    // Get blocked tables for the requested date/time
+    const blockedTableIds = new Set<string>()
+    const blocks = await db.query.tableBlocks.findMany({
+      where: eq(tableBlocks.blockDate, date),
+    })
+
+    // Filter blocks that overlap with requested time
+    for (const block of blocks) {
+      // Check if block overlaps with requested time
+      const blockStart = block.startTime
+      const blockEnd = block.endTime
+      const requestedEnd = `${String(parse(time, "HH:mm", new Date()).getHours() + 2).padStart(2, "0")}:${String(parse(time, "HH:mm", new Date()).getMinutes()).padStart(2, "0")}`
+
+      if (time < blockEnd && requestedEnd > blockStart) {
+        blockedTableIds.add(block.tableId)
+      }
+    }
+
+    // Filter out blocked tables
+    const availableSuitableTables = suitableTables.filter((t) => !blockedTableIds.has(t.id))
+
+    if (availableSuitableTables.length === 0) {
+      return {
+        available: false,
+        reason: `No hay mesas disponibles para ${partySize} personas (mesas bloqueadas o ocupadas)`,
+      }
+    }
+
     // Calculate time range
     const startTime = parse(time, "HH:mm", new Date())
     const endTime = addMinutes(startTime, RESERVATION_DURATION_MINUTES)
@@ -77,8 +105,8 @@ export class AvailabilityChecker {
       }
     }
 
-    // Find available tables
-    const availableTables = suitableTables.filter((t) => !occupiedTableIds.has(t.id))
+    // Find available tables (not occupied by reservations)
+    const availableTables = availableSuitableTables.filter((t) => !occupiedTableIds.has(t.id))
 
     if (availableTables.length === 0) {
       // Find alternative time slots

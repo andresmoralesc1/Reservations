@@ -14,6 +14,8 @@ import { HourlyBarChart } from "@/components/admin/HourlyBarChart"
 import { StatusDonutChart } from "@/components/admin/StatusDonutChart"
 import { BulkActionsBar } from "@/components/admin/BulkActionsBar"
 import { ReservationDetailsModal } from "@/components/admin/ReservationDetailsModal"
+import { CreateReservationModal } from "@/components/admin/CreateReservationModal"
+import { TableBlockModal } from "@/components/admin/TableBlockModal"
 import { Button } from "@/components/Button"
 
 interface Reservation {
@@ -121,6 +123,8 @@ export default function AdminPage() {
   })
   const [isProcessing, setIsProcessing] = useState(false)
   const [detailsReservation, setDetailsReservation] = useState<Reservation | null>(null)
+  const [createReservationModalOpen, setCreateReservationModalOpen] = useState(false)
+  const [tableBlockModalOpen, setTableBlockModalOpen] = useState(false)
 
   const itemsPerPage = 10
 
@@ -456,20 +460,46 @@ export default function AdminPage() {
       </div>
 
       {/* Bulk Actions Bar */}
-      <BulkActionsBar
-        selectedIds={Array.from(selectedIds)}
-        selectedCount={selectedIds.size}
-        onApproveAll={() => {
-          loadData()
-          clearSelection()
-        }}
-        onRejectAll={() => {
-          loadData()
-          clearSelection()
-        }}
-        onClearSelection={clearSelection}
-        onExportCSV={handleExportCSV}
-      />
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <BulkActionsBar
+          selectedIds={Array.from(selectedIds)}
+          selectedCount={selectedIds.size}
+          onApproveAll={() => {
+            loadData()
+            clearSelection()
+          }}
+          onRejectAll={() => {
+            loadData()
+            clearSelection()
+          }}
+          onClearSelection={clearSelection}
+          onExportCSV={handleExportCSV}
+        />
+        <div className="flex gap-3 w-full sm:w-auto">
+          <Button
+            variant="outline"
+            size="md"
+            onClick={() => setCreateReservationModalOpen(true)}
+            className="flex-1 sm:flex-none"
+          >
+            <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Nueva Reserva
+          </Button>
+          <Button
+            variant="outline"
+            size="md"
+            onClick={() => setTableBlockModalOpen(true)}
+            className="flex-1 sm:flex-none text-red-700 border-red-300 hover:bg-red-50 hover:border-red-400"
+          >
+            <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+            </svg>
+            Bloquear Mesas
+          </Button>
+        </div>
+      </div>
 
       {/* Content */}
       {loading ? (
@@ -533,6 +563,20 @@ export default function AdminPage() {
         isOpen={detailsReservation !== null}
         onClose={() => setDetailsReservation(null)}
         reservation={detailsReservation}
+      />
+
+      {/* Create Reservation Modal */}
+      <CreateReservationModal
+        isOpen={createReservationModalOpen}
+        onClose={() => setCreateReservationModalOpen(false)}
+        onSuccess={loadData}
+      />
+
+      {/* Table Block Modal */}
+      <TableBlockModal
+        isOpen={tableBlockModalOpen}
+        onClose={() => setTableBlockModalOpen(false)}
+        onSuccess={loadData}
       />
     </div>
   )
