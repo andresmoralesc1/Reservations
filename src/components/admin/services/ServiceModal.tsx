@@ -208,6 +208,9 @@ export function ServiceModal({
         }),
       }
 
+      console.log("[ServiceModal] Sending payload:", JSON.stringify(payload, null, 2))
+      console.log("[ServiceModal] localStorage restaurant:", localStorage.getItem("posit_restaurant"))
+
       const url = service
         ? `/api/admin/services/${service.id}`
         : "/api/admin/services"

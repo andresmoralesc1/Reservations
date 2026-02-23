@@ -67,6 +67,8 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
 
   const fetchServices = async () => {
     console.log("Fetching services... restaurantId:", restaurantId)
+    console.log("[ServicesManager] localStorage restaurant:", localStorage.getItem("posit_restaurant"))
+    console.log("[ServicesManager] localStorage user:", localStorage.getItem("posit_user"))
     try {
       setLoading(true)
       setError(null)
@@ -74,6 +76,9 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
       const params = new URLSearchParams()
       if (restaurantId) {
         params.append("restaurantId", restaurantId)
+        console.log("[ServicesManager] Query params:", params.toString())
+      } else {
+        console.log("[ServicesManager] WARNING: restaurantId is empty/null, fetching ALL services")
       }
 
       const url = `/api/admin/services?${params.toString()}`

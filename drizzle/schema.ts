@@ -1,4 +1,5 @@
 import { pgTable, uuid, text, integer, boolean, timestamp, jsonb, index, unique } from "drizzle-orm/pg-core"
+import { relations } from "drizzle-orm"
 
 export const restaurants = pgTable("restaurants", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -198,3 +199,69 @@ export type ReservationSession = typeof reservationSessions.$inferSelect
 export type NewReservationSession = typeof reservationSessions.$inferInsert
 export type WhatsappMessage = typeof whatsappMessages.$inferSelect
 export type NewWhatsappMessage = typeof whatsappMessages.$inferInsert
+
+// Drizzle Relations
+export const restaurantsRelations = relations(restaurants, ({ many }) => ({
+  tables: many(tables),
+  services: many(services),
+  reservations: many(reservations),
+  reservationSessions: many(reservationSessions),
+}))
+
+export const servicesRelations = relations(services, ({ one, many }) => ({
+  restaurant: one(restaurants, {
+    fields: [services.restaurantId],
+    references: [restaurants.id],
+  }),
+  reservations: many(reservations),
+}))
+
+export const tablesRelations = relations(tables, ({ one }) => ({
+  restaurant: one(restaurants, {
+    fields: [tables.restaurantId],
+    references: [restaurants.id],
+  }),
+}))
+
+export const customersRelations = relations(customers, ({ many }) => ({
+  reservations: many(reservations),
+}))
+
+export const reservationsRelations = relations(reservations, ({ one, many }) => ({
+  customer: one(customers, {
+    fields: [reservations.customerId],
+    references: [customers.id],
+  }),
+  restaurant: one(restaurants, {
+    fields: [reservations.restaurantId],
+    references: [restaurants.id],
+  }),
+  service: one(services, {
+    fields: [reservations.serviceId],
+    references: [services.id],
+  }),
+  tables: many(tables),
+  history: many(reservationHistory),
+  whatsappMessages: many(whatsappMessages),
+}))
+
+export const reservationHistoryRelations = relations(reservationHistory, ({ one }) => ({
+  reservation: one(reservations, {
+    fields: [reservationHistory.reservationId],
+    references: [reservations.id],
+  }),
+}))
+
+export const whatsappMessagesRelations = relations(whatsappMessages, ({ one }) => ({
+  reservation: one(reservations, {
+    fields: [whatsappMessages.reservationId],
+    references: [reservations.id],
+  }),
+}))
+
+export const reservationSessionsRelations = relations(reservationSessions, ({ one }) => ({
+  restaurant: one(restaurants, {
+    fields: [reservationSessions.restaurantId],
+    references: [restaurants.id],
+  }),
+}))
