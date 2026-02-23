@@ -4,6 +4,14 @@ import { Modal } from "@/components/Modal"
 import { StatusBadge } from "@/components/StatusBadge"
 import { Button } from "@/components/Button"
 
+interface Table {
+  id: string
+  tableNumber: string
+  tableCode: string
+  capacity: number
+  location: string | null
+}
+
 interface ReservationDetailsModalProps {
   isOpen: boolean
   onClose: () => void
@@ -24,6 +32,7 @@ interface ReservationDetailsModalProps {
     createdAt: string
     updatedAt: string
     tableIds?: string[]
+    tables?: Table[]
     restaurant?: {
       name: string
       phone: string
@@ -151,18 +160,19 @@ export function ReservationDetailsModal({
         </div>
 
         {/* Tables */}
-        {reservation.tableIds && reservation.tableIds.length > 0 && (
+        {reservation.tables && reservation.tables.length > 0 && (
           <div className="bg-neutral-50 rounded-lg p-4">
             <h3 className="text-sm font-medium uppercase tracking-wider text-neutral-500 mb-3">
               Mesas Asignadas
             </h3>
             <div className="flex flex-wrap gap-2">
-              {reservation.tableIds.map((tableId) => (
+              {reservation.tables.map((table) => (
                 <span
-                  key={tableId}
-                  className="px-3 py-1 bg-white border border-neutral-200 rounded-full text-sm"
+                  key={table.id}
+                  className="px-3 py-1 bg-white border border-neutral-200 rounded-full text-sm font-medium"
+                  title={`${table.location || ''} - ${table.capacity} pax`}
                 >
-                  {tableId.slice(0, 8)}
+                  {table.tableCode}
                 </span>
               ))}
             </div>

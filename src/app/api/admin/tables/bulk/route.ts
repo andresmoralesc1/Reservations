@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { tables } from "@/drizzle/schema"
 import { eq, and, sql } from "drizzle-orm"
+import { generateTableCode } from "@/lib/tableCode"
 
 // POST /api/admin/tables/bulk - Create multiple tables
 export async function POST(request: NextRequest) {
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
     const errors = []
 
     for (let i = 0; i < count; i++) {
-      const tableNumber = `M-${currentNumber + i}`
+      const tableNumber = `${location.charAt(0).toUpperCase()}-${currentNumber + i}`
 
       // Check if table number already exists
       const existing = await db.query.tables.findFirst({
@@ -81,11 +82,15 @@ export async function POST(request: NextRequest) {
       }
 
       try {
+        // Generate table code based on location
+        const tableCode = await generateTableCode(restaurantId, location)
+
         const [created] = await db
           .insert(tables)
           .values({
             restaurantId,
             tableNumber,
+            tableCode,
             capacity,
             location,
             isAccessible: isAccessible || false,

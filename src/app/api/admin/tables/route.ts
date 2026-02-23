@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { tables } from "@/drizzle/schema"
 import { eq, and, sql, desc } from "drizzle-orm"
+import { generateTableCode } from "@/lib/tableCode"
 
 // GET /api/admin/tables - Get all tables with optional filters
 export async function GET(request: NextRequest) {
@@ -105,11 +106,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Generate table code automatically based on location
+    const tableCode = await generateTableCode(restaurantId, location)
+
     const [created] = await db
       .insert(tables)
       .values({
         restaurantId,
         tableNumber,
+        tableCode,
         capacity,
         location,
         isAccessible: isAccessible || false,

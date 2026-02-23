@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { reservations, reservationHistory } from "@/drizzle/schema"
+import { reservations, reservationHistory, tables } from "@/drizzle/schema"
 import { eq, and, gte, lte, desc, sql, or } from "drizzle-orm"
 import { startOfDay, endOfDay } from "date-fns"
 
@@ -43,6 +43,30 @@ export async function GET(request: NextRequest) {
       offset,
     })
 
+    // Get tables for all reservations
+    const allTableIds = new Set<string>()
+    resultList.forEach((r) => {
+      if (r.tableIds) {
+        r.tableIds.forEach((id) => allTableIds.add(id))
+      }
+    })
+
+    const tablesData = await db.query.tables.findMany({
+      where: allTableIds.size > 0
+        ? sql`id = ANY(${Array.from(allTableIds)})`
+        : undefined,
+    })
+
+    const tablesMap = new Map(tablesData.map((t) => [t.id, t]))
+
+    // Attach tables to each reservation
+    const reservationsWithTables = resultList.map((reservation) => ({
+      ...reservation,
+      tables: reservation.tableIds
+        ?.map((id) => tablesMap.get(id))
+        .filter((t): t is typeof tables.$inferSelect => t !== undefined) || [],
+    }))
+
     // Get pending count
     const pendingResult = await db
       .select({ count: sql<number>`count(*)` })
@@ -50,7 +74,7 @@ export async function GET(request: NextRequest) {
       .where(eq(reservations.status, "PENDIENTE"))
 
     return NextResponse.json({
-      reservations: resultList,
+      reservations: reservationsWithTables,
       meta: {
         limit,
         offset,

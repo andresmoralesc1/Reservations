@@ -18,6 +18,7 @@ export const tables = pgTable("tables", {
     .notNull()
     .references(() => restaurants.id, { onDelete: "cascade" }),
   tableNumber: text("table_number").notNull(),
+  tableCode: text("table_code").notNull(), // I-1, I-2, T-1, T-2, P-1, P-2
   capacity: integer("capacity").notNull(),
   location: text("location"), // 'patio', 'interior', 'terraza'
   isAccessible: boolean("is_accessible").default(false),
@@ -34,7 +35,10 @@ export const tables = pgTable("tables", {
   stoolPositions: jsonb("stool_positions").$type<number[]>(), // Posiciones de sillas en barra
 
   createdAt: timestamp("created_at").defaultNow(),
-})
+}, (table) => ({
+  // Índice único para código de mesa por restaurante
+  tableCodeIdx: index("tables_table_code_idx").on(table.tableCode, table.restaurantId),
+}))
 
 export const services = pgTable("services", {
   id: uuid("id").primaryKey().defaultRandom(),
