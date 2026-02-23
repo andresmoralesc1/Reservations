@@ -68,22 +68,25 @@ export function CreateReservationModal({ isOpen, onClose, onSuccess }: CreateRes
     }
   }
 
-  // Load available time slots when date and party size are selected
+  // Load available time slots when date is selected
   useEffect(() => {
-    if (formData.date && formData.partySize) {
+    if (formData.date) {
       loadTimeSlots()
     } else {
       setTimeSlots([])
     }
-  }, [formData.date, formData.partySize])
+  }, [formData.date])
 
   async function loadTimeSlots() {
-    if (!formData.date || !formData.partySize) return
+    if (!formData.date) return
+
+    // Use partySize if selected, otherwise default to 2 (minimum for most tables)
+    const partySize = formData.partySize || "2"
 
     setCheckingAvailability(true)
     try {
       const response = await fetch(
-        `/api/admin/availability/slots?restaurantId=${RESTAURANT_ID}&date=${formData.date}&partySize=${formData.partySize}`
+        `/api/admin/availability/slots?restaurantId=${RESTAURANT_ID}&date=${formData.date}&partySize=${partySize}`
       )
 
       if (response.ok) {
@@ -204,7 +207,7 @@ export function CreateReservationModal({ isOpen, onClose, onSuccess }: CreateRes
           </div>
 
           {/* Time Slots */}
-          {formData.date && formData.partySize && (
+          {formData.date && (
             <div>
               <label className="block font-sans text-sm font-medium text-neutral-700 mb-2">
                 Hora Disponible

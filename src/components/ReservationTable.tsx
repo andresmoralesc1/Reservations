@@ -4,6 +4,14 @@ import { cn } from "@/lib/utils"
 import { Button } from "./Button"
 import { StatusBadge } from "./StatusBadge"
 
+interface Table {
+  id: string
+  tableNumber: string
+  tableCode: string
+  capacity: number
+  location: string | null
+}
+
 interface Reservation {
   id: string
   reservationCode: string
@@ -14,6 +22,7 @@ interface Reservation {
   partySize: number
   status: string
   source: string
+  tables?: Table[]
 }
 
 interface ReservationTableProps {
@@ -90,6 +99,9 @@ export function ReservationTable({
               Personas
             </th>
             <th className="px-6 py-4 text-left font-display text-xs uppercase tracking-wider text-neutral-500">
+              Mesas
+            </th>
+            <th className="px-6 py-4 text-left font-display text-xs uppercase tracking-wider text-neutral-500">
               Estado
             </th>
             <th className="px-6 py-4 text-left font-display text-xs uppercase tracking-wider text-neutral-500">
@@ -131,6 +143,23 @@ export function ReservationTable({
               </td>
               <td className="whitespace-nowrap px-6 py-4 font-sans text-sm text-center">
                 {reservation.partySize}
+              </td>
+              <td className="px-6 py-4">
+                {reservation.tables && reservation.tables.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {reservation.tables.map((table) => (
+                      <span
+                        key={table.id}
+                        className="inline-flex items-center px-2 py-1 rounded-md bg-neutral-100 text-xs font-medium text-neutral-700"
+                        title={`${table.location || ''} - ${table.capacity} pax`}
+                      >
+                        {table.tableCode}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="font-sans text-xs text-neutral-400">Sin asignar</span>
+                )}
               </td>
               <td className="whitespace-nowrap px-6 py-4">
                 <StatusBadge status={reservation.status} />

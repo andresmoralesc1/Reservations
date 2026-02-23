@@ -18,6 +18,14 @@ import { CreateReservationModal } from "@/components/admin/CreateReservationModa
 import { TableBlockModal } from "@/components/admin/TableBlockModal"
 import { Button } from "@/components/Button"
 
+interface Table {
+  id: string
+  tableNumber: string
+  tableCode: string
+  capacity: number
+  location: string | null
+}
+
 interface Reservation {
   id: string
   reservationCode: string
@@ -35,6 +43,7 @@ interface Reservation {
   createdAt: string
   updatedAt: string
   tableIds?: string[]
+  tables?: Table[]
   restaurant?: {
     name: string
     phone: string
