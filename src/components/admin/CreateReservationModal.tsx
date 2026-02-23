@@ -132,7 +132,7 @@ export function CreateReservationModal({ isOpen, onClose, onSuccess }: CreateRes
           partySize: parseInt(formData.partySize),
           specialRequests: formData.specialRequests || undefined,
           source: "MANUAL",
-          status: "CONFIRMADO", // Manual reservations go directly to confirmed
+          confirmImmediately: true, // Signal to skip pending queue
         }),
       })
 

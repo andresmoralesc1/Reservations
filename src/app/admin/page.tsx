@@ -105,7 +105,7 @@ export default function AdminPage() {
   } | null>(null)
 
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<FilterValue>("pending")
+  const [filter, setFilter] = useState<FilterValue>("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [dateFilter, setDateFilter] = useState<string>("")
   const [currentPage, setCurrentPage] = useState(1)

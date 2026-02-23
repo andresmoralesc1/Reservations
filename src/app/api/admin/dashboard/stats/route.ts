@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
       return reservationDateTime <= oneHourFromNow && r.status !== "CANCELADO"
     }).length
 
-    return NextResponse.json({
+    const result = {
       // Today's stats
       totalToday,
       confirmedCount,
@@ -115,7 +115,11 @@ export async function GET(request: NextRequest) {
       // Restaurant info
       totalTables: allTables.length,
       totalCapacity: allTables.reduce((sum, t) => sum + t.capacity, 0),
-    })
+    }
+
+    console.log("[Dashboard Stats] date:", today, "result:", result)
+
+    return NextResponse.json(result)
   } catch (error) {
     console.error("Error fetching dashboard stats:", error)
     return NextResponse.json(

@@ -18,6 +18,7 @@ const createReservationSchema = z.object({
   specialRequests: z.string().optional(),
   source: z.enum(["IVR", "WHATSAPP", "MANUAL", "WEB"]).default("IVR"),
   sessionId: z.string().optional(),
+  confirmImmediately: z.boolean().optional(), // For manual reservations to skip pending queue
 })
 
 // GET /api/reservations - List reservations with filters
@@ -176,6 +177,10 @@ export async function POST(request: NextRequest) {
       ? new Date(Date.now() + 30 * 60 * 1000)
       : null
 
+    // Determine initial status based on source and confirmImmediately flag
+    // Manual reservations can go directly to CONFIRMED
+    const initialStatus = validatedData.confirmImmediately ? "CONFIRMADO" : "PENDIENTE"
+
     // Create reservation
     const [newReservation] = await db
       .insert(reservations)
@@ -189,11 +194,12 @@ export async function POST(request: NextRequest) {
         reservationTime: validatedData.reservationTime,
         partySize: validatedData.partySize,
         tableIds: availability.suggestedTables || [],
-        status: "PENDIENTE",
+        status: initialStatus,
         source: validatedData.source,
         sessionId: validatedData.sessionId,
         sessionExpiresAt,
         specialRequests: validatedData.specialRequests,
+        confirmedAt: initialStatus === "CONFIRMADO" ? new Date() : undefined,
         // Service info
         serviceId: activeService.id,
         estimatedDurationMinutes: activeService.defaultDurationMinutes,
@@ -204,13 +210,14 @@ export async function POST(request: NextRequest) {
     await db.insert(reservationHistory).values({
       reservationId: newReservation.id,
       oldStatus: null,
-      newStatus: "PENDIENTE",
+      newStatus: initialStatus,
       changedBy: validatedData.source,
       metadata: {
         source: validatedData.source,
         sessionId: validatedData.sessionId,
         serviceId: activeService.id,
         serviceName: activeService.name,
+        confirmedImmediately: validatedData.confirmImmediately,
       },
     })
 

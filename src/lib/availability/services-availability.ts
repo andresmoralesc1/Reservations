@@ -189,7 +189,7 @@ export class ServicesAvailability {
       eq(reservations.reservationDate, date),
       sql`${reservations.reservationTime} < ${endTime}`,
       // Use service duration for overlap calculation
-      sql`(${reservations.reservationTime}::time + interval '${durationMinutes} minutes' > ${startTime}::time)`,
+      sql`(${reservations.reservationTime}::time + (interval '1 minute') * ${durationMinutes} > ${startTime}::time)`,
       or(
         eq(reservations.status, "PENDIENTE"),
         eq(reservations.status, "CONFIRMED")
