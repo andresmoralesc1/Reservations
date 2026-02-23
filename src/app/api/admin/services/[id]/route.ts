@@ -181,14 +181,25 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 /**
  * DELETE /api/admin/services/[id]
  * Delete a service (soft delete by setting isActive = false)
+ * Query param: ?permanent=true for hard delete
  */
 export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params
+    const { searchParams } = new URL(request.url)
+    const permanent = searchParams.get("permanent") === "true"
 
     // Check if service exists
     const existingService = await db.query.services.findFirst({
       where: eq(services.id, id),
+      with: {
+        restaurant: {
+          columns: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     })
 
     if (!existingService) {
@@ -201,25 +212,57 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
       )
     }
 
-    // Soft delete by setting isActive to false
-    await db
-      .update(services)
-      .set({
-        isActive: false,
-        updatedAt: new Date(),
-      })
-      .where(eq(services.id, id))
+    if (permanent) {
+      // Hard delete - check for existing reservations first
+      const { reservations } = await import("@/drizzle/schema")
 
-    return NextResponse.json({
-      success: true,
-      message: "Servicio desactivado correctamente",
-    })
+      const associatedReservations = await db.query.reservations.findMany({
+        where: (reservations, { eq, and, isNotNull }) => and(
+          eq(reservations.serviceId, id),
+          isNotNull(reservations.serviceId)
+        ),
+        limit: 1,
+      })
+
+      if (associatedReservations.length > 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "No se puede eliminar el servicio porque tiene reservas asociadas",
+            details: "Desactiva el servicio en su lugar",
+          },
+          { status: 409 }
+        )
+      }
+
+      // Perform hard delete
+      await db.delete(services).where(eq(services.id, id))
+
+      return NextResponse.json({
+        success: true,
+        message: "Servicio eliminado permanentemente",
+      })
+    } else {
+      // Soft delete by setting isActive to false
+      await db
+        .update(services)
+        .set({
+          isActive: false,
+          updatedAt: new Date(),
+        })
+        .where(eq(services.id, id))
+
+      return NextResponse.json({
+        success: true,
+        message: "Servicio desactivado correctamente",
+      })
+    }
   } catch (error) {
     console.error("Error deleting service:", error)
     return NextResponse.json(
       {
         success: false,
-        error: "Error al desactivar el servicio",
+        error: "Error al eliminar el servicio",
       },
       { status: 500 }
     )

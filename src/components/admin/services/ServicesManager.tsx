@@ -59,6 +59,8 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingService, setEditingService] = useState<Service | null>(null)
   const [deletingService, setDeletingService] = useState<Service | null>(null)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null)
   const [filters, setFilters] = useState({
     isActive: "all",
     serviceType: "all",
@@ -141,6 +143,41 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
     } catch (err) {
       console.error("Error deleting service:", err)
       alert("Error de conexión al desactivar el servicio")
+    } finally {
+      setDeletingService(null)
+    }
+  }
+
+  const openDeleteConfirm = (service: Service) => {
+    setServiceToDelete(service)
+    setDeleteConfirmOpen(true)
+  }
+
+  const closeDeleteConfirm = () => {
+    setDeleteConfirmOpen(false)
+    setServiceToDelete(null)
+  }
+
+  const handleDeletePermanently = async () => {
+    if (!serviceToDelete) return
+
+    try {
+      setDeletingService(serviceToDelete)
+      const response = await fetch(`/api/admin/services/${serviceToDelete.id}?permanent=true`, {
+        method: "DELETE",
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        await fetchServices()
+        closeDeleteConfirm()
+      } else {
+        alert(data.error || "Error al eliminar el servicio")
+      }
+    } catch (err) {
+      console.error("Error permanently deleting service:", err)
+      alert("Error de conexión al eliminar el servicio")
     } finally {
       setDeletingService(null)
     }
@@ -331,6 +368,15 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
                     >
                       {deletingService?.id === service.id ? "Desactivando..." : "Desactivar"}
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openDeleteConfirm(service)}
+                      disabled={deletingService?.id === service.id}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      {deletingService?.id === service.id ? "Eliminando..." : "Eliminar"}
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -347,6 +393,59 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
         service={editingService}
         restaurantId={restaurantId}
       />
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={deleteConfirmOpen}
+        onClose={closeDeleteConfirm}
+        title="Eliminar Servicio"
+        size="md"
+        footer={
+          <>
+            <button
+              onClick={closeDeleteConfirm}
+              disabled={deletingService !== null}
+              className="px-4 py-2 text-neutral-600 hover:text-black transition-colors disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleDeletePermanently}
+              disabled={deletingService !== null}
+              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+            >
+              {deletingService ? "Eliminando..." : "Eliminar Permanentemente"}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-sm text-red-800 font-medium">
+              ⚠️ Esta acción es irreversible
+            </p>
+          </div>
+
+          <p className="text-neutral-700">
+            ¿Estás seguro que deseas eliminar el servicio <strong>"{serviceToDelete?.name}"</strong>?
+          </p>
+
+          <p className="text-sm text-neutral-500">
+            Esta acción eliminará permanentemente el servicio. Si el servicio tiene reservas asociadas, no se podrá eliminar.
+          </p>
+
+          {serviceToDelete && (
+            <div className="bg-neutral-50 rounded-lg p-3 text-sm">
+              <div className="grid grid-cols-2 gap-2 text-neutral-600">
+                <span><strong>Tipo:</strong> {SERVICE_TYPE_LABELS[serviceToDelete.serviceType] || serviceToDelete.serviceType}</span>
+                <span><strong>Días:</strong> {DAY_TYPE_LABELS[serviceToDelete.dayType] || serviceToDelete.dayType}</span>
+                <span><strong>Horario:</strong> {formatTime(serviceToDelete.startTime)} - {formatTime(serviceToDelete.endTime)}</span>
+                <span><strong>Temporada:</strong> {SEASON_LABELS[serviceToDelete.season] || serviceToDelete.season}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
     </>
   )
 }
