@@ -69,6 +69,11 @@ export class PipecatClient {
   // Audio level monitoring
   private audioLevelInterval: ReturnType<typeof setInterval> | null = null;
 
+  // Recursos de audio remoto para cleanup
+  private remoteAudioElement: HTMLAudioElement | null = null;
+  private remoteAudioContext: AudioContext | null = null;
+  private remoteAnimationFrameId: number | null = null;
+
   constructor(config: PipecatClientConfig) {
     // Convertir http:// a ws:// y https:// a wss://
     this.serverUrl = config.serverUrl.replace(/^https?:/, (match) =>
@@ -146,7 +151,7 @@ export class PipecatClient {
       this.localStream = null;
     }
 
-    // Cerrar AudioContext
+    // Cerrar AudioContext local
     if (this.audioContext && this.audioContext.state !== "closed") {
       this.audioContext.close();
       this.audioContext = null;
@@ -159,8 +164,35 @@ export class PipecatClient {
       this.microphoneNode = null;
     }
 
+    // Limpiar recursos de audio remoto
+    this.cleanupRemoteAudio();
+
     this.setConnectionState("disconnected");
     console.log("[PipecatClient] Disconnected");
+  }
+
+  /**
+   * Limpia los recursos de audio remoto
+   */
+  private cleanupRemoteAudio(): void {
+    // Cancelar animation frame
+    if (this.remoteAnimationFrameId !== null) {
+      cancelAnimationFrame(this.remoteAnimationFrameId);
+      this.remoteAnimationFrameId = null;
+    }
+
+    // Detener y limpiar el elemento de audio
+    if (this.remoteAudioElement) {
+      this.remoteAudioElement.pause();
+      this.remoteAudioElement.srcObject = null;
+      this.remoteAudioElement = null;
+    }
+
+    // Cerrar el AudioContext remoto
+    if (this.remoteAudioContext && this.remoteAudioContext.state !== "closed") {
+      this.remoteAudioContext.close();
+      this.remoteAudioContext = null;
+    }
   }
 
   /**
@@ -361,15 +393,19 @@ export class PipecatClient {
    * Reproduce el audio remoto del bot
    */
   private playRemoteAudio(stream: MediaStream): void {
-    const audioElement = new Audio();
-    audioElement.srcObject = stream;
-    audioElement.autoplay = true;
-    audioElement.play().catch(console.error);
+    // Limpiar recursos previos antes de crear nuevos
+    this.cleanupRemoteAudio();
 
-    // Detectar cuando el bot está hablando
-    const audioContext = new AudioContext();
-    const source = audioContext.createMediaStreamSource(stream);
-    const analyzer = audioContext.createAnalyser();
+    // Crear elemento de audio
+    this.remoteAudioElement = new Audio();
+    this.remoteAudioElement.srcObject = stream;
+    this.remoteAudioElement.autoplay = true;
+    this.remoteAudioElement.play().catch(console.error);
+
+    // Crear AudioContext para detectar cuando el bot está hablando
+    this.remoteAudioContext = new AudioContext();
+    const source = this.remoteAudioContext.createMediaStreamSource(stream);
+    const analyzer = this.remoteAudioContext.createAnalyser();
     analyzer.fftSize = 256;
     source.connect(analyzer);
 
@@ -382,11 +418,13 @@ export class PipecatClient {
       this.setBotSpeaking(isSpeaking);
 
       if (this._isConnected) {
-        requestAnimationFrame(checkSpeaking);
+        this.remoteAnimationFrameId = requestAnimationFrame(checkSpeaking);
+      } else {
+        this.remoteAnimationFrameId = null;
       }
     };
 
-    checkSpeaking();
+    this.remoteAnimationFrameId = requestAnimationFrame(checkSpeaking);
   }
 
   /**

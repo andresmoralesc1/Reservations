@@ -22,6 +22,7 @@ const redisMock = {
 
 // Por defecto usamos el mock (Redis no disponible)
 let redisClient: Redis = redisMock
+let connectionTimeout: NodeJS.Timeout | null = null
 
 // Redis es opcional - intentamos conectar pero si falla usamos mock
 if (redisUrl) {
@@ -42,7 +43,7 @@ if (redisUrl) {
     })
 
     // Si se conecta en 2 segundos, úsalo
-    setTimeout(() => {
+    connectionTimeout = setTimeout(() => {
       if (redis.status !== "ready") {
         redis.disconnect()
         redisClient = redisMock
@@ -50,6 +51,14 @@ if (redisUrl) {
     }, 2000)
   } catch {
     redisClient = redisMock
+  }
+}
+
+// Función para limpiar el timeout si es necesario
+export const clearRedisConnectionTimeout = () => {
+  if (connectionTimeout) {
+    clearTimeout(connectionTimeout)
+    connectionTimeout = null
   }
 }
 

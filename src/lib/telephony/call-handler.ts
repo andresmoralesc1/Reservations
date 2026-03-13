@@ -36,6 +36,7 @@ export interface CallSession {
 class CallSessionManager {
   private sessions: Map<string, CallSession> = new Map();
   private readonly SESSION_TIMEOUT = 5 * 60 * 1000; // 5 minutos
+  private readonly MAX_TRANSCRIPTION_LENGTH = 100; // Máximo de entradas de transcripción
 
   /**
    * Crea una nueva sesión de llamada
@@ -86,6 +87,10 @@ class CallSessionManager {
     if (!session) return false;
 
     session.transcription.push(text);
+    // Limitar el tamaño del array para prevenir memory leaks
+    if (session.transcription.length > this.MAX_TRANSCRIPTION_LENGTH) {
+      session.transcription = session.transcription.slice(-this.MAX_TRANSCRIPTION_LENGTH);
+    }
     session.lastActivity = new Date();
 
     return true;
@@ -123,10 +128,29 @@ class CallSessionManager {
 const sessionManager = new CallSessionManager();
 
 // Limpiar sesiones expiradas cada minuto
-if (typeof setInterval !== "undefined") {
-  setInterval(() => {
-    sessionManager.cleanupExpiredSessions();
-  }, 60 * 1000);
+let cleanupInterval: ReturnType<typeof setInterval> | null = null;
+
+export function startSessionCleanup(): void {
+  if (cleanupInterval) {
+    return; // Ya está corriendo
+  }
+  if (typeof setInterval !== "undefined") {
+    cleanupInterval = setInterval(() => {
+      sessionManager.cleanupExpiredSessions();
+    }, 60 * 1000);
+  }
+}
+
+export function stopSessionCleanup(): void {
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = null;
+  }
+}
+
+// Iniciar automáticamente en el servidor
+if (typeof window === "undefined") {
+  startSessionCleanup();
 }
 
 // ============ Funciones de flujo de llamada ============
