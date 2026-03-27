@@ -275,14 +275,15 @@ export function useTableOperations(
   const duplicateTableFromTemplate = useCallback(
     async (
       template: any,
-      snapAndConstrainToCanvas: (x: number, y: number, size: number) => { x: number; y: number }
+      snapAndConstrainToCanvas: (x: number, y: number, size: number) => { x: number; y: number },
+      location: "patio" | "interior" | "terraza" | "barra" = "interior"
     ): Promise<TableOperationResult> => {
       // Calculate position and number
       const newTableNumber = getNextTableNumber(tables)
       const position = snapAndConstrainToCanvas(50, 50, 100)
 
-      // Create from template
-      const options = createTemplateOptions(template, restaurantId, newTableNumber, position)
+      // Create from template with current section location
+      const options = createTemplateOptions(template, restaurantId, newTableNumber, position, location)
       return createTable(options)
     },
     [tables, createTable, restaurantId]

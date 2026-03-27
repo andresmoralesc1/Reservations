@@ -111,8 +111,12 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
     { value: 'barra' as SectionType, label: 'Barra', count: sectionCounts.barra },
   ]
 
-  // Filter tables by selected section
-  const filteredTables = tables.filter(t => t.location === selectedSection)
+  // Filter tables by selected section - case-insensitive and null-safe
+  const filteredTables = tables.filter(t => {
+    const tableLocation = (t.location || '').toLowerCase().trim()
+    const targetSection = selectedSection.toLowerCase().trim()
+    return tableLocation === targetSection
+  })
 
   const handleSelectTable = useCallback((tableId: string) => {
     setSelectedTableId(tableId)
@@ -125,7 +129,12 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
   // Handle adding table from template
   const handleAddTableFromTemplate = useCallback(
     async (template: TableTemplate) => {
-      const result = await duplicateTableFromTemplate(template, snapAndConstrainToCanvas)
+      // Create table in the current section
+      const result = await duplicateTableFromTemplate(
+        template,
+        snapAndConstrainToCanvas,
+        selectedSection as "patio" | "interior" | "terraza" | "barra"
+      )
 
       if (result.success && result.table) {
         // Auto-select the new table
@@ -134,7 +143,7 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
         console.error("Error adding table from template:", result.error)
       }
     },
-    [duplicateTableFromTemplate, snapAndConstrainToCanvas]
+    [duplicateTableFromTemplate, snapAndConstrainToCanvas, selectedSection]
   )
 
   // Handle duplicating selected table

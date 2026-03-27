@@ -1,6 +1,6 @@
 import React from "react"
 
-export type SectionType = 'all' | 'interior' | 'patio' | 'terraza'
+export type SectionType = 'interior' | 'patio' | 'terraza' | 'barra'
 
 export interface SectionOption {
   value: SectionType

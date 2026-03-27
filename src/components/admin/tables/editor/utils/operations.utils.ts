@@ -102,6 +102,7 @@ export function createDuplicateOptions(
  * @param restaurantId - Restaurant ID
  * @param tableNumber - Table number
  * @param position - Position {x, y}
+ * @param location - Table location (default: "interior")
  * @returns CreateTableOptions
  */
 export function createTemplateOptions(
@@ -114,13 +115,14 @@ export function createTemplateOptions(
   },
   restaurantId: string,
   tableNumber: string,
-  position: { x: number; y: number }
+  position: { x: number; y: number },
+  location: "patio" | "interior" | "terraza" | "barra" = "interior"
 ): CreateTableOptions {
   return {
     restaurantId,
     tableNumber,
     capacity: template.capacity,
-    location: "interior",
+    location,
     shape: template.shape,
     positionX: position.x,
     positionY: position.y,
