@@ -13,7 +13,10 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get("startDate")
     const endDate = searchParams.get("endDate")
 
+    console.log("📊 Analytics request:", { restaurantId, period, startDate, endDate })
+
     if (!restaurantId) {
+      console.log("❌ Missing restaurantId")
       return NextResponse.json(
         { error: "Se requiere restaurantId" },
         { status: 400 }
@@ -45,10 +48,14 @@ export async function GET(request: NextRequest) {
       orderBy: [desc(reservations.reservationDate), desc(reservations.reservationTime)],
     })
 
+    console.log(`📊 Found ${allReservations.length} reservations from ${startDateStr} to ${endDateStr}`)
+
     // Get tables
     const allTables = await db.query.tables.findMany({
       where: eq(tables.restaurantId, restaurantId),
     })
+
+    console.log(`📊 Found ${allTables.length} tables`)
 
     // Calculate metrics
     const totalReservations = allReservations.length
@@ -146,7 +153,7 @@ export async function GET(request: NextRequest) {
       ? Math.round((confirmedCount / (confirmedCount + pendingCount)) * 100)
       : 0
 
-    return NextResponse.json({
+    const responseData = {
       period: {
         startDate: startDateStr,
         endDate: endDateStr,
@@ -171,7 +178,11 @@ export async function GET(request: NextRequest) {
       ),
       hourlyBreakdown: Object.values(hourlyBreakdown).sort((a, b) => a.hour - b.hour),
       sourceBreakdown,
-    })
+    }
+
+    console.log("📊 Analytics response:", JSON.stringify(responseData, null, 2))
+
+    return NextResponse.json(responseData)
   } catch (error) {
     console.error("Error fetching analytics:", error)
     return NextResponse.json(
