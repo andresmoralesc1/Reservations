@@ -436,11 +436,11 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
             className="flex-1 bg-gray-100 relative p-4"
             onClick={handleDeselect}
           >
-            <div className="grid grid-cols-3 gap-4 h-full">
+            <div className="grid grid-cols-2 gap-4 h-full">
               {[
                 { key: 'interior', label: '🏠 Interior', bg: 'bg-blue-50', border: 'border-blue-200' },
-                { key: 'patio', label: '☀️ Patio', bg: 'bg-amber-50', border: 'border-amber-200' },
                 { key: 'terraza', label: '🌿 Terraza', bg: 'bg-green-50', border: 'border-green-200' },
+                { key: 'patio', label: '☀️ Patio', bg: 'bg-amber-50', border: 'border-amber-200' },
               ].map((section) => {
                 // Filter tables - match exact location (case-insensitive)
                 const sectionTables = tables.filter(t => {
@@ -451,7 +451,7 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
                   <div
                     key={section.key}
                     className={`relative rounded-xl border-2 overflow-hidden ${section.bg} ${section.border}`}
-                    style={{ minHeight: 300 }}
+                    style={{ minHeight: 400 }}
                   >
                     {/* Section Header */}
                     <div className={`px-3 py-2 border-b ${section.border} bg-white/50`}>
@@ -489,7 +489,7 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
                             style={{
                               left: `${normX}%`,
                               top: `${normY}%`,
-                              transform: `scale(0.4)`,
+                              transform: `scale(0.5)`,
                               transformOrigin: 'top left',
                             }}
                             onClick={(e) => {
