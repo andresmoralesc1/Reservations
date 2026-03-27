@@ -66,7 +66,7 @@ export function Modal({
       <div
         ref={modalRef}
         className={cn(
-          "relative z-10 w-full bg-white shadow-xl",
+          "relative z-10 w-full bg-white shadow-xl flex flex-col max-h-[90vh]",
           sizeClasses[size],
           className
         )}
@@ -74,7 +74,7 @@ export function Modal({
       >
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4">
+          <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4 flex-shrink-0">
             <h2 className="font-display text-xl uppercase tracking-wider text-black">
               {title}
             </h2>
@@ -91,13 +91,13 @@ export function Modal({
         )}
 
         {/* Content */}
-        <div className="px-6 py-6">
+        <div className="px-6 py-6 overflow-y-auto flex-1">
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 border-t border-neutral-200 px-6 py-4">
+          <div className="flex items-center justify-end gap-3 border-t border-neutral-200 px-6 py-4 flex-shrink-0">
             {footer}
           </div>
         )}
