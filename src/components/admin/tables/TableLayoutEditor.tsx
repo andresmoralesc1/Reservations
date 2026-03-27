@@ -431,40 +431,37 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
 
         {/* Canvas */}
         {selectedSection === 'all' ? (
-          // 2x2 Grid View - Patio spans 2 columns
+          // Full page sections - each with large canvas
           <div
-            className="flex-1 bg-gray-100 relative p-4 overflow-auto"
+            className="flex-1 bg-gray-100 relative"
             onClick={handleDeselect}
           >
-            <div className="grid grid-cols-2 auto-rows-fr gap-4 h-full">
+            <div className="p-4 space-y-4">
               {[
                 { key: 'interior', label: '🏠 Interior', bg: 'bg-blue-50', border: 'border-blue-200' },
                 { key: 'terraza', label: '🌿 Terraza', bg: 'bg-green-50', border: 'border-green-200' },
                 { key: 'patio', label: '☀️ Patio', bg: 'bg-amber-50', border: 'border-amber-200' },
-              ].map((section, index) => {
+              ].map((section) => {
                 // Filter tables - match exact location (case-insensitive)
                 const sectionTables = tables.filter(t => {
                   const loc = (t.location || '').toLowerCase().trim()
                   return loc === section.key
                 })
 
-                // Patio (index 2) spans both columns
-                const isPatio = section.key === 'patio'
-
                 return (
                   <div
                     key={section.key}
-                    className={`relative rounded-xl border-2 overflow-hidden ${section.bg} ${section.border} ${isPatio ? 'col-span-2' : ''}`}
-                    style={{ minHeight: 350 }}
+                    className={`relative rounded-xl border-2 overflow-hidden ${section.bg} ${section.border}`}
+                    style={{ height: '60vh', width: '100%' }}
                   >
                     {/* Section Header */}
-                    <div className={`px-3 py-2 border-b ${section.border} bg-white/50`}>
-                      <span className="font-bold text-sm">{section.label}</span>
-                      <span className="ml-2 text-xs opacity-60">({sectionTables.length} mesas)</span>
+                    <div className={`px-4 py-3 border-b ${section.border} bg-white/50 sticky top-0 z-10`}>
+                      <span className="font-bold text-base">{section.label}</span>
+                      <span className="ml-3 text-sm opacity-60">({sectionTables.length} mesas)</span>
                     </div>
 
-                    {/* Mini canvas for this section */}
-                    <div className="relative" style={{ height: 'calc(100% - 40px)', minHeight: 300 }}>
+                    {/* Large canvas for this section */}
+                    <div className="relative w-full" style={{ height: 'calc(100% - 52px)' }}>
                       <div
                         className="absolute inset-0"
                         style={{
@@ -474,27 +471,21 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
                               linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px)
                             `
                             : "none",
-                          backgroundSize: "10px 10px",
+                          backgroundSize: "20px 20px",
                         }}
                       />
 
-                      {/* Tables with scale transform */}
+                      {/* Tables positioned absolutely */}
                       {sectionTables.map((table) => {
                         if (dragState.activeId === table.id) return null
-
-                        // Normalize position to fit in the quadrant
-                        const normX = ((table.positionX || 0) / CANVAS_CONFIG.WIDTH) * 100
-                        const normY = ((table.positionY || 0) / CANVAS_CONFIG.HEIGHT) * 100
 
                         return (
                           <div
                             key={table.id}
                             className="absolute cursor-pointer"
                             style={{
-                              left: `${normX}%`,
-                              top: `${normY}%`,
-                              transform: `scale(0.5)`,
-                              transformOrigin: 'top left',
+                              left: `${table.positionX || 50}px`,
+                              top: `${table.positionY || 50}px`,
                             }}
                             onClick={(e) => {
                               e.stopPropagation()
@@ -514,8 +505,8 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
                       })}
 
                       {sectionTables.length === 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
-                          Sin mesas
+                        <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-base">
+                          Sin mesas en esta sección
                         </div>
                       )}
                     </div>
