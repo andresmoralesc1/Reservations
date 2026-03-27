@@ -436,7 +436,7 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
             className="flex-1 bg-gray-100 relative p-4"
             onClick={handleDeselect}
           >
-            <div className="grid grid-cols-2 gap-4 h-full">
+            <div className="grid grid-cols-2 grid-rows-2 gap-4 h-full">
               {[
                 { key: 'interior', label: '🏠 Interior', bg: 'bg-blue-50', border: 'border-blue-200' },
                 { key: 'terraza', label: '🌿 Terraza', bg: 'bg-green-50', border: 'border-green-200' },
