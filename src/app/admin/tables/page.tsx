@@ -150,6 +150,16 @@ export default function TablesPage() {
     }
   }
 
+  // Handle tables change - supports both direct array and functional update
+  const handleTablesChange = useCallback((update: Table[] | ((prev: Table[]) => Table[])) => {
+    setTables((prev) => {
+      if (typeof update === 'function') {
+        return update(prev)
+      }
+      return update
+    })
+  }, [])
+
   async function handleDeleteTableFromEditor(id: string) {
     try {
       const response = await fetch(`/api/admin/tables/${id}`, {
@@ -259,7 +269,7 @@ export default function TablesPage() {
         <div className="border border-gray-200 rounded-lg overflow-hidden" style={{ height: "70vh" }}>
           <TableLayoutEditor
             tables={tables as any}
-            onTablesChange={setTables as any}
+            onTablesChange={handleTablesChange as any}
             onCreateTable={handleCreateTable}
             onUpdateTable={handleUpdateTable}
             onDeleteTable={handleDeleteTableFromEditor}

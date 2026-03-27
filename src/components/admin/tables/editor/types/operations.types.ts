@@ -52,8 +52,8 @@ export interface TableOperationsState {
 
 export interface UseTableOperationsOptions {
   restaurantId: string
-  tables: Table[]  // Added tables to access current state
-  onTablesChange?: (tables: Table[]) => void
+  tables: Table[]
+  onTablesChange?: (tables: Table[] | ((prev: Table[]) => Table[])) => void
   autoHideSaved?: boolean
   autoHideDelay?: number
 }

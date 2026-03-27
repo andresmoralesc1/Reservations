@@ -113,13 +113,10 @@ export function useTableDrag(
         // Apply grid snapping and canvas constraints
         const finalPos = snapAndConstrainToCanvas(rawPos.x, rawPos.y, 100)
 
-        // Optimistic update
-        const updatedTables = createOptimisticUpdate(
-          tables,
-          tableId,
-          finalPos
+        // Optimistic update - use functional update to avoid stale closure
+        onTablesChange((prevTables) =>
+          createOptimisticUpdate(prevTables, tableId, finalPos)
         )
-        onTablesChange(updatedTables)
 
         // Persist to server
         await onUpdateTable(tableId, {

@@ -148,9 +148,9 @@ export function useTableOperations(
         const data = await response.json()
         const newTable = data.table
 
-        // Update local state
+        // Update local state - use functional update to avoid stale closure
         if (onTablesChange) {
-          onTablesChange([...tables, newTable])
+          onTablesChange((prevTables) => [...prevTables, newTable])
         }
 
         showSavedSuccess()
@@ -186,10 +186,10 @@ export function useTableOperations(
         const data = await response.json()
         const updatedTable = data.table
 
-        // Update local state
+        // Update local state - use functional update to avoid stale closure
         if (onTablesChange) {
-          onTablesChange(
-            tables.map((t) => (t.id === tableId ? { ...t, ...updatedTable } : t))
+          onTablesChange((prevTables) =>
+            prevTables.map((t) => (t.id === tableId ? { ...t, ...updatedTable } : t))
           )
         }
 
@@ -202,7 +202,7 @@ export function useTableOperations(
         updatePendingCount(-1)
       }
     },
-    [tables, onTablesChange, updatePendingCount, showSavedSuccess]
+    [onTablesChange, updatePendingCount, showSavedSuccess]
   )
 
   // Delete table
@@ -228,9 +228,9 @@ export function useTableOperations(
           throw new Error(error.error || "Error deleting table")
         }
 
-        // Update local state
+        // Update local state - use functional update to avoid stale closure
         if (onTablesChange) {
-          onTablesChange(tables.filter((t) => t.id !== tableId))
+          onTablesChange((prevTables) => prevTables.filter((t) => t.id !== tableId))
         }
 
         showSavedSuccess()
@@ -242,7 +242,7 @@ export function useTableOperations(
         updatePendingCount(-1)
       }
     },
-    [tables, onTablesChange, updatePendingCount, showSavedSuccess]
+    [onTablesChange, updatePendingCount, showSavedSuccess]
   )
 
   // Duplicate table

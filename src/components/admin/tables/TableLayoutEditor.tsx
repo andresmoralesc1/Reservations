@@ -28,7 +28,7 @@ import { DragOverlayTable } from "./DragOverlayTable"
 
 interface TableLayoutEditorProps {
   tables: Table[]
-  onTablesChange: (tables: Table[]) => void
+  onTablesChange: (tables: Table[] | ((prev: Table[]) => Table[])) => void
   onCreateTable: () => void
   onUpdateTable: (id: string, updates: Partial<Table>) => Promise<void>
   onDeleteTable: (id: string) => Promise<void>

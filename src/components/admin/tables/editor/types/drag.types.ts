@@ -14,7 +14,7 @@ export interface DragState {
 
 export interface UseTableDragOptions {
   tables: Table[]
-  onTablesChange: (tables: Table[]) => void
+  onTablesChange: (tables: Table[] | ((prev: Table[]) => Table[])) => void
   snapAndConstrainToCanvas: (
     x: number,
     y: number,
