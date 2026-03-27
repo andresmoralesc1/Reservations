@@ -1,21 +1,12 @@
 const postgres = require('postgres');
+const { randomUUID } = require('crypto');
 require('dotenv').config();
 
 const RESTAURANT_ID = '00000000-0000-0000-0000-000000000001';
 
-// Helper to generate random date within last 30 days
-function randomDate(start, end) {
-  return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-}
-
 // Helper to format date as YYYY-MM-DD
 function formatDate(date) {
   return date.toISOString().split('T')[0];
-}
-
-// Helper to format time as HH:MM
-function formatTime(date) {
-  return date.toTimeString().slice(0, 5);
 }
 
 async function seedAnalytics() {
@@ -95,7 +86,7 @@ async function seedAnalytics() {
               reservation_date, reservation_time, party_size, status,
               source, code, created_at
             ) VALUES (
-              ${crypto.randomUUID()}, ${RESTAURANT_ID}, ${table.id},
+              ${randomUUID()}, ${RESTAURANT_ID}, ${table.id},
               ${name}, ${phone}, ${dateStr}, ${timeStr}, ${partySize},
               ${status}, ${source}, ${code}, ${new Date().toISOString()}
             )

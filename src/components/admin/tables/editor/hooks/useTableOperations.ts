@@ -38,7 +38,8 @@ export interface UseTableOperationsReturn {
   ) => Promise<TableOperationResult>
   duplicateTableFromTemplate: (
     template: any,
-    snapAndConstrainToCanvas: (x: number, y: number, size: number) => { x: number; y: number }
+    snapAndConstrainToCanvas: (x: number, y: number, size: number) => { x: number; y: number },
+    location?: "patio" | "interior" | "terraza" | "barra"
   ) => Promise<TableOperationResult>
 
   // Batch operations

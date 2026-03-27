@@ -8,7 +8,7 @@ export interface CreateTableOptions {
   restaurantId: string
   tableNumber: string
   capacity: number
-  location: "patio" | "interior" | "terraza"
+  location: "patio" | "interior" | "terraza" | "barra"
   shape: string | null
   positionX: number
   positionY: number
@@ -24,7 +24,7 @@ export interface CreateTableOptions {
 export interface UpdateTableOptions {
   tableNumber?: string
   capacity?: number
-  location?: "patio" | "interior" | "terraza" | null
+  location?: "patio" | "interior" | "terraza" | "barra" | null
   isAccessible?: boolean
   shape?: string | null
   positionX?: number

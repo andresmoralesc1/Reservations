@@ -82,7 +82,7 @@ export function createDuplicateOptions(
     restaurantId: sourceTable.restaurantId,
     tableNumber: newTableNumber,
     capacity: sourceTable.capacity,
-    location: (sourceTable.location || "interior") as "patio" | "interior" | "terraza",
+    location: (sourceTable.location || "interior") as "patio" | "interior" | "terraza" | "barra",
     shape: sourceTable.shape,
     positionX: position.x,
     positionY: position.y,
