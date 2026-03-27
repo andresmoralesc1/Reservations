@@ -8,7 +8,7 @@ async function seedRestaurant() {
     // Insert a test restaurant
     const result = await sql`
       INSERT INTO restaurants (id, name, phone, address, timezone, is_active)
-      VALUES (${'00000000-0000-0000-0000-000000000001'}, ${'El Posit'}, ${'+57 300 123 4567'}, ${'Calle 123 #45-67, Bogotá'}, ${'America/Bogota'}, ${true})
+      VALUES (${'00000000-0000-0000-0000-000000000001'}, ${'El Posit'}, ${'+34 977 123 456'}, ${'Cambrils, Tarragona, España'}, ${'Europe/Madrid'}, ${true})
       ON CONFLICT (id) DO NOTHING
       RETURNING id, name
     `;

@@ -36,9 +36,9 @@ export async function GET() {
       .values({
         id: DEMO_RESTAURANT_ID,
         name: "El Posit",
-        phone: "+57 300 123 4567",
-        address: "Carrera 7 #123-45, Bogotá",
-        timezone: "America/Bogota",
+        phone: "+34 977 123 456",
+        address: "Cambrils, Tarragona, España",
+        timezone: "Europe/Madrid",
         isActive: true,
       })
       .returning()

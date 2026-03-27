@@ -6,7 +6,7 @@ export const restaurants = pgTable("restaurants", {
   name: text("name").notNull(),
   phone: text("phone"),
   address: text("address"),
-  timezone: text("timezone").default("America/Bogota"),
+  timezone: text("timezone").default("Europe/Madrid"),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
