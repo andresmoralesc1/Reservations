@@ -51,7 +51,7 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
   const [showGrid, setShowGrid] = useState(true)
   const [snapToGrid, setSnapToGrid] = useState(true)
   const [showShortcuts, setShowShortcuts] = useState(false)
-  const [selectedSection, setSelectedSection] = useState<SectionType>('all')
+  const [selectedSection, setSelectedSection] = useState<SectionType>('interior')
   const [showAutoArrangeConfirm, setShowAutoArrangeConfirm] = useState(false)
 
   // Grid snapping hook
@@ -98,48 +98,21 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
 
   // Calculate section counts
   const sectionCounts = {
-    all: tables.length,
     interior: tables.filter(t => t.location === 'interior').length,
     patio: tables.filter(t => t.location === 'patio').length,
     terraza: tables.filter(t => t.location === 'terraza').length,
+    barra: tables.filter(t => t.location === 'barra').length,
   }
 
   const sections = [
-    { value: 'all' as SectionType, label: 'Todas', count: sectionCounts.all },
     { value: 'interior' as SectionType, label: 'Interior', count: sectionCounts.interior },
     { value: 'patio' as SectionType, label: 'Patio', count: sectionCounts.patio },
     { value: 'terraza' as SectionType, label: 'Terraza', count: sectionCounts.terraza },
-    { value: 'barra' as SectionType, label: 'Barra', count: tables.filter(t => t.location === 'barra').length },
+    { value: 'barra' as SectionType, label: 'Barra', count: sectionCounts.barra },
   ]
 
   // Filter tables by selected section
-  const filteredTables = selectedSection === 'all'
-    ? tables
-    : tables.filter(t => t.location === selectedSection)
-
-  // When showing all sections, define quadrants for a 2x2 layout
-  // Each section gets a compact area in the viewport
-  const sectionQuadrants = {
-    interior: { x: 0, y: 0, label: '🏠 Interior' },
-    patio: { x: 0, y: 0, label: '☀️ Patio' },
-    terraza: { x: 0, y: 0, label: '🌿 Terraza' },
-    barra: { x: 0, y: 0, label: '🍷 Barra' },
-  }
-
-  // Get position offset and scale for a table based on its location
-  const getTableTransform = (table: Table) => {
-    if (selectedSection !== 'all') {
-      return { offsetX: 0, offsetY: 0, scale: 1, quadrant: null }
-    }
-
-    const location = table.location || 'interior'
-    return {
-      offsetX: 0,
-      offsetY: 0,
-      scale: 0.4, // Smaller scale for overview
-      quadrant: location
-    }
-  }
+  const filteredTables = tables.filter(t => t.location === selectedSection)
 
   const handleSelectTable = useCallback((tableId: string) => {
     setSelectedTableId(tableId)
@@ -219,11 +192,10 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
   // Execute auto-arrange after confirmation
   const executeAutoArrange = useCallback(async () => {
     setShowAutoArrangeConfirm(false)
-    // Only arrange tables in the current section (or all if 'all' is selected)
-    const tablesToArrange = selectedSection === 'all' ? tables : filteredTables
-    await autoArrangeTables(tablesToArrange, onUpdateTable)
+    // Arrange tables in the current section
+    await autoArrangeTables(filteredTables, onUpdateTable)
     // Don't call onTablesChange - each table is updated individually via onUpdateTable
-  }, [tables, filteredTables, selectedSection, onUpdateTable, autoArrangeTables])
+  }, [filteredTables, onUpdateTable, autoArrangeTables])
 
   const activeTable = filteredTables.find((t) => t.id === dragState.activeId)
 
@@ -429,151 +401,61 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
         {/* Keyboard Shortcuts Hint */}
         {showShortcuts && <KeyboardShortcutsHint />}
 
-        {/* Canvas */}
-        {selectedSection === 'all' ? (
-          // Full page sections - each with large canvas
+        {/* Canvas - Single Section View with DnD */}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
           <div
-            className="flex-1 bg-gray-100 overflow-y-auto"
+            className="flex-1 overflow-auto bg-gradient-to-br from-gray-100 to-gray-200 relative"
             onClick={handleDeselect}
           >
-            <div className="p-4 space-y-4">
-              {[
-                { key: 'interior', label: '🏠 Interior', bg: 'bg-blue-50', border: 'border-blue-200' },
-                { key: 'terraza', label: '🌿 Terraza', bg: 'bg-green-50', border: 'border-green-200' },
-                { key: 'patio', label: '☀️ Patio', bg: 'bg-amber-50', border: 'border-amber-200' },
-              ].map((section) => {
-                // Filter tables - match exact location (case-insensitive)
-                const sectionTables = tables.filter(t => {
-                  const loc = (t.location || '').toLowerCase().trim()
-                  return loc === section.key
-                })
+            <div
+              className="relative bg-white shadow-xl mx-auto my-4 rounded-lg"
+              style={{
+                width: `${CANVAS_CONFIG.WIDTH}px`,
+                height: `${CANVAS_CONFIG.HEIGHT}px`,
+                backgroundImage: showGrid
+                  ? `
+                    linear-gradient(to right, #f3f4f6 1px, transparent 1px),
+                    linear-gradient(to bottom, #f3f4f6 1px, transparent 1px)
+                  `
+                  : "none",
+                backgroundSize: "20px 20px",
+              }}
+            >
+              {filteredTables.map((table) => {
+                // Don't render the table if it's being dragged (it's shown in DragOverlay)
+                if (dragState.activeId === table.id) {
+                  return null
+                }
 
                 return (
-                  <div
-                    key={section.key}
-                    className={`relative rounded-xl border-2 overflow-hidden ${section.bg} ${section.border}`}
-                    style={{ height: '60vh', width: '100%' }}
-                  >
-                    {/* Section Header */}
-                    <div className={`px-4 py-3 border-b ${section.border} bg-white/50 sticky top-0 z-10`}>
-                      <span className="font-bold text-base">{section.label}</span>
-                      <span className="ml-3 text-sm opacity-60">({sectionTables.length} mesas)</span>
-                    </div>
-
-                    {/* Large canvas for this section */}
-                    <div className="relative w-full" style={{ height: 'calc(100% - 52px)' }}>
-                      <div
-                        className="absolute inset-0"
-                        style={{
-                          backgroundImage: showGrid
-                            ? `
-                              linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
-                              linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px)
-                            `
-                            : "none",
-                          backgroundSize: "20px 20px",
-                        }}
-                      />
-
-                      {/* Tables positioned absolutely */}
-                      {sectionTables.map((table) => {
-                        if (dragState.activeId === table.id) return null
-
-                        return (
-                          <div
-                            key={table.id}
-                            className="absolute cursor-pointer"
-                            style={{
-                              left: `${table.positionX || 50}px`,
-                              top: `${table.positionY || 50}px`,
-                              transform: `scale(${zoom})`,
-                              transformOrigin: 'top left',
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleSelectTable(table.id)
-                            }}
-                          >
-                            <DraggableTable
-                              table={table}
-                              isSelected={selectedTableId === table.id}
-                              onSelect={() => handleSelectTable(table.id)}
-                              onPositionChange={() => {}}
-                              onRotate={(degrees) => handleRotate(table.id, degrees)}
-                              zoom={1}
-                            />
-                          </div>
-                        )
-                      })}
-
-                      {sectionTables.length === 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-base">
-                          Sin mesas en esta sección
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <DraggableTable
+                    key={table.id}
+                    table={table}
+                    isSelected={selectedTableId === table.id}
+                    onSelect={() => handleSelectTable(table.id)}
+                    onPositionChange={() => {}}
+                    onRotate={(degrees) => handleRotate(table.id, degrees)}
+                    zoom={zoom}
+                  />
                 )
               })}
             </div>
           </div>
-        ) : (
-          // Single Section View with DnD
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            <div
-              className="flex-1 overflow-auto bg-gradient-to-br from-gray-100 to-gray-200 relative"
-              onClick={handleDeselect}
-            >
-              <div
-                className="relative bg-white shadow-xl mx-auto my-4 rounded-lg"
-                style={{
-                  width: `${CANVAS_CONFIG.WIDTH}px`,
-                  height: `${CANVAS_CONFIG.HEIGHT}px`,
-                  backgroundImage: showGrid
-                    ? `
-                      linear-gradient(to right, #f3f4f6 1px, transparent 1px),
-                      linear-gradient(to bottom, #f3f4f6 1px, transparent 1px)
-                    `
-                    : "none",
-                  backgroundSize: "20px 20px",
-                }}
-              >
-                {filteredTables.map((table) => {
-                  // Don't render the table if it's being dragged (it's shown in DragOverlay)
-                  if (dragState.activeId === table.id) {
-                    return null
-                  }
 
-                  return (
-                    <DraggableTable
-                      key={table.id}
-                      table={table}
-                      isSelected={selectedTableId === table.id}
-                      onSelect={() => handleSelectTable(table.id)}
-                      onPositionChange={() => {}}
-                      onRotate={(degrees) => handleRotate(table.id, degrees)}
-                      zoom={zoom}
-                    />
-                  )
-                })}
-              </div>
-            </div>
-
-            <DragOverlay>
-              {activeTable ? (
-                <DragOverlayTable
-                  table={activeTable}
-                  zoom={zoom}
-                />
-              ) : null}
-            </DragOverlay>
-          </DndContext>
-        )}
+          <DragOverlay>
+            {activeTable ? (
+              <DragOverlayTable
+                table={activeTable}
+                zoom={zoom}
+              />
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       </div>
 
       {/* Config Panel - Mobile bottom sheet, Desktop side panel */}
@@ -641,12 +523,7 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
                     Auto-organizar mesas
                   </h3>
                   <p className="text-sm text-gray-600">
-                    Esto reorganizará todas las mesas en una cuadrícula. Se perderá la organización manual actual.
-                    {selectedSection !== 'all' && (
-                      <span className="block mt-2 font-medium text-gray-700">
-                        Solo se afectarán las mesas de la sección: <strong>{sections.find(s => s.value === selectedSection)?.label}</strong>
-                      </span>
-                    )}
+                    Esto reorganizará todas las mesas de la sección <strong>{sections.find(s => s.value === selectedSection)?.label}</strong> en una cuadrícula. Se perderá la organización manual actual.
                   </p>
                 </div>
               </div>
