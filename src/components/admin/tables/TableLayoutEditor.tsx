@@ -47,7 +47,7 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
   restaurantId,
 }) => {
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null)
-  const [zoom, setZoom] = useState(1)
+  const [zoom, setZoom] = useState(0.8)  // Start at 80% to see more content
   const [showGrid, setShowGrid] = useState(true)
   const [snapToGrid, setSnapToGrid] = useState(true)
   const [showShortcuts, setShowShortcuts] = useState(false)
@@ -529,20 +529,18 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
             onDragEnd={handleDragEnd}
           >
             <div
-              className="flex-1 overflow-auto bg-gray-100 relative"
+              className="flex-1 overflow-auto bg-gradient-to-br from-gray-100 to-gray-200 relative"
               onClick={handleDeselect}
             >
               <div
-                className="relative"
+                className="relative bg-white shadow-xl mx-auto my-4 rounded-lg"
                 style={{
                   width: `${CANVAS_CONFIG.WIDTH}px`,
                   height: `${CANVAS_CONFIG.HEIGHT}px`,
-                  minWidth: "100%",
-                  minHeight: "100%",
                   backgroundImage: showGrid
                     ? `
-                      linear-gradient(to right, #e5e7eb 1px, transparent 1px),
-                      linear-gradient(to bottom, #e5e7eb 1px, transparent 1px)
+                      linear-gradient(to right, #f3f4f6 1px, transparent 1px),
+                      linear-gradient(to bottom, #f3f4f6 1px, transparent 1px)
                     `
                     : "none",
                   backgroundSize: "20px 20px",

@@ -266,7 +266,7 @@ export default function TablesPage() {
           />
         </>
       ) : (
-        <div className="border border-gray-200 rounded-lg overflow-hidden" style={{ height: "70vh" }}>
+        <div className="border border-gray-200 rounded-lg overflow-hidden" style={{ height: "85vh" }}>
           <TableLayoutEditor
             tables={tables as any}
             onTablesChange={handleTablesChange as any}

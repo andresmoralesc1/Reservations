@@ -3,8 +3,8 @@
  */
 
 export const CANVAS_CONFIG = {
-  WIDTH: 2000,
-  HEIGHT: 1500,
+  WIDTH: 2500,  // More width for better space distribution
+  HEIGHT: 1600, // Slightly taller for more tables
 } as const
 
 export const GRID_CONFIG = {
