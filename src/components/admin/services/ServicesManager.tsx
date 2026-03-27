@@ -148,6 +148,35 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
     }
   }
 
+  const handleToggleActive = async (service: Service) => {
+    const action = service.isActive ? "desactivar" : "activar"
+    if (!confirm(`¿Estás seguro de ${action} el servicio "${service.name}"?`)) {
+      return
+    }
+
+    try {
+      setDeletingService(service)
+      const response = await fetch(`/api/admin/services/${service.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !service.isActive }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        await fetchServices()
+      } else {
+        alert(data.error || `Error al ${action} el servicio`)
+      }
+    } catch (err) {
+      console.error("Error toggling service:", err)
+      alert(`Error de conexión al ${action} el servicio`)
+    } finally {
+      setDeletingService(null)
+    }
+  }
+
   const openDeleteConfirm = (service: Service) => {
     setServiceToDelete(service)
     setDeleteConfirmOpen(true)
@@ -362,11 +391,15 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(service)}
-                      disabled={!service.isActive || deletingService?.id === service.id}
-                      className={!service.isActive ? "opacity-50 cursor-not-allowed" : ""}
+                      onClick={() => handleToggleActive(service)}
+                      disabled={deletingService?.id === service.id}
+                      className={service.isActive ? "text-orange-600 hover:text-orange-700 hover:bg-orange-50" : "text-green-600 hover:text-green-700 hover:bg-green-50"}
                     >
-                      {deletingService?.id === service.id ? "Desactivando..." : "Desactivar"}
+                      {deletingService?.id === service.id
+                        ? "Procesando..."
+                        : service.isActive
+                        ? "Desactivar"
+                        : "Activar"}
                     </Button>
                     <Button
                       variant="ghost"
