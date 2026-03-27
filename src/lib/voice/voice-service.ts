@@ -8,7 +8,7 @@
  */
 
 import { createLegacyReservation, getLegacyReservation, cancelLegacyReservation, checkLegacyAvailability, logLegacyCall } from "@/lib/services/legacy-service"
-import { generateReservationCode, normalizeSpanishPhone } from "@/lib/utils"
+import { generateReservationCode } from "@/lib/utils"
 import type {
   VoiceActionResult,
   CheckAvailabilityInput,
@@ -45,9 +45,6 @@ export async function checkAvailability(params: CheckAvailabilityInput): Promise
 // ============ Función 2: createReservation ============
 export async function createReservation(params: CreateReservationInput): Promise<VoiceActionResult> {
   try {
-    // Normalizar teléfono
-    const normalizedPhone = normalizeSpanishPhone(params.customerPhone)
-
     // Verificar disponibilidad primero
     const availability = await checkLegacyAvailability({
       fecha: params.date,
@@ -67,7 +64,7 @@ export async function createReservation(params: CreateReservationInput): Promise
     // Crear reserva
     const result = await createLegacyReservation({
       nombre: params.customerName,
-      numero: normalizedPhone,
+      numero: params.customerPhone,
       fecha: params.date,
       hora: params.time,
       invitados: params.partySize,
@@ -90,7 +87,7 @@ export async function createReservation(params: CreateReservationInput): Promise
       reservation: {
         reservationCode: result.reservationCode!,
         customerName: params.customerName,
-        customerPhone: normalizedPhone,
+        customerPhone: params.customerPhone,
         date: params.date,
         time: params.time,
         partySize: params.partySize,
@@ -129,18 +126,18 @@ export async function getReservation(params: GetReservationInput): Promise<Voice
 
     return {
       success: true,
-      message: `Reserva ${params.code} a nombre de ${r.nombre}. ` +
-               `El ${formatDate(r.fecha)} a las ${r.hora} ` +
-               `para ${r.invitados} personas. ` +
-               `Estado: ${statusMessages[r.estatus] || r.estatus}.`,
+      message: `Reserva ${params.code} a nombre de ${r.customerName}. ` +
+               `El ${formatDate(r.reservationDate)} a las ${r.reservationTime} ` +
+               `para ${r.partySize} personas. ` +
+               `Estado: ${statusMessages[r.status] || r.status}.`,
       reservation: {
-        reservationCode: r.idReserva,
-        customerName: r.nombre,
-        customerPhone: r.numero || "",
-        date: r.fecha,
-        time: r.hora,
-        partySize: r.invitados,
-        status: r.estatus,
+        reservationCode: r.reservationCode,
+        customerName: r.customerName,
+        customerPhone: r.customerPhone || "",
+        date: r.reservationDate,
+        time: r.reservationTime,
+        partySize: r.partySize,
+        status: r.status,
       },
     }
   } catch (error) {
@@ -155,9 +152,7 @@ export async function getReservation(params: GetReservationInput): Promise<Voice
 // ============ Función 4: cancelReservation ============
 export async function cancelReservation(params: CancelReservationInput): Promise<VoiceActionResult> {
   try {
-    const normalizedPhone = normalizeSpanishPhone(params.phone)
-
-    const result = await cancelLegacyReservation(params.code, normalizedPhone)
+    const result = await cancelLegacyReservation(params.code, params.phone)
 
     if (!result.success) {
       return {
@@ -195,12 +190,12 @@ export async function modifyReservation(params: ModifyReservationInput): Promise
     const r = getResult.data
 
     // Verify phone
-    const normalizedPhone = normalizeSpanishPhone(params.phone)
-    const reservationPhone = (r.numero || "").replace(/[\s-]/g, "")
+    const phone = params.phone?.toString().replace(/[\s-]/g, "") || ""
+    const reservationPhone = (r.customerPhone || "").replace(/[\s-]/g, "")
 
-    if (normalizedPhone !== reservationPhone &&
-        !normalizedPhone.includes(reservationPhone) &&
-        !reservationPhone.includes(normalizedPhone)) {
+    if (phone !== reservationPhone &&
+        !phone.includes(reservationPhone) &&
+        !reservationPhone.includes(phone)) {
       return {
         success: false,
         message: "El número de teléfono no coincide con la de la reserva.",

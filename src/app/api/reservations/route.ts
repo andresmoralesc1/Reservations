@@ -125,26 +125,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Error al crear reserva" }, { status: 500 })
   }
 }
-
-// DELETE /api/reservations/[code] - Cancelar reserva
-export async function DELETE(request: NextRequest, { params }: { params: { code: string } }) {
-  try {
-    const { code } = params
-    const { numero } = await request.json()
-
-    if (!numero) {
-      return NextResponse.json({ error: "Número de teléfono requerido" }, { status: 400 })
-    }
-
-    const result = await cancelLegacyReservation(code, numero)
-
-    if (!result.success) {
-      return NextResponse.json({ error: result.message }, { status: 400 })
-    }
-
-    return NextResponse.json({ success: true, message: result.message })
-  } catch (error) {
-    console.error("[API Reservations] Error canceling:", error)
-    return NextResponse.json({ error: "Error al cancelar reserva" }, { status: 500 })
-  }
-}

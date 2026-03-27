@@ -1,21 +1,16 @@
 /**
  * Legacy Reservation Service
  *
- * Servicio adaptado para trabajar con las tablas existentes en Supabase:
- * - reservas (en lugar de reservations)
- * - mesas_disponibles (en lugar de tables)
- * - info_llamadas (en lugar de call_logs)
- * - reservas_temporales (en lugar de reservation_sessions)
+ * Servicio adaptado para trabajar con las tablas del schema principal
+ * Mantiene compatibilidad con llamadas antiguas pero usa el nuevo schema
  */
 
 import { db } from "@/lib/db"
-import { reservas, mesasDisponibles, infoLlamadas } from "@/drizzle/legacy-schema"
-import { eq, and, desc, sql } from "drizzle-orm"
+import { reservations, tables, customers } from "@/drizzle/schema"
+import { eq, and, desc, sql, or, gte, asc } from "drizzle-orm"
 import { generateReservationCode } from "@/lib/utils"
 
-// ============ Mapeo de campos entre新旧 ============
-
-// Mapeo de estatus
+// ============ Mapeo de estatus ============
 const STATUS_MAP: Record<string, string> = {
   "PENDIENTE": "PENDING",
   "CONFIRMADO": "CONFIRMED",
@@ -30,10 +25,8 @@ const STATUS_REVERSE_MAP: Record<string, string> = {
   "NOSHOW": "NO_SHOW",
 }
 
-// ============ Funciones principales ============
-
 /**
- * Crear una nueva reserva (adaptado a tabla existente)
+ * Crear una nueva reserva (usando nuevo schema)
  */
 export async function createLegacyReservation(params: {
   nombre: string
@@ -48,43 +41,64 @@ export async function createLegacyReservation(params: {
 }) {
   try {
     // Generar código de reserva
-    const idReserva = generateReservationCode()
+    const reservationCode = generateReservationCode()
 
-    // Determinar ID de mesa si no se proporciona
-    let idMesa = params.idMesa
-    if (!idMesa) {
-      // Buscar una mesa disponible con capacidad suficiente
-      const mesa = await db.query.mesasDisponibles.findFirst({
-        where: (table, { and, eq, gte }) => and(
-          eq(table.restaurante, params.restaurante || "default"),
-          gte(table.capacidad, params.invitados),
-          eq(table.activa, true)
-        ),
-        orderBy: (table, { asc }) => [asc(table.capacidad)]
-      })
-      idMesa = mesa?.idMesa || "mesa-por-asignar"
+    // Buscar o crear cliente
+    let customer = await db.query.customers.findFirst({
+      where: eq(customers.phoneNumber, params.numero)
+    })
+
+    if (!customer) {
+      const [newCustomer] = await db.insert(customers).values({
+        phoneNumber: params.numero,
+        name: params.nombre
+      }).returning()
+      customer = newCustomer
     }
 
-    // Insertar reserva
-    const [nuevaReserva] = await db.insert(reservas).values({
-      idReserva,
-      idMesa,
-      nombre: params.nombre,
-      numero: params.numero,
-      fecha: params.fecha,
-      hora: params.hora,
-      invitados: params.invitados,
-      estatus: "PENDIENTE",
-      fuente: params.fuente || "WEB",
-      restaurante: params.restaurante || "default",
-      observaciones: params.observaciones,
+    // Buscar mesa adecuada si no se proporciona
+    let tableIds: string[] = []
+    if (params.idMesa) {
+      // Buscar la tabla por tableCode
+      const table = await db.query.tables.findFirst({
+        where: eq(tables.tableCode, params.idMesa)
+      })
+      tableIds = table ? [table.id] : []
+    } else {
+      // Buscar mesa disponible con capacidad suficiente
+      const availableTables = await db.query.tables.findMany({
+        where: and(
+          gte(tables.capacity, params.invitados),
+          eq(tables.restaurantId, params.restaurante || "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+        ),
+        orderBy: [asc(tables.capacity)]
+      })
+      if (availableTables.length > 0) {
+        tableIds = [availableTables[0].id]
+      }
+    }
+
+    // Insertar reserva con campos del nuevo schema
+    const [newReservation] = await db.insert(reservations).values({
+      reservationCode,
+      customerId: customer.id,
+      customerName: params.nombre,
+      customerPhone: params.numero,
+      restaurantId: params.restaurante || "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      reservationDate: params.fecha,
+      reservationTime: params.hora,
+      partySize: params.invitados,
+      tableIds,
+      status: "PENDIENTE",
+      source: params.fuente || "WEB",
+      specialRequests: params.observaciones,
     }).returning()
 
     return {
       success: true,
-      reservationCode: idReserva,
-      message: `Reserva creada. Código: ${idReserva}`,
-      data: nuevaReserva
+      reservationCode,
+      message: `Reserva creada. Código: ${reservationCode}`,
+      data: newReservation
     }
   } catch (error) {
     console.error("[Legacy Service] Error creating reservation:", error)
@@ -100,11 +114,15 @@ export async function createLegacyReservation(params: {
  */
 export async function getLegacyReservation(idReserva: string) {
   try {
-    const reserva = await db.query.reservas.findFirst({
-      where: eq(reservas.idReserva, idReserva.toUpperCase())
+    const reservation = await db.query.reservations.findFirst({
+      where: eq(reservations.reservationCode, idReserva.toUpperCase()),
+      with: {
+        customer: true,
+        restaurant: true,
+      }
     })
 
-    if (!reserva) {
+    if (!reservation) {
       return {
         success: false,
         message: "No encontré ninguna reserva con ese código"
@@ -113,7 +131,7 @@ export async function getLegacyReservation(idReserva: string) {
 
     return {
       success: true,
-      data: reserva
+      data: reservation
     }
   } catch (error) {
     console.error("[Legacy Service] Error getting reservation:", error)
@@ -129,20 +147,20 @@ export async function getLegacyReservation(idReserva: string) {
  */
 export async function cancelLegacyReservation(idReserva: string, telefono: string) {
   try {
-    const reserva = await db.query.reservas.findFirst({
-      where: eq(reservas.idReserva, idReserva.toUpperCase())
+    const reservation = await db.query.reservations.findFirst({
+      where: eq(reservations.reservationCode, idReserva.toUpperCase())
     })
 
-    if (!reserva) {
+    if (!reservation) {
       return {
         success: false,
         message: "No encontré ninguna reserva con ese código"
       }
     }
 
-    // Verificar teléfono (quitar espacios y guiones para comparar)
+    // Verificar teléfono
     const telefonoLimpio = telefono.replace(/[\s-]/g, "")
-    const reservaTelefonoLimpio = (reserva.numero || "").replace(/[\s-]/g, "")
+    const reservaTelefonoLimpio = (reservation.customerPhone || "").replace(/[\s-]/g, "")
 
     if (telefonoLimpio !== reservaTelefonoLimpio &&
         !telefonoLimpio.includes(reservaTelefonoLimpio) &&
@@ -154,13 +172,13 @@ export async function cancelLegacyReservation(idReserva: string, telefono: strin
     }
 
     // Actualizar estatus
-    await db.update(reservas)
+    await db.update(reservations)
       .set({
-        estatus: "CANCELADO",
-        fechaCancelacion: new Date(),
+        status: "CANCELADO",
+        cancelledAt: new Date(),
         updatedAt: new Date()
       })
-      .where(eq(reservas.idReserva, idReserva.toUpperCase()))
+      .where(eq(reservations.reservationCode, idReserva.toUpperCase()))
 
     return {
       success: true,
@@ -189,18 +207,24 @@ export async function listLegacyReservations(params: {
     const conditions = []
 
     if (params.restaurante) {
-      conditions.push(eq(reservas.restaurante, params.restaurante))
+      conditions.push(eq(reservations.restaurantId, params.restaurante))
     }
     if (params.fecha) {
-      conditions.push(eq(reservas.fecha, params.fecha))
+      conditions.push(eq(reservations.reservationDate, params.fecha))
     }
     if (params.estatus) {
-      conditions.push(eq(reservas.estatus, params.estatus))
+      // Mapear estatus si es necesario
+      const status = STATUS_REVERSE_MAP[params.estatus] || params.estatus
+      conditions.push(eq(reservations.status, status))
     }
 
-    const results = await db.query.reservas.findMany({
+    const results = await db.query.reservations.findMany({
       where: conditions.length > 0 ? and(...conditions) : undefined,
-      orderBy: [desc(reservas.fecha), desc(reservas.hora)],
+      with: {
+        customer: true,
+        restaurant: true,
+      },
+      orderBy: [desc(reservations.reservationDate), desc(reservations.reservationTime)],
       limit: params.limit || 50,
       offset: params.offset || 0
     })
@@ -219,7 +243,7 @@ export async function listLegacyReservations(params: {
 }
 
 /**
- * Registrar llamada de voz (info_llamadas)
+ * Registrar llamada de voz (simplified - usando console.log por ahora)
  */
 export async function logLegacyCall(params: {
   telefono: string
@@ -234,19 +258,20 @@ export async function logLegacyCall(params: {
   motivoFinalizacion?: string
 }) {
   try {
-    const [nuevoLog] = await db.insert(infoLlamadas).values({
+    // Por ahora solo log en consola
+    console.log("[Legacy Call Log]", {
       telefono: params.telefono,
-      restaurante: params.restaurante || "default",
+      restaurante: params.restaurante,
       resId: params.resId,
-      accionesRealizadas: params.accionesRealizadas || [],
-      duracionLlamada: params.duracionLlamada?.toString(),
-      motivoFinalizacion: params.motivoFinalizacion || "completed",
-      fechaLlamada: new Date(),
-    }).returning()
+      acciones: params.accionesRealizadas,
+      duracion: params.duracionLlamada,
+      motivo: params.motivoFinalizacion,
+      timestamp: new Date().toISOString()
+    })
 
     return {
       success: true,
-      callId: nuevoLog.id.toString()
+      callId: "log-" + Date.now()
     }
   } catch (error) {
     console.error("[Legacy Service] Error logging call:", error)
@@ -258,7 +283,7 @@ export async function logLegacyCall(params: {
 }
 
 /**
- * Verificar disponibilidad (simplified)
+ * Verificar disponibilidad (usando nuevo schema)
  */
 export async function checkLegacyAvailability(params: {
   fecha: string
@@ -267,38 +292,46 @@ export async function checkLegacyAvailability(params: {
   restaurante?: string
 }) {
   try {
-    // Buscar mesas disponibles con capacidad suficiente
-    const mesas = await db.query.mesasDisponibles.findMany({
-      where: (table, { and, eq, gte }) => and(
-        eq(table.restaurante, params.restaurante || "default"),
-        gte(table.capacidad, params.invitados),
-        eq(table.activa, true)
-      )
+    // Buscar mesas con capacidad suficiente
+    const allTables = await db.query.tables.findMany({
+      where: eq(tables.restaurantId, params.restaurante || "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
     })
 
-    // Buscar reservas que se solapan
-    const reservasOcupadas = await db.query.reservas.findMany({
-      where: (table, { and, eq, sql }) => and(
-        eq(table.fecha, params.fecha),
-        eq(table.estatus, "CONFIRMADO"),
-        // Solapamiento de hora (reserva ocupa su hora + 90 min)
-        sql`${table.hora} <= ${params.hora}::time + interval '90 minutes'`
+    const suitableTables = allTables.filter(t => t.capacity >= params.invitados)
+
+    // Buscar reservas confirmadas que se solapan
+    const startTime = params.hora
+    const endTime = addMinutes(params.hora, 90) // 90 min duración
+
+    const conflictingReservations = await db.query.reservations.findMany({
+      where: and(
+        eq(reservations.reservationDate, params.fecha),
+        eq(reservations.status, "CONFIRMADO"),
+        // Chequear solapamiento de horarios
+        sql`${reservations.reservationTime} < ${endTime}::time AND ${reservations.reservationTime} + interval '2 hours' > ${startTime}::time`
       )
     })
 
     // IDs de mesas ocupadas
-    const mesasOcupadasIds = new Set(reservasOcupadas.map(r => r.idMesa))
+    const occupiedTableIds = new Set<string>()
+    for (const res of conflictingReservations) {
+      if (res.tableIds && Array.isArray(res.tableIds)) {
+        for (const tableId of res.tableIds) {
+          occupiedTableIds.add(tableId)
+        }
+      }
+    }
 
     // Filtrar mesas disponibles
-    const mesasLibres = mesas.filter(m => !mesasOcupadasIds.has(m.idMesa))
+    const availableTables = suitableTables.filter(t => !occupiedTableIds.has(t.id))
 
     return {
       success: true,
-      available: mesasLibres.length > 0,
-      message: mesasLibres.length > 0
+      available: availableTables.length > 0,
+      message: availableTables.length > 0
         ? `Tenemos disponibilidad para ${params.invitados} personas el ${params.fecha} a las ${params.hora}`
         : `No tenemos disponibilidad para ${params.invitados} personas el ${params.fecha} a las ${params.hora}`,
-      availableTables: mesasLibres
+      availableTables: availableTables
     }
   } catch (error) {
     console.error("[Legacy Service] Error checking availability:", error)
@@ -307,4 +340,12 @@ export async function checkLegacyAvailability(params: {
       error: "Error al verificar disponibilidad"
     }
   }
+}
+
+// Helper function para sumar minutos a una hora
+function addMinutes(time: string, minutes: number): string {
+  const [hours, mins] = time.split(":").map(Number)
+  const date = new Date()
+  date.setHours(hours, mins + minutes)
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`
 }

@@ -45,6 +45,7 @@ export default function AdminLayout({
     },
     {
       key: "2",
+      description: "Ir a Floor Plan",
       handler: () => router.push("/admin/floor-plan"),
     },
     {

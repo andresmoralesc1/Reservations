@@ -479,8 +479,8 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
                         if (dragState.activeId === table.id) return null
 
                         // Normalize position to fit in the quadrant
-                        const normX = (table.positionX / CANVAS_CONFIG.WIDTH) * 100
-                        const normY = (table.positionY / CANVAS_CONFIG.HEIGHT) * 100
+                        const normX = ((table.positionX || 0) / CANVAS_CONFIG.WIDTH) * 100
+                        const normY = ((table.positionY || 0) / CANVAS_CONFIG.HEIGHT) * 100
 
                         return (
                           <div

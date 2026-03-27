@@ -38,7 +38,7 @@ export const reservas = pgTable("reservas", {
 
 // ============ Tabla: mesas_disponibles ============
 export const mesasDisponibles = pgTable("mesas_disponibles", {
-  id: bigint("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
   idMesa: text("id_mesa").notNull().unique(),
   numero: text("numero").notNull(), // número de mesa
   capacidad: integer("capacidad").notNull(),
@@ -51,7 +51,7 @@ export const mesasDisponibles = pgTable("mesas_disponibles", {
 
 // ============ Tabla: info_llamadas ============
 export const infoLlamadas = pgTable("info_llamadas", {
-  id: bigint("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
   idLlamada: text("id_llamada"),
   resId: text("res_id"), // ID de reserva asociada
   telefono: text("telefono"),
@@ -68,7 +68,7 @@ export const infoLlamadas = pgTable("info_llamadas", {
 
 // ============ Tabla: reservas_temporales ============
 export const reservasTemporales = pgTable("reservas_temporales", {
-  id: bigint("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
   sessionId: text("session_id").notNull().unique(),
   telefono: text("telefono").notNull(),
   restaurante: text("restaurante"),
