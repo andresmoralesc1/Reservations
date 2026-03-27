@@ -433,10 +433,10 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
         {selectedSection === 'all' ? (
           // 2x2 Grid View for All Sections
           <div
-            className="flex-1 bg-gray-100 relative p-4"
+            className="flex-1 bg-gray-100 relative p-4 overflow-auto"
             onClick={handleDeselect}
           >
-            <div className="grid grid-cols-2 grid-rows-2 gap-4 h-full">
+            <div className="grid grid-cols-2 auto-rows-min gap-4">
               {[
                 { key: 'interior', label: '🏠 Interior', bg: 'bg-blue-50', border: 'border-blue-200' },
                 { key: 'terraza', label: '🌿 Terraza', bg: 'bg-green-50', border: 'border-green-200' },
@@ -451,7 +451,7 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
                   <div
                     key={section.key}
                     className={`relative rounded-xl border-2 overflow-hidden ${section.bg} ${section.border}`}
-                    style={{ minHeight: 400 }}
+                    style={{ minHeight: 350 }}
                   >
                     {/* Section Header */}
                     <div className={`px-3 py-2 border-b ${section.border} bg-white/50`}>
@@ -460,7 +460,7 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
                     </div>
 
                     {/* Mini canvas for this section */}
-                    <div className="relative" style={{ height: 'calc(100% - 40px)' }}>
+                    <div className="relative" style={{ height: 'calc(100% - 40px)', minHeight: 300 }}>
                       <div
                         className="absolute inset-0"
                         style={{
