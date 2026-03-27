@@ -486,6 +486,8 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
                             style={{
                               left: `${table.positionX || 50}px`,
                               top: `${table.positionY || 50}px`,
+                              transform: `scale(${zoom})`,
+                              transformOrigin: 'top left',
                             }}
                             onClick={(e) => {
                               e.stopPropagation()
