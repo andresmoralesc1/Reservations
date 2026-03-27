@@ -27,9 +27,10 @@ export default function AdminLayout({
   const navItems = [
     { href: "/admin", label: "Dashboard", shortcut: "1" },
     { href: "/admin/floor-plan", label: "Floor Plan", shortcut: "2" },
-    { href: "/admin/services", label: "Servicios", shortcut: "3" },
-    { href: "/admin/tables", label: "Mesas", shortcut: "4" },
-    { href: "/admin/analytics", label: "Analíticas", shortcut: "5", permission: "view_analytics" as const },
+    { href: "/admin/availability", label: "Disponibilidad", shortcut: "3" },
+    { href: "/admin/services", label: "Servicios", shortcut: "4" },
+    { href: "/admin/tables", label: "Mesas", shortcut: "5" },
+    { href: "/admin/analytics", label: "Analíticas", shortcut: "6", permission: "view_analytics" as const },
   ]
 
   // Filter nav items based on permissions
@@ -49,15 +50,23 @@ export default function AdminLayout({
       handler: () => router.push("/admin/floor-plan"),
     },
     {
-      ...SHORTCUTS.NAV_SERVICES,
+      key: "3",
+      description: "Ir a Disponibilidad",
+      handler: () => router.push("/admin/availability"),
+    },
+    {
+      key: "4",
+      description: "Ir a Servicios",
       handler: () => router.push("/admin/services"),
     },
     {
-      ...SHORTCUTS.NAV_TABLES,
+      key: "5",
+      description: "Ir a Mesas",
       handler: () => router.push("/admin/tables"),
     },
     {
-      ...SHORTCUTS.NAV_ANALYTICS,
+      key: "6",
+      description: "Ir a Analíticas",
       handler: () => {
         if (hasPermission("view_analytics" as const)) {
           router.push("/admin/analytics")
@@ -250,16 +259,20 @@ export default function AdminLayout({
                 <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">2</kbd>
               </div>
               <div className="flex justify-between">
-                <span className="text-neutral-600">Ir a Servicios</span>
+                <span className="text-neutral-600">Ir a Disponibilidad</span>
                 <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">3</kbd>
               </div>
               <div className="flex justify-between">
-                <span className="text-neutral-600">Ir a Mesas</span>
+                <span className="text-neutral-600">Ir a Servicios</span>
                 <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">4</kbd>
               </div>
               <div className="flex justify-between">
-                <span className="text-neutral-600">Ir a Analíticas</span>
+                <span className="text-neutral-600">Ir a Mesas</span>
                 <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">5</kbd>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-600">Ir a Analíticas</span>
+                <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">6</kbd>
               </div>
             </div>
             <div className="mt-4 text-center">
