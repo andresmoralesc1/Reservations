@@ -1,239 +1,119 @@
 import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/lib/db"
-import { reservations, customers, reservationHistory, tables, services } from "@/drizzle/schema"
-import { eq, and, desc } from "drizzle-orm"
-import { generateReservationCode, normalizePhoneNumber } from "@/lib/utils"
-import { availabilityChecker } from "@/services/availability"
-import { servicesAvailability } from "@/lib/availability/services-availability"
+import { createLegacyReservation, getLegacyReservation, cancelLegacyReservation, listLegacyReservations } from "@/lib/services/legacy-service"
 import { z } from "zod"
 
-// Validation schema for creating a reservation
+// Validation schema for creating a reservation (supports both Spanish and English field names)
 const createReservationSchema = z.object({
-  customerName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-  customerPhone: z.string().regex(/^3\d{9}$/, "Número de teléfono inválido"),
-  restaurantId: z.string().uuid("ID de restaurante inválido"),
-  reservationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha inválido (YYYY-MM-DD)"),
-  reservationTime: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido (HH:MM)"),
-  partySize: z.number().int().min(1).max(50),
+  // Spanish fields
+  nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres").optional(),
+  numero: z.string().min(9, "Número de teléfono inválido").optional(),
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha inválido (YYYY-MM-DD)").optional(),
+  hora: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido (HH:MM)").optional(),
+  invitados: z.number().int().min(1).max(50).optional(),
+  idMesa: z.string().optional(),
+  fuente: z.enum(["WEB", "WHATSAPP", "VOICE", "MANUAL", "IVR"]).default("WEB").optional(),
+  restaurante: z.string().optional(),
+  observaciones: z.string().optional(),
+  // English fields (admin modal)
+  customerName: z.string().min(2, "El nombre debe tener al menos 2 caracteres").optional(),
+  customerPhone: z.string().min(9, "Número de teléfono inválido").optional(),
+  reservationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha inválido (YYYY-MM-DD)").optional(),
+  reservationTime: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido (HH:MM)").optional(),
+  partySize: z.number().int().min(1).max(50).optional(),
   specialRequests: z.string().optional(),
-  source: z.enum(["IVR", "WHATSAPP", "MANUAL", "WEB"]).default("IVR"),
-  sessionId: z.string().optional(),
-  confirmImmediately: z.boolean().optional(), // For manual reservations to skip pending queue
-})
+  source: z.enum(["WEB", "WHATSAPP", "VOICE", "MANUAL", "IVR"]).optional(),
+  restaurantId: z.string().optional(),
+  confirmImmediately: z.boolean().optional(),
+}).refine(
+  (data) => {
+    // Either Spanish or English fields must be provided
+    const hasSpanish = data.nombre && data.numero && data.fecha && data.hora && data.invitados
+    const hasEnglish = data.customerName && data.customerPhone && data.reservationDate && data.reservationTime && data.partySize
+    return hasSpanish || hasEnglish
+  },
+  { message: "Se requieren todos los campos (en español o inglés)" }
+)
 
-// GET /api/reservations - List reservations with filters
+// GET /api/reservations - Listar o consultar reservas
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    const status = searchParams.get("status")
-    const date = searchParams.get("date")
-    const restaurantId = searchParams.get("restaurantId")
     const code = searchParams.get("code")
-    const phone = searchParams.get("phone")
+    const restaurant = searchParams.get("restaurante")
+    const date = searchParams.get("fecha")
+    const status = searchParams.get("estatus")
     const limit = parseInt(searchParams.get("limit") || "50")
-    const offset = parseInt(searchParams.get("offset") || "0")
 
-    // If searching by code, return single reservation
+    // Buscar por código
     if (code) {
-      const reservation = await db.query.reservations.findFirst({
-        where: eq(reservations.reservationCode, code),
-        with: {
-          restaurant: true,
-          customer: true,
-        },
-      })
-
-      if (!reservation) {
-        return NextResponse.json({ error: "Reserva no encontrada" }, { status: 404 })
+      const result = await getLegacyReservation(code)
+      if (!result.success) {
+        return NextResponse.json({ error: result.message }, { status: 404 })
       }
-
-      return NextResponse.json({ reservation })
+      return NextResponse.json({ reservation: result.data })
     }
 
-    // Build query conditions
-    const conditions = []
-
-    if (status) {
-      conditions.push(eq(reservations.status, status))
-    }
-    if (date) {
-      conditions.push(eq(reservations.reservationDate, date))
-    }
-    if (restaurantId) {
-      conditions.push(eq(reservations.restaurantId, restaurantId))
-    }
-    if (phone) {
-      conditions.push(eq(reservations.customerPhone, phone))
-    }
-
-    // Query with conditions
-    const resultList = await db.query.reservations.findMany({
-      where: conditions.length > 0 ? and(...conditions) : undefined,
-      with: {
-        restaurant: true,
-        customer: true,
-      },
-      orderBy: [desc(reservations.createdAt)],
-      limit,
-      offset,
+    // Listar con filtros
+    const result = await listLegacyReservations({
+      restaurante: restaurant || undefined,
+      fecha: date || undefined,
+      estatus: status || undefined,
+      limit
     })
+
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 500 })
+    }
 
     return NextResponse.json({
-      reservations: resultList,
-      meta: {
-        limit,
-        offset,
-        count: resultList.length,
-      },
+      reservations: result.data,
+      meta: { count: result.data?.length || 0 }
     })
   } catch (error) {
-    console.error("Error fetching reservations:", error)
-    return NextResponse.json(
-      { error: "Error al obtener reservas" },
-      { status: 500 }
-    )
+    console.error("[API Reservations] Error:", error)
+    return NextResponse.json({ error: "Error al obtener reservas" }, { status: 500 })
   }
 }
 
-// POST /api/reservations - Create a new reservation
+// POST /api/reservations - Crear reserva
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    // Validate input
+    // Validar datos (supports both Spanish and English)
     const validatedData = createReservationSchema.parse(body)
 
-    // Normalize phone number
-    const normalizedPhone = normalizePhoneNumber(validatedData.customerPhone)
+    // Normalize to Spanish format for legacy service
+    const nombre = validatedData.nombre || validatedData.customerName!
+    const numero = validatedData.numero || validatedData.customerPhone!
+    const fecha = validatedData.fecha || validatedData.reservationDate!
+    const hora = validatedData.hora || validatedData.reservationTime!
+    const invitados = validatedData.invitados || validatedData.partySize!
+    const fuente = validatedData.fuente || validatedData.source || "MANUAL"
+    const restaurante = validatedData.restaurante || validatedData.restaurantId || "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+    const observaciones = validatedData.observaciones || validatedData.specialRequests
 
-    // Check if there's an active service for the requested date/time
-    const activeServices = await servicesAvailability.getActiveServicesForDateTime(
-      validatedData.reservationDate,
-      validatedData.reservationTime,
-      validatedData.restaurantId
-    )
+    // Crear reserva usando servicio legacy
+    const result = await createLegacyReservation({
+      nombre,
+      numero,
+      fecha,
+      hora,
+      invitados,
+      idMesa: validatedData.idMesa,
+      fuente,
+      restaurante,
+      observaciones,
+    })
 
-    if (activeServices.length === 0) {
-      return NextResponse.json(
-        {
-          error: "No hay servicio configurado para esta fecha y hora",
-          message: "El restaurante no tiene servicio configurado para la fecha y hora solicitada",
-        },
-        { status: 400 }
-      )
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 500 })
     }
 
-    // Use first matching service (following "first created wins" rule)
-    const activeService = activeServices[0]
-
-    // Check availability with services validation
-    const availability = await servicesAvailability.checkAvailabilityWithServices({
-      restaurantId: validatedData.restaurantId,
-      date: validatedData.reservationDate,
-      time: validatedData.reservationTime,
-      partySize: validatedData.partySize,
-    })
-
-    if (!availability.available) {
-      return NextResponse.json(
-        {
-          error: availability.message || "No hay disponibilidad para la fecha y hora seleccionadas",
-          service: availability.service,
-          alternativeSlots: availability.alternativeSlots,
-        },
-        { status: 409 }
-      )
-    }
-
-    // Find or create customer
-    let customer = await db.query.customers.findFirst({
-      where: eq(customers.phoneNumber, normalizedPhone),
-    })
-
-    if (!customer) {
-      const [newCustomer] = await db
-        .insert(customers)
-        .values({
-          phoneNumber: normalizedPhone,
-          name: validatedData.customerName,
-        })
-        .returning()
-      customer = newCustomer
-    } else if (customer.name !== validatedData.customerName) {
-      // Update customer name if different
-      const [updated] = await db
-        .update(customers)
-        .set({ name: validatedData.customerName })
-        .where(eq(customers.id, customer.id))
-        .returning()
-      customer = updated
-    }
-
-    // Generate reservation code
-    const reservationCode = generateReservationCode()
-
-    // Calculate session expiry (30 minutes from now)
-    const sessionExpiresAt = validatedData.sessionId
-      ? new Date(Date.now() + 30 * 60 * 1000)
-      : null
-
-    // Determine initial status based on source and confirmImmediately flag
-    // Manual reservations can go directly to CONFIRMED
-    const initialStatus = validatedData.confirmImmediately ? "CONFIRMADO" : "PENDIENTE"
-
-    // Create reservation
-    const [newReservation] = await db
-      .insert(reservations)
-      .values({
-        reservationCode,
-        customerId: customer.id,
-        customerName: validatedData.customerName,
-        customerPhone: normalizedPhone,
-        restaurantId: validatedData.restaurantId,
-        reservationDate: validatedData.reservationDate,
-        reservationTime: validatedData.reservationTime,
-        partySize: validatedData.partySize,
-        tableIds: availability.suggestedTables || [],
-        status: initialStatus,
-        source: validatedData.source,
-        sessionId: validatedData.sessionId,
-        sessionExpiresAt,
-        specialRequests: validatedData.specialRequests,
-        confirmedAt: initialStatus === "CONFIRMADO" ? new Date() : undefined,
-        // Service info
-        serviceId: activeService.id,
-        estimatedDurationMinutes: activeService.defaultDurationMinutes,
-      })
-      .returning()
-
-    // Record history
-    await db.insert(reservationHistory).values({
-      reservationId: newReservation.id,
-      oldStatus: null,
-      newStatus: initialStatus,
-      changedBy: validatedData.source,
-      metadata: {
-        source: validatedData.source,
-        sessionId: validatedData.sessionId,
-        serviceId: activeService.id,
-        serviceName: activeService.name,
-        confirmedImmediately: validatedData.confirmImmediately,
-      },
-    })
-
-    // Return the created reservation
-    const result = await db.query.reservations.findFirst({
-      where: eq(reservations.id, newReservation.id),
-      with: {
-        restaurant: true,
-        customer: true,
-      },
-    })
-
-    return NextResponse.json(
-      { reservation: result },
-      { status: 201 }
-    )
+    return NextResponse.json({
+      reservation: result.data,
+      reservationCode: result.reservationCode
+    }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -241,11 +121,30 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+    console.error("[API Reservations] Error creating:", error)
+    return NextResponse.json({ error: "Error al crear reserva" }, { status: 500 })
+  }
+}
 
-    console.error("Error creating reservation:", error)
-    return NextResponse.json(
-      { error: "Error al crear reserva" },
-      { status: 500 }
-    )
+// DELETE /api/reservations/[code] - Cancelar reserva
+export async function DELETE(request: NextRequest, { params }: { params: { code: string } }) {
+  try {
+    const { code } = params
+    const { numero } = await request.json()
+
+    if (!numero) {
+      return NextResponse.json({ error: "Número de teléfono requerido" }, { status: 400 })
+    }
+
+    const result = await cancelLegacyReservation(code, numero)
+
+    if (!result.success) {
+      return NextResponse.json({ error: result.message }, { status: 400 })
+    }
+
+    return NextResponse.json({ success: true, message: result.message })
+  } catch (error) {
+    console.error("[API Reservations] Error canceling:", error)
+    return NextResponse.json({ error: "Error al cancelar reserva" }, { status: 500 })
   }
 }

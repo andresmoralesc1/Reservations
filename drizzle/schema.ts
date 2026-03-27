@@ -208,6 +208,35 @@ export const tableBlocks = pgTable("table_blocks", {
   restaurantDateIdx: index("table_blocks_restaurant_date_idx").on(table.restaurantId, table.blockDate),
 }))
 
+// Voice call logs - Registra llamadas del bot de voz (Pipecat)
+// Reemplaza la tabla "info_llamadas" que n8n usaba en Supabase
+export const callLogs = pgTable("call_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  reservationId: uuid("reservation_id").references(() => reservations.id, { onDelete: "set null" }),
+  restaurantId: uuid("restaurant_id")
+    .notNull()
+    .references(() => restaurants.id, { onDelete: "cascade" }),
+  callerPhone: text("caller_phone").notNull(), // +34 6XX XXX XXX
+  callStartedAt: timestamp("call_started_at").notNull().defaultNow(),
+  callDurationSecs: integer("call_duration_secs"), // Duración en segundos
+  callEndReason: text("call_end_reason"), // 'completed', 'hangup', 'error', 'timeout', 'no_show'
+  callCost: text("call_cost"), // Coste estimado (Cartesia + GPT)
+  callSummary: text("call_summary"), // Resumen generado por GPT al final
+  actionsTaken: jsonb("actions_taken").$type<Array<{
+    action: string
+    success: boolean
+    timestamp: string
+    params?: Record<string, unknown>
+    error?: string
+  }>>().notNull().default([]),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  // Índices para búsquedas eficientes
+  callerPhoneIdx: index("call_logs_caller_phone_idx").on(table.callerPhone),
+  restaurantDateIdx: index("call_logs_restaurant_date_idx").on(table.restaurantId, table.callStartedAt),
+  reservationIdx: index("call_logs_reservation_idx").on(table.reservationId),
+}))
+
 export type Restaurant = typeof restaurants.$inferSelect
 export type NewRestaurant = typeof restaurants.$inferInsert
 export type Table = typeof tables.$inferSelect
@@ -226,6 +255,8 @@ export type WhatsappMessage = typeof whatsappMessages.$inferSelect
 export type NewWhatsappMessage = typeof whatsappMessages.$inferInsert
 export type TableBlock = typeof tableBlocks.$inferSelect
 export type NewTableBlock = typeof tableBlocks.$inferInsert
+export type CallLog = typeof callLogs.$inferSelect
+export type NewCallLog = typeof callLogs.$inferInsert
 
 // Drizzle Relations
 export const restaurantsRelations = relations(restaurants, ({ many }) => ({
@@ -234,6 +265,7 @@ export const restaurantsRelations = relations(restaurants, ({ many }) => ({
   reservations: many(reservations),
   reservationSessions: many(reservationSessions),
   tableBlocks: many(tableBlocks),
+  callLogs: many(callLogs),
 }))
 
 export const servicesRelations = relations(services, ({ one, many }) => ({
@@ -302,6 +334,17 @@ export const tableBlocksRelations = relations(tableBlocks, ({ one }) => ({
   }),
   restaurant: one(restaurants, {
     fields: [tableBlocks.restaurantId],
+    references: [restaurants.id],
+  }),
+}))
+
+export const callLogsRelations = relations(callLogs, ({ one }) => ({
+  reservation: one(reservations, {
+    fields: [callLogs.reservationId],
+    references: [reservations.id],
+  }),
+  restaurant: one(restaurants, {
+    fields: [callLogs.restaurantId],
     references: [restaurants.id],
   }),
 }))

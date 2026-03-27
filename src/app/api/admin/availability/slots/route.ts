@@ -32,13 +32,19 @@ export async function GET(request: NextRequest) {
 
     const partySize = parseInt(partySizeParam)
 
+    console.log('[Slots] restaurantId:', restaurantId, 'date:', date, 'partySize:', partySize)
+
     // Get all tables for this restaurant
     const allTables = await db.query.tables.findMany({
       where: eq(tables.restaurantId, restaurantId),
     })
 
+    console.log('[Slots] allTables:', allTables.length, JSON.stringify(allTables.map(t => ({id: t.id, code: t.tableCode, capacity: t.capacity}))))
+
     // Filter tables that can accommodate the party size
     const suitableTables = allTables.filter((t) => t.capacity >= partySize)
+
+    console.log('[Slots] suitableTables:', suitableTables.length)
 
     if (suitableTables.length === 0) {
       return NextResponse.json({
@@ -54,6 +60,8 @@ export async function GET(request: NextRequest) {
     const dayOfWeek = new Date(date).getDay() // 0 = Sunday, 6 = Saturday
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
 
+    console.log('[Slots] dayOfWeek:', dayOfWeek, 'isWeekend:', isWeekend)
+
     const activeServices = await db.query.services.findMany({
       where: and(
         eq(services.restaurantId, restaurantId),
@@ -64,6 +72,8 @@ export async function GET(request: NextRequest) {
         )
       ),
     })
+
+    console.log('[Slots] activeServices:', activeServices.length, JSON.stringify(activeServices.map(s => ({name: s.name, dayType: s.dayType, start: s.startTime, end: s.endTime}))))
 
     // Filter services by date range if specified
     const validServices = activeServices.filter((service) => {

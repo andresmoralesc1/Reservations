@@ -3,7 +3,8 @@ import postgres from "postgres"
 import * as dotenv from "dotenv"
 import * as schema from "../../drizzle/schema"
 
-dotenv.config()
+// Load .env.local explicitly
+dotenv.config({ path: ".env.local" })
 
 const connectionString =
   process.env.DATABASE_URL || "postgresql://neuralflow@postgres:5432/reservations_db"

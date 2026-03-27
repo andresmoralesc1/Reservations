@@ -14,6 +14,14 @@ const PARTY_SIZES = Array.from({ length: 20 }, (_, i) => ({
   label: `${i + 1} ${i === 0 ? "persona" : "personas"}`,
 }))
 
+const LOCATION_OPTIONS = [
+  { value: "", label: "Cualquier ubicación" },
+  { value: "interior", label: "Interior" },
+  { value: "terraza", label: "Terraza" },
+  { value: "patio", label: "Patio" },
+  { value: "barra", label: "Barra" },
+]
+
 interface CreateReservationModalProps {
   isOpen: boolean
   onClose: () => void
@@ -36,6 +44,7 @@ export function CreateReservationModal({ isOpen, onClose, onSuccess }: CreateRes
     date: "",
     time: "",
     partySize: "",
+    location: "",
     name: "",
     phone: "",
     specialRequests: "",
@@ -48,6 +57,7 @@ export function CreateReservationModal({ isOpen, onClose, onSuccess }: CreateRes
         date: "",
         time: "",
         partySize: "",
+        location: "",
         name: "",
         phone: "",
         specialRequests: "",
@@ -123,7 +133,7 @@ export function CreateReservationModal({ isOpen, onClose, onSuccess }: CreateRes
 
     setLoading(true)
     try {
-      const response = await fetch("/api/reservations", {
+      const response = await fetch("/api/admin/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -133,9 +143,10 @@ export function CreateReservationModal({ isOpen, onClose, onSuccess }: CreateRes
           reservationDate: formData.date,
           reservationTime: formData.time,
           partySize: parseInt(formData.partySize),
+          preferredLocation: formData.location || undefined,
           specialRequests: formData.specialRequests || undefined,
           source: "MANUAL",
-          confirmImmediately: true, // Signal to skip pending queue
+          confirmImmediately: true,
         }),
       })
 
@@ -205,6 +216,15 @@ export function CreateReservationModal({ isOpen, onClose, onSuccess }: CreateRes
               required
             />
           </div>
+
+          {/* Location Preference */}
+          <Select
+            label="Ubicación preferida"
+            options={LOCATION_OPTIONS}
+            value={formData.location}
+            onChange={(e) => handleInputChange("location", e.target.value)}
+            helperText="Opcional: asignaremos la mejor mesa en esta zona"
+          />
 
           {/* Time Slots */}
           {formData.date && (
