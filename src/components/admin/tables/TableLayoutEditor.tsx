@@ -431,31 +431,31 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
 
         {/* Canvas */}
         {selectedSection === 'all' ? (
-          // Sections View - Each section with more space
+          // 2x2 Grid View - Patio spans 2 columns
           <div
             className="flex-1 bg-gray-100 relative p-4 overflow-auto"
             onClick={handleDeselect}
           >
-            <div className="space-y-4">
+            <div className="grid grid-cols-2 auto-rows-fr gap-4 h-full">
               {[
                 { key: 'interior', label: '🏠 Interior', bg: 'bg-blue-50', border: 'border-blue-200' },
                 { key: 'terraza', label: '🌿 Terraza', bg: 'bg-green-50', border: 'border-green-200' },
                 { key: 'patio', label: '☀️ Patio', bg: 'bg-amber-50', border: 'border-amber-200' },
-              ].map((section) => {
+              ].map((section, index) => {
                 // Filter tables - match exact location (case-insensitive)
                 const sectionTables = tables.filter(t => {
                   const loc = (t.location || '').toLowerCase().trim()
                   return loc === section.key
                 })
 
-                // Patio takes full width, others take half
-                const isFullWidth = section.key === 'patio'
+                // Patio (index 2) spans both columns
+                const isPatio = section.key === 'patio'
 
                 return (
                   <div
                     key={section.key}
-                    className={`relative rounded-xl border-2 overflow-hidden ${section.bg} ${section.border} ${isFullWidth ? 'w-full' : 'w-1/2'}`}
-                    style={{ minHeight: 400 }}
+                    className={`relative rounded-xl border-2 overflow-hidden ${section.bg} ${section.border} ${isPatio ? 'col-span-2' : ''}`}
+                    style={{ minHeight: 350 }}
                   >
                     {/* Section Header */}
                     <div className={`px-3 py-2 border-b ${section.border} bg-white/50`}>
@@ -464,7 +464,7 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
                     </div>
 
                     {/* Mini canvas for this section */}
-                    <div className="relative" style={{ height: 'calc(100% - 40px)', minHeight: 350 }}>
+                    <div className="relative" style={{ height: 'calc(100% - 40px)', minHeight: 300 }}>
                       <div
                         className="absolute inset-0"
                         style={{
@@ -493,7 +493,7 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
                             style={{
                               left: `${normX}%`,
                               top: `${normY}%`,
-                              transform: `scale(0.6)`,
+                              transform: `scale(0.5)`,
                               transformOrigin: 'top left',
                             }}
                             onClick={(e) => {
