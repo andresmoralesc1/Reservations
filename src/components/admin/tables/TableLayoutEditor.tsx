@@ -221,9 +221,9 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
     setShowAutoArrangeConfirm(false)
     // Only arrange tables in the current section (or all if 'all' is selected)
     const tablesToArrange = selectedSection === 'all' ? tables : filteredTables
-    const updatedTables = await autoArrangeTables(tablesToArrange, onUpdateTable)
-    onTablesChange(updatedTables)
-  }, [tables, filteredTables, selectedSection, onUpdateTable, autoArrangeTables, onTablesChange])
+    await autoArrangeTables(tablesToArrange, onUpdateTable)
+    // Don't call onTablesChange - each table is updated individually via onUpdateTable
+  }, [tables, filteredTables, selectedSection, onUpdateTable, autoArrangeTables])
 
   const activeTable = filteredTables.find((t) => t.id === dragState.activeId)
 
