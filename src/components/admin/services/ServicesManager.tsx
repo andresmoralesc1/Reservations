@@ -123,29 +123,7 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
   }
 
   const handleDelete = async (service: Service) => {
-    if (!confirm(`¿Estás seguro de desactivar el servicio "${service.name}"?`)) {
-      return
-    }
-
-    try {
-      setDeletingService(service)
-      const response = await fetch(`/api/admin/services/${service.id}`, {
-        method: "DELETE",
-      })
-
-      const data = await response.json()
-
-      if (data.success) {
-        await fetchServices()
-      } else {
-        alert(data.error || "Error al desactivar el servicio")
-      }
-    } catch (err) {
-      console.error("Error deleting service:", err)
-      alert("Error de conexión al desactivar el servicio")
-    } finally {
-      setDeletingService(null)
-    }
+    openDeleteConfirm(service)
   }
 
   const handleToggleActive = async (service: Service) => {
@@ -192,21 +170,47 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
 
     try {
       setDeletingService(serviceToDelete)
+      console.log(`Attempting to delete service: ${serviceToDelete.name}`)
+
       const response = await fetch(`/api/admin/services/${serviceToDelete.id}?permanent=true`, {
         method: "DELETE",
       })
 
       const data = await response.json()
+      console.log("Delete response:", data)
 
       if (data.success) {
+        alert(`✅ Servicio "${serviceToDelete.name}" eliminado permanentemente`)
         await fetchServices()
         closeDeleteConfirm()
       } else {
-        alert(data.error || "Error al eliminar el servicio")
+        // Si tiene reservas asociadas, ofrecer desactivar
+        if (data.error?.includes("reservas asociadas") || data.error?.includes("no se puede eliminar")) {
+          const deactivate = confirm(
+            `⚠️ ${data.error}\n\n` +
+            `¿Quieres desactivar el servicio en su lugar? (Se mantendrá en la BD pero oculto)`
+          )
+          if (deactivate) {
+            console.log("Deactivating service instead of deleting")
+            const deactivateResponse = await fetch(`/api/admin/services/${serviceToDelete.id}`, {
+              method: "DELETE",
+            })
+            const deactivateData = await deactivateResponse.json()
+            if (deactivateData.success) {
+              alert(`✅ Servicio "${serviceToDelete.name}" desactivado`)
+              await fetchServices()
+              closeDeleteConfirm()
+            } else {
+              alert(`❌ Error: ${deactivateData.error || "No se pudo desactivar el servicio"}`)
+            }
+          }
+        } else {
+          alert(`❌ Error: ${data.error || "No se pudo eliminar el servicio"}`)
+        }
       }
     } catch (err) {
       console.error("Error permanently deleting service:", err)
-      alert("Error de conexión al eliminar el servicio")
+      alert(`❌ Error de conexión: ${err instanceof Error ? err.message : "Error desconocido"}`)
     } finally {
       setDeletingService(null)
     }
@@ -455,8 +459,19 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
         <div className="space-y-4">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-sm text-red-800 font-medium">
-              ⚠️ Esta acción es irreversible
+              ⚠️ Esta acción eliminará permanentemente el servicio
             </p>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-800 font-medium mb-2">
+              📋 Información del servicio:
+            </p>
+            <div className="text-sm text-neutral-700 space-y-1">
+              <p><strong>Nombre:</strong> {serviceToDelete?.name}</p>
+              <p><strong>Tipo:</strong> {serviceToDelete ? SERVICE_TYPE_LABELS[serviceToDelete.serviceType] : ''}</p>
+              <p><strong>Horario:</strong> {serviceToDelete?.startTime} - {serviceToDelete?.endTime}</p>
+            </div>
           </div>
 
           <p className="text-neutral-700">
@@ -464,7 +479,7 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
           </p>
 
           <p className="text-sm text-neutral-500">
-            Esta acción eliminará permanentemente el servicio. Si el servicio tiene reservas asociadas, no se podrá eliminar.
+            💡 Si el servicio tiene reservas asociadas, el sistema te lo indicará y podrás desactivarlo en su lugar.
           </p>
 
           {serviceToDelete && (
