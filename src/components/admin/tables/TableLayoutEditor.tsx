@@ -288,7 +288,7 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
       />
 
       {/* Canvas Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-auto">
         {/* Main Toolbar - Actions and Controls */}
         <div className="bg-white border-b border-gray-200 px-2 sm:px-4 py-2 sm:py-3">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
@@ -433,7 +433,7 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
         {selectedSection === 'all' ? (
           // Full page sections - each with large canvas
           <div
-            className="flex-1 bg-gray-100 relative"
+            className="flex-1 bg-gray-100 overflow-y-auto"
             onClick={handleDeselect}
           >
             <div className="p-4 space-y-4">
