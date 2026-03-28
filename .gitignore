@@ -44,3 +44,16 @@ drizzle/migrations/*.sql
 *.swp
 *.swo
 .env.local
+
+# ──── Agregado en limpieza ────
+
+# Archivos de configuración de agentes (pueden contener datos sensibles)
+Agente de reservasRest1*.json
+
+# Vercel deployment
+.vercel/
+
+# Environment local (adicionales)
+.env.development.local
+.env.test.local
+.env.production.local

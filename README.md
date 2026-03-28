@@ -300,6 +300,28 @@ npm run dev
 
 Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
+### Linux / macOS
+
+```bash
+# Primera vez
+chmod +x scripts/*.sh
+./scripts/setup.sh
+
+# Iniciar
+./scripts/start.sh
+
+# Detener
+./scripts/stop.sh
+```
+
+### Windows
+
+```batch
+# Ejecutar INICIAR.bat y seguir las instrucciones del menú
+# O ejecutar directamente:
+run-setup.bat    # Configuración inicial + inicio
+```
+
 ---
 
 ## 🏗️ Arquitectura
@@ -471,6 +493,21 @@ IVR_PHONE_NUMBER=+573001234567
 | `reservation_history` | Auditoría de cambios |
 | `ivr_sessions` | Sesiones de conversación IVR |
 | `whatsapp_messages` | Registro de mensajes |
+
+---
+
+## 📊 Estado del Proyecto
+
+| Módulo | Estado |
+|---|---|
+| Dashboard Admin (6 secciones) | ✅ Completo |
+| Voice Bot IA (Pipecat + Cartesia + OpenAI) | ✅ Desplegado |
+| 30 mesas configuradas (124 pax) | ✅ Operativo |
+| Base de datos PostgreSQL (Supabase) | ✅ Conectada |
+| Autenticación Admin | ✅ Funcional |
+| Integración Telnyx telefónica | 🔄 En desarrollo |
+| Integración WhatsApp (Telnyx) | 🔄 En desarrollo |
+| Endpoint check-availability | ✅ Operativo |
 
 ---
 
