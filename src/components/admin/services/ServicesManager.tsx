@@ -239,7 +239,32 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
     return `${hours}:${minutes}`
   }
 
-  console.log("ServicesManager state:", { loading, error, servicesCount: services.length })
+  // Aplicar filtros a los servicios
+  const filteredServices = services.filter((service) => {
+    // Filtro por estado (activo/inactivo)
+    if (filters.isActive !== "all") {
+      if (filters.isActive === "true" && !service.isActive) return false
+      if (filters.isActive === "false" && service.isActive) return false
+    }
+
+    // Filtro por tipo de servicio
+    if (filters.serviceType !== "all") {
+      if (service.serviceType !== filters.serviceType) return false
+    }
+
+    // Filtro por temporada
+    if (filters.season !== "all") {
+      if (filters.season === "todos") {
+        // "todos" es un valor especial, mostrar todos
+        return true
+      }
+      if (service.season !== filters.season) return false
+    }
+
+    return true
+  })
+
+  console.log("ServicesManager state:", { loading, error, servicesCount: services.length, filteredCount: filteredServices.length, filters })
 
   if (loading) {
     return (
@@ -327,14 +352,16 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
 
         {/* Services List */}
         <div className="divide-y divide-neutral-200">
-          {services.length === 0 ? (
+          {filteredServices.length === 0 ? (
             <div className="px-6 py-12 text-center">
               <p className="text-neutral-500">
-                No hay servicios configurados. Crea tu primer servicio para empezar.
+                {services.length === 0
+                  ? "No hay servicios configurados. Crea tu primer servicio para empezar."
+                  : "No hay servicios que coincidan con los filtros seleccionados."}
               </p>
             </div>
           ) : (
-            services.map((service) => (
+            filteredServices.map((service) => (
               <div
                 key={service.id}
                 className="px-6 py-4 hover:bg-neutral-50 transition-colors"
