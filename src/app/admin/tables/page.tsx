@@ -173,9 +173,10 @@ export default function TablesPage() {
 
       setTables((prev) => prev.filter((t) => t.id !== id))
       toast("Mesa eliminada correctamente", "success")
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error deleting table:", error)
-      toast(error.message || "Error al eliminar la mesa", "error")
+      const errorMessage = error instanceof Error ? error.message : "Error al eliminar la mesa"
+      toast(errorMessage, "error")
       throw error
     }
   }

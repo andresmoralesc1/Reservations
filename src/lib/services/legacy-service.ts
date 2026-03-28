@@ -9,21 +9,9 @@ import { db } from "@/lib/db"
 import { reservations, tables, customers } from "@/drizzle/schema"
 import { eq, and, desc, sql, or, gte, asc } from "drizzle-orm"
 import { generateReservationCode } from "@/lib/utils"
-
-// ============ Mapeo de estatus ============
-const STATUS_MAP: Record<string, string> = {
-  "PENDIENTE": "PENDING",
-  "CONFIRMADO": "CONFIRMED",
-  "CANCELADO": "CANCELLED",
-  "NO_SHOW": "NOSHOW",
-}
-
-const STATUS_REVERSE_MAP: Record<string, string> = {
-  "PENDING": "PENDIENTE",
-  "CONFIRMED": "CONFIRMADO",
-  "CANCELLED": "CANCELADO",
-  "NOSHOW": "NO_SHOW",
-}
+import { servicesAvailability } from "@/lib/availability/services-availability"
+import { config } from "@/lib/config/env"
+import { STATUS_MAP, STATUS_REVERSE_MAP } from "@/types/reservation"
 
 /**
  * Crear una nueva reserva (usando nuevo schema)
@@ -283,7 +271,7 @@ export async function logLegacyCall(params: {
 }
 
 /**
- * Verificar disponibilidad (usando nuevo schema)
+ * Verificar disponibilidad (usando servicesAvailability unificado)
  */
 export async function checkLegacyAvailability(params: {
   fecha: string
@@ -292,46 +280,21 @@ export async function checkLegacyAvailability(params: {
   restaurante?: string
 }) {
   try {
-    // Buscar mesas con capacidad suficiente
-    const allTables = await db.query.tables.findMany({
-      where: eq(tables.restaurantId, params.restaurante || "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+    // Usar el servicio unificado de disponibilidad
+    const result = await servicesAvailability.checkAvailabilityWithServices({
+      date: params.fecha,
+      time: params.hora,
+      partySize: params.invitados,
+      restaurantId: params.restaurante || "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
     })
-
-    const suitableTables = allTables.filter(t => t.capacity >= params.invitados)
-
-    // Buscar reservas confirmadas que se solapan
-    const startTime = params.hora
-    const endTime = addMinutes(params.hora, 90) // 90 min duración
-
-    const conflictingReservations = await db.query.reservations.findMany({
-      where: and(
-        eq(reservations.reservationDate, params.fecha),
-        eq(reservations.status, "CONFIRMADO"),
-        // Chequear solapamiento de horarios
-        sql`${reservations.reservationTime} < ${endTime}::time AND ${reservations.reservationTime} + interval '2 hours' > ${startTime}::time`
-      )
-    })
-
-    // IDs de mesas ocupadas
-    const occupiedTableIds = new Set<string>()
-    for (const res of conflictingReservations) {
-      if (res.tableIds && Array.isArray(res.tableIds)) {
-        for (const tableId of res.tableIds) {
-          occupiedTableIds.add(tableId)
-        }
-      }
-    }
-
-    // Filtrar mesas disponibles
-    const availableTables = suitableTables.filter(t => !occupiedTableIds.has(t.id))
 
     return {
       success: true,
-      available: availableTables.length > 0,
-      message: availableTables.length > 0
+      available: result.available,
+      message: result.message || (result.available
         ? `Tenemos disponibilidad para ${params.invitados} personas el ${params.fecha} a las ${params.hora}`
-        : `No tenemos disponibilidad para ${params.invitados} personas el ${params.fecha} a las ${params.hora}`,
-      availableTables: availableTables
+        : `No tenemos disponibilidad para ${params.invitados} personas el ${params.fecha} a las ${params.hora}`),
+      availableTables: result.availableTables
     }
   } catch (error) {
     console.error("[Legacy Service] Error checking availability:", error)
@@ -340,12 +303,4 @@ export async function checkLegacyAvailability(params: {
       error: "Error al verificar disponibilidad"
     }
   }
-}
-
-// Helper function para sumar minutos a una hora
-function addMinutes(time: string, minutes: number): string {
-  const [hours, mins] = time.split(":").map(Number)
-  const date = new Date()
-  date.setHours(hours, mins + minutes)
-  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`
 }

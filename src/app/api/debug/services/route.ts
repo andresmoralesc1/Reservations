@@ -1,23 +1,25 @@
 import { db } from "@/lib/db"
+import { config } from "@/lib/config/env"
+import { withDebugProtection } from "@/middleware/debug-protection"
 import { services, tables } from "@/drizzle/schema"
 import { eq, sql } from "drizzle-orm"
 
-const RESTAURANT_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+// Restaurant ID from config
 
-export async function GET() {
+export const GET = withDebugProtection(async () => {
   try {
     const [allServices, allTables, tableCount] = await Promise.all([
       db.query.services.findMany({
-        where: eq(services.restaurantId, RESTAURANT_ID),
+        where: eq(services.restaurantId, config.restaurantId),
       }),
       db.query.tables.findMany({
-        where: eq(tables.restaurantId, RESTAURANT_ID),
+        where: eq(tables.restaurantId, config.restaurantId),
       }),
-      db.select({ count: sql<number>`count(*)`.as("count") }).from(tables).where(eq(tables.restaurantId, RESTAURANT_ID)),
+      db.select({ count: sql<number>`count(*)`.as("count") }).from(tables).where(eq(tables.restaurantId, config.restaurantId)),
     ])
 
     return Response.json({
-      restaurantId: RESTAURANT_ID,
+      restaurantId: config.restaurantId,
       tables: {
         count: tableCount[0]?.count || 0,
         tables: allTables.map(t => ({
@@ -43,4 +45,4 @@ export async function GET() {
     console.error("Error:", error)
     return Response.json({ error: String(error) }, { status: 500 })
   }
-}
+})

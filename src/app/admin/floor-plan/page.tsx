@@ -6,6 +6,33 @@ import { FloorPlanView } from "@/components/admin/FloorPlanView"
 import { TableTimeline } from "@/components/admin/TableTimeline"
 import { CalendarIcon } from "@/components/admin/Icons"
 
+// Tipo de tabla para el floor plan (mínimo requerido)
+interface FloorPlanTable {
+  id: string
+  tableCode: string
+  tableNumber: string
+  capacity: number
+  location: string
+  shape: string
+  positionX: number
+  positionY: number
+  width: number
+  height: number
+  diameter?: number
+  rotation?: number
+  status?: "available" | "occupied" | "reserved" | "blocked"
+  reservations: Array<{
+    id: string
+    reservationCode: string
+    customerName: string
+    customerPhone: string
+    reservationTime: string
+    partySize: number
+    status: string
+    estimatedDurationMinutes: number
+  }>
+}
+
 export default function FloorPlanPage() {
   const { user } = useAuth()
   const restaurantId = user?.restaurantId || "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
@@ -13,9 +40,9 @@ export default function FloorPlanPage() {
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   )
-  const [selectedTable, setSelectedTable] = useState<any>(null)
+  const [selectedTable, setSelectedTable] = useState<FloorPlanTable | null>(null)
 
-  const handleTableClick = (table: any) => {
+  const handleTableClick = (table: FloorPlanTable) => {
     setSelectedTable(table)
   }
 

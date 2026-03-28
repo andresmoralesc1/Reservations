@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { config } from "@/lib/config/env"
 import { createLegacyReservation, getLegacyReservation, cancelLegacyReservation, listLegacyReservations } from "@/lib/services/legacy-service"
 import { z } from "zod"
 

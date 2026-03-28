@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { services } from "@/drizzle/schema"
 import { eq, and, desc } from "drizzle-orm"
 import { servicesAvailability } from "@/lib/availability/services-availability"
+import type { Service } from "@/types/service"
 
 /**
  * GET /api/admin/services
@@ -41,6 +42,8 @@ export async function GET(request: NextRequest) {
     console.log("[GET /api/admin/services] Conditions:", conditions.length)
 
     // Try to fetch services
+    // TODO: Drizzle ORM types son complejos de tipar manualmente
+    // Se usa tipo any[] aquí pero se valida en runtime
     let allServices: any[] = []
     try {
       const query = db.query.services.findMany({
@@ -63,17 +66,18 @@ export async function GET(request: NextRequest) {
       if (allServices.length > 0) {
         console.log("[GET /api/admin/services] Sample service:", allServices[0])
       }
-    } catch (dbError: any) {
+    } catch (dbError: unknown) {
       // Table might not exist yet
-      console.error("[GET /api/admin/services] Database error:", dbError.message)
+      const errorMessage = dbError instanceof Error ? dbError.message : 'Unknown error'
+      console.error("[GET /api/admin/services] Database error:", errorMessage)
       allServices = []
     }
 
     return NextResponse.json({
       success: true,
-      data: allServices || [],
+      data: allServices,
       meta: {
-        total: allServices?.length || 0,
+        total: allServices.length,
       },
     })
   } catch (error) {
@@ -81,9 +85,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: "Error al obtener los servicios",
-        data: [],
-        meta: { total: 0 },
+        error: error instanceof Error ? error.message : 'Failed to fetch services',
       },
       { status: 500 }
     )

@@ -1,7 +1,8 @@
 import { db } from "@/lib/db"
+import { withDebugProtection } from "@/middleware/debug-protection"
 import { tables } from "@/drizzle/schema"
 
-export async function GET() {
+export const GET = withDebugProtection(async () => {
   try {
     const allTables = await db.query.tables.findMany({
       orderBy: (tables, { asc }) => [asc(tables.tableNumber)],
@@ -22,4 +23,4 @@ export async function GET() {
     console.error("Error:", error)
     return Response.json({ error: String(error) }, { status: 500 })
   }
-}
+})

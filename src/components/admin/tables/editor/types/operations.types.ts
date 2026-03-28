@@ -24,7 +24,8 @@ export interface CreateTableOptions {
 export interface UpdateTableOptions {
   tableNumber?: string
   capacity?: number
-  location?: "patio" | "interior" | "terraza" | "barra" | null
+  // Más flexible para compatibilidad con Drizzle ORM (string | null)
+  location?: string | null | undefined
   isAccessible?: boolean
   shape?: string | null
   positionX?: number

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { config } from "@/lib/config/env"
 import { db } from "@/lib/db"
 import { restaurants } from "@/drizzle/schema"
 import { eq } from "drizzle-orm"

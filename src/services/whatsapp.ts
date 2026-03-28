@@ -230,7 +230,14 @@ export class WhatsAppService {
   /**
    * Create confirmation message with buttons
    */
-  private createConfirmationMessage(reservation: any): { text: string; buttons?: Array<{ id: string; text: string }> } {
+  private createConfirmationMessage(reservation: {
+    customerName: string
+    reservationDate: string
+    reservationTime: string
+    partySize: number
+    reservationCode: string
+    restaurant?: { name: string }
+  }): { text: string; buttons?: Array<{ id: string; text: string }> } {
     const parts = [
       "Reserva Confirmada",
       "",
@@ -239,7 +246,7 @@ export class WhatsAppService {
       "Fecha: " + this.formatDate(reservation.reservationDate),
       "Hora: " + reservation.reservationTime,
       "Personas: " + reservation.partySize,
-      "Lugar: " + ((reservation as any).restaurant?.name || "Nuestro restaurante"),
+      "Lugar: " + (reservation.restaurant?.name || "Nuestro restaurante"),
       "",
       "Codigo: " + reservation.reservationCode,
       "",

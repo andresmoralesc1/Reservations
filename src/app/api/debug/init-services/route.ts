@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server"
+import { withDebugProtection } from "@/middleware/debug-protection"
 import { db } from "@/lib/db"
 import { services } from "@/drizzle/schema"
+import { config } from "@/lib/config/env"
 
-const RESTAURANT_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-
-export async function GET() {
+export const GET = withDebugProtection(async () => {
   try {
     // Check if services already exist
     const existing = await db.query.services.findMany({
       columns: { id: true },
-      where: (services, { eq }) => eq(services.restaurantId, RESTAURANT_ID),
+      where: (services, { eq }) => eq(services.restaurantId, config.restaurantId),
     })
 
     if (existing.length > 0) {
@@ -22,7 +22,7 @@ export async function GET() {
     const servicesToCreate = [
       // Comida Invierno (Octubre - Abril, Lunes-Viernes)
       {
-        restaurantId: RESTAURANT_ID,
+        restaurantId: config.restaurantId,
         name: "Comida Invierno",
         description: "Servicio de comida temporada invierno (lunes a viernes)",
         serviceType: "comida",
@@ -42,7 +42,7 @@ export async function GET() {
       },
       // Cena (Lunes - Viernes, todo el año)
       {
-        restaurantId: RESTAURANT_ID,
+        restaurantId: config.restaurantId,
         name: "Cena",
         description: "Servicio de cena (lunes a viernes)",
         serviceType: "cena",
@@ -76,4 +76,4 @@ export async function GET() {
     console.error("Error:", error)
     return NextResponse.json({ error: String(error) }, { status: 500 })
   }
-}
+})

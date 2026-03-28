@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
+import { config } from "@/lib/config/env"
 import { z } from "zod"
-import { checkAvailability } from "@/services/availability-service"
+import { servicesAvailability } from "@/lib/availability/services-availability"
 
 // Validation schema
 const checkAvailabilitySchema = z.object({
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
     const validatedData = checkAvailabilitySchema.parse(normalizedBody)
 
     // Use default restaurant ID if not provided
-    const restaurantId = validatedData.restaurant_id || DEFAULT_RESTAURANT_ID
+    const restaurantId = validatedData.restaurant_id || DEFAULT_RESTAURANT_ID || config.restaurantId
 
     // Validate that date is in the future
     const requestedDate = new Date(validatedData.date)
@@ -64,8 +65,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check availability using the service
-    const result = await checkAvailability({
+    // Check availability using the unified service
+    const result = await servicesAvailability.checkAvailabilityWithServices({
       restaurantId,
       date: validatedData.date,
       time: validatedData.time,

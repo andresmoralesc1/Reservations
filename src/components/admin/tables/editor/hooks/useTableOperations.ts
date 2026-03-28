@@ -275,7 +275,7 @@ export function useTableOperations(
   // Duplicate table from template
   const duplicateTableFromTemplate = useCallback(
     async (
-      template: any,
+      template: Table,
       snapAndConstrainToCanvas: (x: number, y: number, size: number) => { x: number; y: number },
       location: "patio" | "interior" | "terraza" | "barra" = "interior"
     ): Promise<TableOperationResult> => {
@@ -284,7 +284,20 @@ export function useTableOperations(
       const position = snapAndConstrainToCanvas(50, 50, 100)
 
       // Create from template with current section location
-      const options = createTemplateOptions(template, restaurantId, newTableNumber, position, location)
+      // Extract required fields handling null values from Drizzle types
+      const options = createTemplateOptions(
+        {
+          capacity: template.capacity,
+          shape: template.shape || 'rectangular',
+          width: template.width || undefined,
+          height: template.height || undefined,
+          diameter: template.diameter || undefined,
+        },
+        restaurantId,
+        newTableNumber,
+        position,
+        location
+      )
       return createTable(options)
     },
     [tables, createTable, restaurantId]

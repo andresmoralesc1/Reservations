@@ -1,8 +1,9 @@
 import { db } from "@/lib/db"
+import { withDebugProtection } from "@/middleware/debug-protection"
 import { reservations } from "@/drizzle/schema"
 import { desc } from "drizzle-orm"
 
-export async function GET() {
+export const GET = withDebugProtection(async () => {
   try {
     const allReservations = await db.query.reservations.findMany({
       orderBy: [desc(reservations.createdAt)],
@@ -26,4 +27,4 @@ export async function GET() {
     console.error("Error:", error)
     return Response.json({ error: String(error) }, { status: 500 })
   }
-}
+})

@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
+import { withDebugProtection } from "@/middleware/debug-protection"
 import { db } from "@/lib/db"
 import { tables } from "@/drizzle/schema"
+import { config } from "@/lib/config/env"
 
-const RESTAURANT_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-
-export async function POST() {
+export const POST = withDebugProtection(async () => {
   try {
     // Check if tables already exist
     const existing = await db.query.tables.findMany({
-      where: (tables, { eq }) => eq(tables.restaurantId, RESTAURANT_ID),
+      where: (tables, { eq }) => eq(tables.restaurantId, config.restaurantId),
     })
 
     if (existing.length > 0) {
@@ -28,7 +28,7 @@ export async function POST() {
     for (let i = 1; i <= 10; i++) {
       const capacity = i <= 6 ? 2 : 4
       tablesToCreate.push({
-        restaurantId: RESTAURANT_ID,
+        restaurantId: config.restaurantId,
         tableNumber: `I-${i}`,
         tableCode: `I-${i}`,
         capacity,
@@ -46,7 +46,7 @@ export async function POST() {
     for (let i = 1; i <= 10; i++) {
       const capacity = i <= 4 ? 2 : i <= 8 ? 4 : 6
       tablesToCreate.push({
-        restaurantId: RESTAURANT_ID,
+        restaurantId: config.restaurantId,
         tableNumber: `T-${i}`,
         tableCode: `T-${i}`,
         capacity,
@@ -64,7 +64,7 @@ export async function POST() {
     for (let i = 1; i <= 10; i++) {
       const capacity = i <= 3 ? 4 : i <= 7 ? 6 : 8
       tablesToCreate.push({
-        restaurantId: RESTAURANT_ID,
+        restaurantId: config.restaurantId,
         tableNumber: `P-${i}`,
         tableCode: `P-${i}`,
         capacity,
@@ -97,4 +97,4 @@ export async function POST() {
       { status: 500 }
     )
   }
-}
+})

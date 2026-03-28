@@ -36,13 +36,14 @@ export async function GET() {
         createdAt: s.createdAt,
       })),
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[DEBUG] Error:", error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
       {
         success: false,
-        error: error.message,
-        details: error.toString(),
+        error: errorMessage,
+        details: error?.toString(),
       },
       { status: 500 }
     )
