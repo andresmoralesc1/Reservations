@@ -10,96 +10,120 @@ export default function TerminosPage() {
       <main className="min-h-screen bg-cream pt-32 pb-16">
         <Container>
           <div className="max-w-3xl mx-auto">
-            <h1 className="font-serif text-4xl font-bold text-posit-red mb-4">
-              Términos y Condiciones
+            <h1 className="font-display text-4xl uppercase tracking-tight mb-8">
+              Términos de Uso
             </h1>
 
-            <p className="text-sm text-neutral-500 mb-8">
-              Última actualización: Marzo 2026
-            </p>
-
-            <div className="bg-white rounded-xl shadow-sm p-8 md:p-12 space-y-8">
-              {/* 1. CONDICIONES DEL SERVICIO */}
+            <div className="prose prose-neutral max-w-none space-y-6">
               <section>
-                <h2 className="font-bold text-xl mb-3">1. CONDICIONES DEL SERVICIO DE RESERVAS</h2>
-                <div className="text-neutral-700 leading-relaxed space-y-2">
-                  <ul className="list-disc list-inside space-y-2 ml-4">
-                    <li>La reserva no supone pago anticipado</li>
-                    <li>La reserva se confirma automáticamente o tras aprobación del restaurante</li>
-                  </ul>
-                </div>
+                <h2 className="font-display text-xl uppercase mb-3">1. Aceptación de los términos</h2>
+                <p className="font-serif text-neutral-600">
+                  Al utilizar el sistema de reservas de El Posit, aceptas estos términos y condiciones. Si no estás
+                  de acuerdo con alguno de estos términos, por favor no utilices nuestro servicio.
+                </p>
               </section>
 
-              {/* 2. POLÍTICA DE CANCELACIÓN */}
               <section>
-                <h2 className="font-bold text-xl mb-3">2. POLÍTICA DE CANCELACIÓN</h2>
-                <div className="text-neutral-700 leading-relaxed space-y-2">
-                  <ul className="list-disc list-inside space-y-2 ml-4">
-                    <li>Cancelar con mínimo <strong>4 horas de antelación</strong>: sin consecuencias</li>
-                    <li>Cancelar con menos de 4 horas: se registra como cancelación tardía</li>
-                    <li>No presentarse (no-show): se registra en el historial del cliente</li>
-                  </ul>
-                </div>
+                <h2 className="font-display text-xl uppercase mb-3">2. Descripción del servicio</h2>
+                <p className="font-serif text-neutral-600">
+                  El Posit proporciona un sistema de reservas en línea que permite a los clientes:
+                </p>
+                <ul className="list-disc list-inside font-serif text-neutral-600 space-y-1">
+                  <li>Realizar reservas en nuestros restaurantes</li>
+                  <li>Recibir confirmaciones por WhatsApp</li>
+                  <li>Gestionar y modificar sus reservas</li>
+                  <li>Recibir recordatorios automáticos</li>
+                </ul>
               </section>
 
-              {/* 3. NO-SHOWS */}
               <section>
-                <h2 className="font-bold text-xl mb-3">3. NO-SHOWS</h2>
-                <div className="text-neutral-700 leading-relaxed space-y-2">
-                  <p>Para mantener la calidad del servicio y evitar desperdicios:</p>
-                  <ul className="list-disc list-inside space-y-2 ml-4">
-                    <li>Tras <strong>3 no-shows</strong> registrados, el sistema podrá requerir confirmación adicional para futuras reservas</li>
-                    <li>El restaurante se reserva el derecho de rechazar reservas de clientes con historial de no-shows recurrente</li>
-                  </ul>
-                </div>
+                <h2 className="font-display text-xl uppercase mb-3">3. Responsabilidades del usuario</h2>
+                <p className="font-serif text-neutral-600">
+                  Al usar nuestro servicio, el usuario se compromete a:
+                </p>
+                <ul className="list-disc list-inside font-serif text-neutral-600 space-y-1">
+                  <li>Proporcionar información veraz y actualizada</li>
+                  <li>Presentarse en el restaurante en la hora reservada</li>
+                  <li>Notificar con antelación cualquier cancelación o modificación</li>
+                  <li>Respetar las normas del restaurante</li>
+                  <li>No realizar reservas falsas o fraudulentas</li>
+                </ul>
               </section>
 
-              {/* 4. MODIFICACIONES */}
               <section>
-                <h2 className="font-bold text-xl mb-3">4. MODIFICACIONES</h2>
-                <div className="text-neutral-700 leading-relaxed space-y-2">
-                  <ul className="list-disc list-inside space-y-2 ml-4">
-                    <li>Las reservas pueden modificarse hasta <strong>2 horas antes</strong> de la hora reservada</li>
-                    <li>Cambios de fecha/hora están sujetos a disponibilidad</li>
-                  </ul>
-                </div>
+                <h2 className="font-display text-xl uppercase mb-3">4. Política de reservas</h2>
+                <p className="font-serif text-neutral-600">
+                  <strong className="text-neutral-900">Confirmación:</strong> Las reservas están sujetas a confirmación por parte del restaurante.
+                </p>
+                <p className="font-serif text-neutral-600">
+                  <strong className="text-neutral-900">Cancelaciones:</strong> Se recomienda cancelar con al menos 24 horas de antelación.
+                </p>
+                <p className="font-serif text-neutral-600">
+                  <strong className="text-neutral-900">No-show:</strong> Los clientes que no se presenten sin cancelar podrán ser registrados en nuestro sistema.
+                </p>
+                <p className="font-serif text-neutral-600">
+                  <strong className="text-neutral-900">Capacidad:</strong> El restaurante se reserva el derecho de limitar el tamaño de grupos sin aviso previo.
+                </p>
               </section>
 
-              {/* 5. LIMITACIÓN DE RESPONSABILIDAD */}
               <section>
-                <h2 className="font-bold text-xl mb-3">5. LIMITACIÓN DE RESPONSABILIDAD</h2>
-                <div className="text-neutral-700 leading-relaxed space-y-2">
-                  <ul className="list-disc list-inside space-y-2 ml-4">
-                    <li>El sistema de reservas es una herramienta de gestión y no constituye un contrato vinculante de servicio</li>
-                    <li>El restaurante se reserva el derecho de gestionar el aforo según necesidades operativas</li>
-                  </ul>
-                </div>
+                <h2 className="font-display text-xl uppercase mb-3">5. Propiedad intelectual</h2>
+                <p className="font-serif text-neutral-600">
+                  Todos los elementos de este sitio web (diseño, texto, gráficos, logos, imágenes, software) son propiedad
+                  de El Posit o de sus proveedores de contenido y están protegidos por las leyes de propiedad intelectual.
+                </p>
               </section>
 
-              {/* 6. CONTACTO */}
               <section>
-                <h2 className="font-bold text-xl mb-3">6. CONTACTO</h2>
-                <div className="text-neutral-700 leading-relaxed">
-                  <p>Para cualquier pregunta sobre estos términos, contáctanos en:</p>
-                  <p className="mt-2">
-                    Email: <a href="mailto:legal@elposit.com" className="text-posit-red hover:underline">legal@elposit.com</a><br />
-                    Teléfono: +34 977 00 00 00
-                  </p>
-                </div>
+                <h2 className="font-display text-xl uppercase mb-3">6. Limitación de responsabilidad</h2>
+                <p className="font-serif text-neutral-600">
+                  El Posit no se hace responsable por:
+                </p>
+                <ul className="list-disc list-inside font-serif text-neutral-600 space-y-1">
+                  <li>Daños directos o indirectos derivados del uso del servicio</li>
+                  <li>Interrupciones del servicio por causas técnicas</li>
+                  <li>Errores o interrupciones en el sistema de reservas</li>
+                  <li>El contenido de sitios web enlazados</li>
+                </ul>
               </section>
 
-              {/* 7. JURISDICCIÓN */}
               <section>
-                <h2 className="font-bold text-xl mb-3">7. LEY APLICABLE Y JURISDICCIÓN</h2>
-                <div className="text-neutral-700 leading-relaxed">
-                  <p>Estos términos se rigen por las leyes españolas. Cualquier controversia se someterá a los juzgados y tribunales de Tarragona, España.</p>
-                </div>
+                <h2 className="font-display text-xl uppercase mb-3">7. Modificaciones del servicio</h2>
+                <p className="font-serif text-neutral-600">
+                  El Posit se reserva el derecho de modificar, suspender o discontinuar cualquier aspecto del servicio
+                  en cualquier momento, sin previo aviso.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="font-display text-xl uppercase mb-3">8. Ley aplicable y jurisdicción</h2>
+                <p className="font-serif text-neutral-600">
+                  Estos términos se rigen por las leyes españolas. Cualquier controversia se someterá a los juzgados y
+                  tribunales de Tarragona, España.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="font-display text-xl uppercase mb-3">9. Contacto</h2>
+                <p className="font-serif text-neutral-600">
+                  Para cualquier pregunta sobre estos términos, contáctanos en:
+                </p>
+                <p className="font-serif text-neutral-600">
+                  Email: <a href="mailto:legal@elposit.com" className="text-accent underline">legal@elposit.com</a><br />
+                  Teléfono: +34 977 00 00 00
+                </p>
+              </section>
+
+              <section>
+                <p className="font-serif text-sm text-neutral-500">
+                  Última actualización: Febrero 2026
+                </p>
               </section>
             </div>
 
-            <div className="mt-8">
-              <Link href="/" className="inline-flex items-center text-posit-red hover:underline font-medium">
-                ← Volver a inicio
+            <div className="mt-12">
+              <Link href="/">
+                ← Volver al inicio
               </Link>
             </div>
           </div>
