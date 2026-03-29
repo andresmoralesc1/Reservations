@@ -4,9 +4,10 @@
  */
 
 import { Button } from "@/components/Button"
-import { ChevronLeft, ChevronRight, Calendar, Clock } from "lucide-react"
-import { format, addDays, subDays, isToday, isTomorrow, isThisWeek } from "date-fns"
+import { ChevronLeft, ChevronRight, Calendar } from "lucide-react"
+import { format, addDays, isToday, isTomorrow } from "date-fns"
 import { es } from "date-fns/locale"
+import { useRef } from "react"
 
 interface PageHeaderProps {
   dateFilter: string
@@ -16,6 +17,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ dateFilter, onDateChange, onTodayClick }: PageHeaderProps) {
   const currentDate = dateFilter ? new Date(dateFilter + 'T00:00:00') : new Date()
+  const dateInputRef = useRef<HTMLInputElement>(null)
 
   const navigateDay = (days: number) => {
     const newDate = addDays(currentDate, days)
@@ -25,26 +27,17 @@ export function PageHeader({ dateFilter, onDateChange, onTodayClick }: PageHeade
   const goToToday = () => {
     const today = format(new Date(), 'yyyy-MM-dd')
     onDateChange(today)
-    onTodayClick() // This will trigger refresh
+    onTodayClick()
   }
 
-  const getQuickDate = (days: number) => {
-    const date = addDays(new Date(), days)
-    return {
-      label: isToday(date)
-        ? "Hoy"
-        : isTomorrow(date)
-        ? "Mañana"
-        : format(date, 'EEE d', { locale: es }),
-      date: format(date, 'yyyy-MM-dd'),
-      isToday: isToday(date)
-    }
+  const handleDateDisplayClick = () => {
+    dateInputRef.current?.showPicker()
   }
 
   const quickDates = [
-    getQuickDate(0),  // Hoy
-    getQuickDate(1),  // Mañana
-    getQuickDate(2),  // Pasado mañana
+    { label: "Hoy", date: format(new Date(), 'yyyy-MM-dd'), isToday: true },
+    { label: "Mañana", date: format(addDays(new Date(), 1), 'yyyy-MM-dd'), isToday: false },
+    { label: format(addDays(new Date(), 2), 'EEE d', { locale: es }), date: format(addDays(new Date(), 2), 'yyyy-MM-dd'), isToday: false },
   ]
 
   return (
@@ -85,8 +78,12 @@ export function PageHeader({ dateFilter, onDateChange, onTodayClick }: PageHeade
           </Button>
         </div>
 
-        {/* Current date display */}
-        <div className="flex items-center gap-2 px-4 py-2 bg-neutral-100 rounded-lg min-w-[200px]">
+        {/* Clickable date display - opens native calendar */}
+        <button
+          onClick={handleDateDisplayClick}
+          className="flex items-center gap-2 px-4 py-2 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer min-w-[220px]"
+          title="Click para abrir calendario"
+        >
           <Calendar className="w-4 h-4 text-neutral-500" />
           <span className="font-medium text-black">
             {isToday(currentDate)
@@ -96,7 +93,18 @@ export function PageHeader({ dateFilter, onDateChange, onTodayClick }: PageHeade
           <span className="text-neutral-500 text-sm">
             ({format(currentDate, "dd/MM/yy")})
           </span>
-        </div>
+        </button>
+
+        {/* Hidden date input that opens when clicking the display */}
+        <input
+          ref={dateInputRef}
+          type="date"
+          value={dateFilter}
+          onChange={(e) => onDateChange(e.target.value)}
+          max={format(addDays(new Date(), 90), 'yyyy-MM-dd')}
+          className="sr-only"
+          aria-hidden="true"
+        />
 
         {/* Quick date buttons */}
         <div className="flex items-center gap-2">
@@ -106,7 +114,7 @@ export function PageHeader({ dateFilter, onDateChange, onTodayClick }: PageHeade
               onClick={() => onDateChange(date)}
               className={`
                 px-3 py-2 rounded-lg text-sm font-medium transition-all
-                ${isTodayDate
+                ${date === dateFilter
                   ? "bg-black text-white"
                   : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
                 }
@@ -117,17 +125,13 @@ export function PageHeader({ dateFilter, onDateChange, onTodayClick }: PageHeade
           ))}
         </div>
 
-        {/* Date input hidden but accessible */}
-        <div className="flex items-center gap-2 ml-auto">
-          <label className="text-sm text-neutral-500">Ir a fecha:</label>
-          <input
-            type="date"
-            value={dateFilter}
-            onChange={(e) => onDateChange(e.target.value)}
-            max={format(addDays(new Date(), 90), 'yyyy-MM-dd')}
-            className="px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black"
-          />
-        </div>
+        {/* Today button */}
+        <button
+          onClick={goToToday}
+          className="ml-auto px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-neutral-800 transition-colors"
+        >
+          Hoy
+        </button>
       </div>
 
       {/* Keyboard shortcuts hint */}
@@ -140,6 +144,10 @@ export function PageHeader({ dateFilter, onDateChange, onTodayClick }: PageHeade
         <span className="flex items-center gap-1">
           <kbd className="px-1.5 py-0.5 bg-neutral-100 rounded border">H</kbd>
           <span>Hoy</span>
+        </span>
+        <span className="flex items-center gap-1">
+          <kbd className="px-1.5 py-0.5 bg-neutral-100 rounded border">Click</kbd>
+          <span>en fecha para calendario</span>
         </span>
       </div>
     </div>
