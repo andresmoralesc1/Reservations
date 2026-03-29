@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { FloorPlanView } from "@/components/admin/FloorPlanView"
 import { TableTimeline } from "@/components/admin/TableTimeline"
-import { CalendarIcon } from "@/components/admin/Icons"
+import { FloorPlanHeader } from "./FloorPlanHeader"
+import { format, addDays } from "date-fns"
 
 // Tipo de tabla para el floor plan (mínimo requerido)
 interface FloorPlanTable {
@@ -38,9 +39,49 @@ export default function FloorPlanPage() {
   const restaurantId = user?.restaurantId || "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 
   const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
+    format(new Date(), 'yyyy-MM-dd')
   )
   const [selectedTable, setSelectedTable] = useState<FloorPlanTable | null>(null)
+
+  // Keyboard shortcuts for date navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if typing in an input
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return
+      }
+
+      // ESC to close selected table
+      if (e.key === 'Escape' && selectedTable) {
+        setSelectedTable(null)
+        return
+      }
+
+      const currentDate = selectedDate ? new Date(selectedDate + 'T00:00:00') : new Date()
+
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault()
+          setSelectedDate(format(addDays(currentDate, -1), 'yyyy-MM-dd'))
+          break
+        case 'ArrowRight':
+          e.preventDefault()
+          setSelectedDate(format(addDays(currentDate, 1), 'yyyy-MM-dd'))
+          break
+        case 'h':
+        case 'H':
+          e.preventDefault()
+          setSelectedDate(format(new Date(), 'yyyy-MM-dd'))
+          break
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedDate, selectedTable])
 
   const handleTableClick = (table: FloorPlanTable) => {
     setSelectedTable(table)
@@ -52,28 +93,11 @@ export default function FloorPlanPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-3xl uppercase tracking-wider text-black">
-            Floor Plan
-          </h1>
-          <p className="font-sans text-neutral-500 mt-1">
-            Vista visual de mesas y reservas en tiempo real
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-neutral-100 rounded-lg px-4 py-2">
-            <CalendarIcon className="h-5 w-5 text-neutral-500" />
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="bg-transparent border-none outline-none text-neutral-700"
-            />
-          </div>
-        </div>
-      </div>
+      {/* Page Header with date navigation */}
+      <FloorPlanHeader
+        dateFilter={selectedDate}
+        onDateChange={setSelectedDate}
+      />
 
       {/* Floor Plan View */}
       <FloorPlanView

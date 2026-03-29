@@ -1,11 +1,8 @@
 import { drizzle } from "drizzle-orm/postgres-js"
 import postgres from "postgres"
-import * as dotenv from "dotenv"
 import * as schema from "../../drizzle/schema"
 
-// Load .env.local explicitly
-dotenv.config({ path: ".env.local" })
-
+// Next.js automatically loads .env.local from project root
 const connectionString =
   process.env.DATABASE_URL || "postgresql://neuralflow@postgres:5432/reservations_db"
 

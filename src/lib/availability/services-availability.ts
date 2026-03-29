@@ -41,6 +41,7 @@ export interface Table {
   id: string
   restaurantId: string
   tableNumber: string
+  tableCode: string
   capacity: number
   location: string | null
   isAccessible: boolean | null

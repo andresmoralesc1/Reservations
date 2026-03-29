@@ -1,9 +1,9 @@
-import React, { useState, useRef } from "react"
+import React, { useRef } from "react"
 import { useDraggable } from "@dnd-kit/core"
+import { RotateCw } from "lucide-react"
 import { Table } from "@/drizzle/schema"
 import { TableShape } from "./TableShape"
 import { BarStools } from "./BarStool"
-import { RotateCw } from "lucide-react"
 
 interface DraggableTableProps {
   table: Table
@@ -26,10 +26,8 @@ export const DraggableTable: React.FC<DraggableTableProps> = ({
 }) => {
   // Debug log
   React.useEffect(() => {
-    console.log("DraggableTable rendering:", table.tableNumber, { positionX: table.positionX, positionY: table.positionY, shape: table.shape })
-  }, [table])
-
-  const [localRotation, setLocalRotation] = useState(table.rotation || 0)
+    console.log("DraggableTable rendering:", table.tableNumber, { positionX: table.positionX, positionY: table.positionY, shape: table.shape, isSelected, rotation: table.rotation })
+  }, [table, isSelected])
 
   // Reference to the actual table shape element for centering
   const tableRef = useRef<HTMLDivElement>(null)
@@ -48,15 +46,13 @@ export const DraggableTable: React.FC<DraggableTableProps> = ({
     },
   })
 
-  const handleRotate = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    const newRotation = (localRotation + 45) % 360
-    setLocalRotation(newRotation)
-    onRotate?.(newRotation)
-  }
-
   const x = transform?.x ?? 0
   const y = transform?.y ?? 0
+
+  // Match FloorPlanView defaults for consistency
+  const width = table.width ?? (table.shape === "circular" ? 60 : table.shape === "cuadrada" ? 70 : 70)
+  const height = table.height ?? (table.shape === "circular" ? 60 : table.shape === "cuadrada" ? 70 : 80)
+  const diameter = table.diameter ?? 60
 
   // When in DragOverlay (isDragging=true), don't apply scale so it follows cursor correctly
   const positionStyle: React.CSSProperties = {
@@ -65,42 +61,48 @@ export const DraggableTable: React.FC<DraggableTableProps> = ({
     top: `${table.positionY ?? 50}px`, // Default to 50px if null
     transform: isDragging
       ? `translate(${x}px, ${y}px)`
-      : `translate(${x}px, ${y}px) scale(${zoom})`,
+      : `translate(${x}px, ${y}px)`,
     transformOrigin: "center center",
     cursor: isDraggingKit ? "grabbing" : "grab",
     zIndex: isSelected ? 100 : 1,
   }
 
-  const width = table.width ?? (table.shape === "circular" ? 80 : table.shape === "cuadrada" ? 80 : 120)
-  const height = table.height ?? (table.shape === "circular" ? 80 : table.shape === "cuadrada" ? 80 : 80)
-  const diameter = table.diameter ?? 80
-
   return (
     <div
       ref={setNodeRef}
       style={positionStyle}
-      onClick={onSelect}
       className={`transition-opacity ${isDraggingKit ? "opacity-80" : "opacity-100"}`}
     >
       <div
         {...attributes}
         {...listeners}
         className="relative group"
+        onClick={(e) => {
+          // Don't trigger selection if already selected (prevents deselect issues)
+          e.stopPropagation()
+          onSelect()
+        }}
       >
-        {/* Rotate button */}
-        {isSelected && (
+        {/* Rotate button - outside of drag area but positioned above */}
+        {isSelected && onRotate && (
           <button
-            onClick={handleRotate}
-            className="absolute -top-8 -right-8 w-8 h-8 bg-white rounded-full shadow-lg border-2 border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors z-50"
-            title="Rotar mesa"
+            onClick={(e) => {
+              e.stopPropagation()
+              const newRotation = ((table.rotation || 0) + 90) % 360
+              console.log("Rotate button clicked, new rotation:", newRotation, "table:", table.tableNumber)
+              onRotate(newRotation)
+            }}
+            className="absolute -top-12 left-1/2 -translate-x-1/2 bg-amber-600 hover:bg-amber-700 text-white p-2 rounded-full shadow-lg transition-colors z-20 cursor-pointer"
+            title="Rotar 90°"
+            style={{ pointerEvents: 'auto' }}
           >
-            <RotateCw className="w-4 h-4 text-gray-700" />
+            <RotateCw className="w-4 h-4" />
           </button>
         )}
 
         {/* Accessibility indicator */}
         {table.isAccessible && (
-          <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-blue-500 text-white p-1 rounded-full text-xs">
+          <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-blue-500 text-white p-1 rounded-full text-xs pointer-events-none">
             ♿
           </div>
         )}
@@ -112,11 +114,11 @@ export const DraggableTable: React.FC<DraggableTableProps> = ({
             width={width}
             height={height}
             diameter={diameter}
-            rotation={localRotation}
+            rotation={table.rotation || 0}
             isSelected={isSelected}
           >
           {/* Table number */}
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center">
               <div className="text-sm font-bold text-amber-900">{table.tableNumber}</div>
               <div className="text-xs text-amber-700">{table.capacity}p</div>

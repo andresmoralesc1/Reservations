@@ -86,13 +86,20 @@ export function FloorPlanView({ date, restaurantId, onTableClick, selectedTableI
   // Filter tables by selected location
   const locationTables = tables.filter(t => t.location === selectedLocation)
 
-  // Calculate canvas size based on table positions
-  const maxX = locationTables.length > 0
-    ? Math.max(...locationTables.map(t => t.positionX + (t.width || t.diameter || 70)))
-    : 800
-  const maxY = locationTables.length > 0
-    ? Math.max(...locationTables.map(t => t.positionY + (t.height || t.diameter || 50)))
-    : 500
+  // Debug: log positions to compare with editor
+  console.log("FloorPlanView - location:", selectedLocation, "tables:", locationTables.map(t => ({
+    id: t.id,
+    code: t.tableCode,
+    x: t.positionX,
+    y: t.positionY,
+    w: t.width,
+    h: t.height,
+    d: t.diameter
+  })))
+
+  // Fixed canvas size to match TableLayoutEditor - same scale and spacing
+  const CANVAS_WIDTH = 1600
+  const CANVAS_HEIGHT = 1600
 
   if (loading) {
     return (
@@ -204,9 +211,8 @@ export function FloorPlanView({ date, restaurantId, onTableClick, selectedTableI
           <div
             className="bg-white rounded-lg border-2 border-dashed border-neutral-300 mx-auto shadow-inner"
             style={{
-              width: maxX + 100,
-              height: maxY + 100,
-              minHeight: 500,
+              width: CANVAS_WIDTH,
+              height: CANVAS_HEIGHT,
               position: "relative",
             }}
           >
@@ -218,7 +224,7 @@ export function FloorPlanView({ date, restaurantId, onTableClick, selectedTableI
                   linear-gradient(to right, #000 1px, transparent 1px),
                   linear-gradient(to bottom, #000 1px, transparent 1px)
                 `,
-                backgroundSize: "50px 50px",
+                backgroundSize: "20px 20px",
               }}
             />
 
@@ -314,7 +320,7 @@ export function FloorPlanView({ date, restaurantId, onTableClick, selectedTableI
                   style={{
                     position: "absolute",
                     width: table.width || 70,
-                    height: table.height || 50,
+                    height: table.height || 80,
                     left: table.positionX,
                     top: table.positionY,
                     transform: table.rotation ? `rotate(${table.rotation}deg)` : undefined,

@@ -16,7 +16,7 @@ interface TableShapeProps {
 export const TableShape: React.FC<TableShapeProps> = ({
   shape,
   width = 100,
-  height = 80,
+  height = 100,
   diameter = 80,
   rotation,
   isSelected,

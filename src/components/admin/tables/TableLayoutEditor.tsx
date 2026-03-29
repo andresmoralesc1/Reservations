@@ -47,18 +47,18 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
   restaurantId,
 }) => {
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null)
-  const [zoom, setZoom] = useState(0.8)  // Start at 80% to see more content
+  const [zoom, setZoom] = useState(1.0)  // Match FloorPlanView - no zoom by default
   const [showGrid, setShowGrid] = useState(true)
   const [snapToGrid, setSnapToGrid] = useState(true)
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [selectedSection, setSelectedSection] = useState<SectionType>('interior')
   const [showAutoArrangeConfirm, setShowAutoArrangeConfirm] = useState(false)
 
-  // Grid snapping hook
+  // Grid snapping hook - match canvas size with FloorPlanView
   const { snapAndConstrainToCanvas, calculatePosition } = useGridSnapping({
     snapEnabled: snapToGrid,
-    canvasWidth: CANVAS_CONFIG.WIDTH,
-    canvasHeight: CANVAS_CONFIG.HEIGHT,
+    canvasWidth: 1600,
+    canvasHeight: 1600,
   })
 
   // Table operations hook
@@ -417,24 +417,30 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div
-            className="flex-1 overflow-auto bg-gradient-to-br from-gray-100 to-gray-200 relative"
-            onClick={handleDeselect}
-          >
+          <div className="p-6 bg-neutral-100 overflow-auto">
             <div
-              className="relative bg-white shadow-xl mx-auto my-4 rounded-lg"
+              className="bg-white rounded-lg border-2 border-dashed border-neutral-300 mx-auto shadow-inner"
               style={{
-                width: `${CANVAS_CONFIG.WIDTH}px`,
-                height: `${CANVAS_CONFIG.HEIGHT}px`,
-                backgroundImage: showGrid
-                  ? `
-                    linear-gradient(to right, #f3f4f6 1px, transparent 1px),
-                    linear-gradient(to bottom, #f3f4f6 1px, transparent 1px)
-                  `
-                  : "none",
-                backgroundSize: "20px 20px",
+                width: 1600,
+                height: 1600,
+                position: "relative",
               }}
+              onClick={handleDeselect}
             >
+              {/* Grid background */}
+              {showGrid && (
+                <div
+                  className="absolute inset-0 opacity-10 pointer-events-none"
+                  style={{
+                    backgroundImage: `
+                      linear-gradient(to right, #000 1px, transparent 1px),
+                      linear-gradient(to bottom, #000 1px, transparent 1px)
+                    `,
+                    backgroundSize: "20px 20px",
+                  }}
+                />
+              )}
+
               {filteredTables.map((table) => {
                 // Don't render the table if it's being dragged (it's shown in DragOverlay)
                 if (dragState.activeId === table.id) {

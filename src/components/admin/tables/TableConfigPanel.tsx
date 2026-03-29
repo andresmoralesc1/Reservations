@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { Table } from "@/drizzle/schema"
 import { TableShapePreview, TableShapeType } from "./TableShape"
-import { Trash2, Save, X } from "lucide-react"
+import { Trash2, Save, X, RotateCw, RotateCcw } from "lucide-react"
 
 interface TableConfigPanelProps {
   table: Table
@@ -67,7 +67,7 @@ export const TableConfigPanel: React.FC<TableConfigPanelProps> = ({
       case "cuadrada":
         return { width: 80, height: 80, diameter: 80 }
       case "rectangular":
-        return { width: 120, height: 80, diameter: 80 }
+        return { width: 120, height: 100, diameter: 80 }
       case "barra":
         return { width: 200, height: 40, diameter: 80 }
       default:
@@ -163,9 +163,31 @@ export const TableConfigPanel: React.FC<TableConfigPanelProps> = ({
 
       {/* Rotation */}
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
           Rotación: {rotation}°
         </label>
+        {/* Quick rotation buttons */}
+        <div className="flex gap-2 mb-3">
+          <button
+            type="button"
+            onClick={() => setRotation((r) => (r - 90 + 360) % 360)}
+            className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors text-sm font-medium"
+            title="Rotar -90°"
+          >
+            <RotateCcw className="w-4 h-4" />
+            -90°
+          </button>
+          <button
+            type="button"
+            onClick={() => setRotation((r) => (r + 90) % 360)}
+            className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors text-sm font-medium"
+            title="Rotar +90°"
+          >
+            <RotateCw className="w-4 h-4" />
+            +90°
+          </button>
+        </div>
+        {/* Fine adjustment slider */}
         <input
           type="range"
           min="0"
@@ -175,7 +197,7 @@ export const TableConfigPanel: React.FC<TableConfigPanelProps> = ({
           onChange={(e) => setRotation(parseInt(e.target.value))}
           className="w-full"
         />
-        <div className="flex justify-between text-xs text-gray-500">
+        <div className="flex justify-between text-xs text-gray-500 mt-1">
           <span>0°</span>
           <span>90°</span>
           <span>180°</span>

@@ -267,16 +267,14 @@ export default function TablesPage() {
           />
         </>
       ) : (
-        <div className="border border-gray-200 rounded-lg overflow-auto" style={{ height: "85vh" }}>
-          <TableLayoutEditor
-            tables={tables as any}
-            onTablesChange={handleTablesChange as any}
-            onCreateTable={handleCreateTable}
-            onUpdateTable={handleUpdateTable}
-            onDeleteTable={handleDeleteTableFromEditor}
-            restaurantId={restaurantId || ""}
-          />
-        </div>
+        <TableLayoutEditor
+          tables={tables as any}
+          onTablesChange={handleTablesChange as any}
+          onCreateTable={handleCreateTable}
+          onUpdateTable={handleUpdateTable}
+          onDeleteTable={handleDeleteTableFromEditor}
+          restaurantId={restaurantId || ""}
+        />
       )}
 
       {/* Wizard Modal */}

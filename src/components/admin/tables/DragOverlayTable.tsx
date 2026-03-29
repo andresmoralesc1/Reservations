@@ -10,7 +10,7 @@ interface DragOverlayTableProps {
 
 export const DragOverlayTable: React.FC<DragOverlayTableProps> = ({ table, zoom }) => {
   const width = table.width ?? (table.shape === "circular" ? 80 : table.shape === "cuadrada" ? 80 : 120)
-  const height = table.height ?? (table.shape === "circular" ? 80 : table.shape === "cuadrada" ? 80 : 80)
+  const height = table.height ?? (table.shape === "circular" ? 80 : table.shape === "cuadrada" ? 80 : 100)
   const diameter = table.diameter ?? 80
 
   return (

@@ -1,56 +1,86 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback, useEffect, useMemo, useRef } from "react"
 import { useAuth } from "@/contexts/AuthContext"
-import { CalendarIcon, ClockIcon, UsersIcon, CheckCircleIcon, XCircleIcon } from "@/components/admin/Icons"
+import { ChevronLeft, ChevronRight, Calendar, Clock, Users, CheckCircle, XCircle, AlertCircle } from "lucide-react"
+import { format, addDays, isToday, isTomorrow, startOfWeek, addWeeks, subWeeks } from "date-fns"
+import { es } from "date-fns/locale"
+
+type TimeSlot = {
+  time: string
+  available: boolean
+  tablesCount: number
+  totalCapacity: number
+  occupiedPercent: number
+}
+
+type DayAvailability = {
+  date: string
+  displayDate: string
+  isToday: boolean
+  slots: TimeSlot[]
+}
+
+type TableInfo = {
+  id: string
+  tableNumber: string
+  tableCode: string
+  capacity: number
+  location: string
+  shape?: string
+}
 
 type AvailabilityResult = {
   available: boolean
-  reason?: string
-  tables?: Array<{
-    id: string
-    tableNumber: string
-    tableCode: string
-    capacity: number
-    location: string
-  }>
-  count?: number
-  suggestedTimes?: string[]
+  availableTables?: TableInfo[]
+  suggestedTables?: string[]
   service?: {
     id: string
     name: string
-    start: string
-    end: string
-    duration: number
-    type: string
-  }
-  activeServices?: Array<{
-    id: string
-    name: string
-    start: string
-    end: string
-    duration: number
-    type: string
-  }>
-  message: string
+    startTime: string
+    endTime: string
+    defaultDurationMinutes: number
+    serviceType: string
+  } | null
+  message?: string
+  alternativeSlots?: Array<{ time: string; available: boolean }>
 }
 
 export default function AvailabilityPage() {
   const { user } = useAuth()
   const restaurantId = user?.restaurantId || "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0])
-  const [time, setTime] = useState("13:30")
-  const [partySize, setPartySize] = useState("2")
+  // State
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
+  const [partySize, setPartySize] = useState(2)
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<AvailabilityResult | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [availabilityData, setAvailabilityData] = useState<DayAvailability | null>(null)
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
+  const [slotDetails, setSlotDetails] = useState<AvailabilityResult | null>(null)
+  const [viewMode, setViewMode] = useState<'day' | 'week'>('day')
 
-  const handleCheck = async () => {
-    setLoading(true)
-    setError(null)
-    setResult(null)
+  // Generate time slots (comida y cena) - memoized to avoid infinite loops
+  const allTimeSlots = useMemo((): string[] => {
+    const slots: string[] = []
+    // Comida: 13:00 - 16:00
+    for (let hour = 13; hour <= 15; hour++) {
+      for (let min = 0; min < 60; min += 30) {
+        slots.push(`${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`)
+      }
+    }
+    slots.push('16:00')
+    // Cena: 19:00 - 23:00
+    for (let hour = 19; hour <= 22; hour++) {
+      for (let min = 0; min < 60; min += 30) {
+        slots.push(`${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`)
+      }
+    }
+    slots.push('23:00')
+    return slots
+  }, [])
 
+  // Check availability for a specific time slot
+  const checkSlotAvailability = useCallback(async (date: string, time: string, people: number) => {
     try {
       const response = await fetch("/api/reservations/check-availability", {
         method: "POST",
@@ -59,236 +89,438 @@ export default function AvailabilityPage() {
           restaurant_id: restaurantId,
           date,
           time,
-          party_size: parseInt(partySize),
+          party_size: people,
         }),
       })
-
-      const data = await response.json()
-      setResult(data)
+      return await response.json()
     } catch (err) {
-      setError("Error al verificar disponibilidad")
+      return null
+    }
+  }, [restaurantId])
+
+  // Load availability for the selected date
+  const loadDayAvailability = useCallback(async () => {
+    setLoading(true)
+    const slots: TimeSlot[] = []
+
+    try {
+      // Process slots in batches to avoid overwhelming the server
+      for (const time of allTimeSlots) {
+        const result = await checkSlotAvailability(selectedDate, time, partySize)
+        console.log('Availability check:', { date: selectedDate, time, partySize, result })
+        // Log completo del result
+        console.log('Result full:', JSON.stringify(result, null, 2))
+        if (result) {
+          // Use the actual availableTables array from the API
+          const tables = result.availableTables || []
+          const tablesCount = tables.length
+          const isAvailable = result.available && tablesCount > 0
+
+          console.log('Slot processed:', { time, tablesCount, isAvailable, tables })
+
+          slots.push({
+            time,
+            available: isAvailable,
+            tablesCount,
+            totalCapacity: tables.reduce((sum: number, t: TableInfo) => sum + t.capacity, 0),
+            occupiedPercent: isAvailable ? 0 : 100,
+          })
+        } else {
+          // Fallback for API errors - mark as unavailable
+          slots.push({
+            time,
+            available: false,
+            tablesCount: 0,
+            totalCapacity: 0,
+            occupiedPercent: 100,
+          })
+        }
+      }
+
+      setAvailabilityData({
+        date: selectedDate,
+        displayDate: isToday(new Date(selectedDate))
+          ? "Hoy"
+          : isTomorrow(new Date(selectedDate))
+          ? "Mañana"
+          : format(new Date(selectedDate), "EEEE, d MMM", { locale: es }),
+        isToday: isToday(new Date(selectedDate)),
+        slots,
+      })
+    } catch (error) {
+      console.error("Error loading availability:", error)
     } finally {
       setLoading(false)
     }
+  }, [selectedDate, partySize, allTimeSlots, checkSlotAvailability])
+
+  // Load availability on date or party size change - use refs to avoid loop
+  const isLoadingRef = useRef(false)
+  useEffect(() => {
+    if (!isLoadingRef.current) {
+      isLoadingRef.current = true
+      loadDayAvailability().finally(() => {
+        isLoadingRef.current = false
+      })
+    }
+  }, [selectedDate, partySize])
+
+  // Handle slot click
+  const handleSlotClick = async (time: string) => {
+    setSelectedSlot(time)
+    const result = await checkSlotAvailability(selectedDate, time, partySize)
+    setSlotDetails(result)
   }
 
-  const getTimeSlots = () => {
-    const slots: string[] = []
-    for (let hour = 13; hour <= 23; hour++) {
-      for (let min = 0; min < 60; min += 30) {
-        const timeStr = `${String(hour).padStart(2, "0")}:${String(min).padStart(2, "0")}`
-        slots.push(timeStr)
-      }
-    }
-    return slots
+  // Navigate dates
+  const navigateDay = (days: number) => {
+    const newDate = addDays(new Date(selectedDate), days)
+    setSelectedDate(format(newDate, 'yyyy-MM-dd'))
+    setSelectedSlot(null)
+    setSlotDetails(null)
   }
+
+  const goToToday = () => {
+    setSelectedDate(format(new Date(), 'yyyy-MM-dd'))
+    setSelectedSlot(null)
+    setSlotDetails(null)
+  }
+
+  // Get occupancy level color - simple: green if available, red if not
+  const getOccupancyColor = (available: boolean, tablesCount: number) => {
+    if (!available || tablesCount === 0) return 'bg-red-100 text-red-700 border-red-200'
+    return 'bg-green-100 text-green-700 border-green-200'
+  }
+
+  // Quick dates
+  const getQuickDate = (days: number) => {
+    const date = addDays(new Date(), days)
+    return {
+      label: isToday(date) ? "Hoy" : isTomorrow(date) ? "Mañana" : format(date, 'EEE d', { locale: es }),
+      date: format(date, 'yyyy-MM-dd'),
+      isToday: isToday(date)
+    }
+  }
+
+  const quickDates = [getQuickDate(0), getQuickDate(1), getQuickDate(2)]
+
+  // Group slots by service (comida/cena)
+  const lunchSlots = availabilityData?.slots.filter(s => s.time >= '13:00' && s.time <= '16:00') || []
+  const dinnerSlots = availabilityData?.slots.filter(s => s.time >= '19:00' && s.time <= '23:00') || []
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div>
         <h1 className="font-display text-3xl uppercase tracking-wider text-black">
-          Ver Disponibilidad
+          Disponibilidad
         </h1>
         <p className="font-sans text-neutral-500 mt-1">
-          Consulta rápida de disponibilidad para teléfono y walk-ins
+          Consulta rápida para teléfono y walk-ins
         </p>
       </div>
 
-      {/* Search Form */}
-      <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* Date */}
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4" />
-                Fecha
-              </div>
-            </label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-            />
-          </div>
+      {/* Controls Bar */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        {/* Date Navigation */}
+        <div className="flex-1 bg-white rounded-xl border border-neutral-200 p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            {/* Navigation */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => navigateDay(-1)}
+                className="p-2 hover:bg-neutral-100 rounded-lg transition-colors"
+                title="Día anterior"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={goToToday}
+                className="px-3 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-neutral-800"
+              >
+                Hoy
+              </button>
+              <button
+                onClick={() => navigateDay(1)}
+                className="p-2 hover:bg-neutral-100 rounded-lg transition-colors"
+                title="Día siguiente"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
 
-          {/* Time */}
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              <div className="flex items-center gap-2">
-                <ClockIcon className="h-4 w-4" />
-                Hora
-              </div>
-            </label>
-            <select
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
-              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-            >
-              {getTimeSlots().map((slot) => (
-                <option key={slot} value={slot}>
-                  {slot}
-                </option>
+            {/* Current Date */}
+            <div className="flex items-center gap-2 px-4 py-2 bg-neutral-100 rounded-lg">
+              <Calendar className="w-4 h-4 text-neutral-500" />
+              <span className="font-medium">
+                {availabilityData?.displayDate || format(new Date(selectedDate), "EEEE, d MMM", { locale: es })}
+              </span>
+            </div>
+
+            {/* Quick Dates */}
+            <div className="flex items-center gap-2">
+              {quickDates.map(({ label, date, isToday: isTodayDate }) => (
+                <button
+                  key={date}
+                  onClick={() => setSelectedDate(date)}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    selectedDate === date
+                      ? "bg-black text-white"
+                      : isTodayDate
+                      ? "bg-neutral-800 text-white"
+                      : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                  }`}
+                >
+                  {label}
+                </button>
               ))}
-            </select>
-          </div>
+            </div>
 
-          {/* Party Size */}
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              <div className="flex items-center gap-2">
-                <UsersIcon className="h-4 w-4" />
-                Personas
+            {/* Date Input */}
+            <div className="flex items-center gap-2 ml-auto">
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Party Size */}
+        <div className="bg-white rounded-xl border border-neutral-200 p-4">
+          <div className="flex items-center gap-3">
+            <Users className="w-5 h-5 text-neutral-500" />
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Personas:</span>
+              <div className="flex items-center gap-1">
+                {[2, 4, 6, 8].map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => setPartySize(size)}
+                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
+                      partySize === size
+                        ? "bg-black text-white"
+                        : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+                <input
+                  type="number"
+                  min="1"
+                  max="20"
+                  value={partySize}
+                  onChange={(e) => setPartySize(parseInt(e.target.value) || 2)}
+                  className="w-16 px-2 py-1 border border-neutral-200 rounded-lg text-sm text-center"
+                />
               </div>
-            </label>
-            <select
-              value={partySize}
-              onChange={(e) => setPartySize(e.target.value)}
-              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-            >
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20].map((size) => (
-                <option key={size} value={size}>
-                  {size} {size === 1 ? "persona" : "personas"}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Check Button */}
-          <div className="flex items-end">
-            <button
-              onClick={handleCheck}
-              disabled={loading}
-              className="w-full px-6 py-2 bg-black text-white rounded-lg hover:bg-neutral-800 disabled:bg-neutral-400 disabled:cursor-not-allowed font-medium"
-            >
-              {loading ? "Verificando..." : "Ver Disponibilidad"}
-            </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-          {error}
+      {/* Loading State */}
+      {loading && (
+        <div className="bg-white rounded-xl border border-neutral-200 p-8 text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black mb-4"></div>
+          <p className="text-neutral-600">Verificando disponibilidad...</p>
         </div>
       )}
 
-      {/* Results */}
-      {result && (
-        <div className="space-y-4">
-          {/* Main Result */}
-          <div
-            className={`rounded-xl p-6 border-2 ${
-              result.available
-                ? "bg-green-50 border-green-200"
-                : "bg-red-50 border-red-200"
-            }`}
-          >
-            <div className="flex items-start gap-4">
-              {result.available ? (
-                <CheckCircleIcon className="h-8 w-8 text-green-600 flex-shrink-0 mt-1" />
-              ) : (
-                <XCircleIcon className="h-8 w-8 text-red-600 flex-shrink-0 mt-1" />
-              )}
-              <div className="flex-1">
-                <h3
-                  className={`text-xl font-semibold ${
-                    result.available ? "text-green-900" : "text-red-900"
-                  }`}
-                >
-                  {result.available ? "¡Disponible!" : "No Disponible"}
+      {/* Availability Grid */}
+      {!loading && availabilityData && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Time Slots - Main */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Comida */}
+            <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
+              <div className="px-4 py-3 bg-amber-50 border-b border-amber-100">
+                <h3 className="font-semibold text-amber-900 flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Comida (13:00 - 16:00)
                 </h3>
-                <p
-                  className={`mt-1 ${
-                    result.available ? "text-green-700" : "text-red-700"
-                  }`}
-                >
-                  {result.message}
-                </p>
+              </div>
+              <div className="p-4 grid grid-cols-4 sm:grid-cols-6 gap-2">
+                {lunchSlots.map((slot) => {
+                  const isSelected = selectedSlot === slot.time
+                  return (
+                    <button
+                      key={slot.time}
+                      onClick={() => handleSlotClick(slot.time)}
+                      className={`
+                        relative p-3 rounded-lg border-2 text-center transition-all
+                        ${getOccupancyColor(slot.available, slot.tablesCount)}
+                        ${isSelected ? 'ring-2 ring-black ring-offset-2' : 'hover:opacity-80'}
+                      `}
+                    >
+                      <div className="text-lg font-bold">{slot.time}</div>
+                      <div className="text-xs mt-1 font-medium">
+                        {slot.available && slot.tablesCount > 0
+                          ? `${slot.tablesCount} mesa${slot.tablesCount === 1 ? '' : 's'}`
+                          : 'Lleno'}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
 
-                {/* Service Info */}
-                {result.service && (
-                  <div className="mt-3 text-sm">
-                    <span className="font-medium">Servicio:</span>{" "}
-                    <span className="bg-white px-2 py-1 rounded">
-                      {result.service.name} ({result.service.start} - {result.service.end})
-                    </span>
-                  </div>
-                )}
+            {/* Cena */}
+            <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
+              <div className="px-4 py-3 bg-indigo-50 border-b border-indigo-100">
+                <h3 className="font-semibold text-indigo-900 flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Cena (19:00 - 23:00)
+                </h3>
+              </div>
+              <div className="p-4 grid grid-cols-4 sm:grid-cols-6 gap-2">
+                {dinnerSlots.map((slot) => {
+                  const isSelected = selectedSlot === slot.time
+                  return (
+                    <button
+                      key={slot.time}
+                      onClick={() => handleSlotClick(slot.time)}
+                      className={`
+                        relative p-3 rounded-lg border-2 text-center transition-all
+                        ${getOccupancyColor(slot.available, slot.tablesCount)}
+                        ${isSelected ? 'ring-2 ring-black ring-offset-2' : 'hover:opacity-80'}
+                      `}
+                    >
+                      <div className="text-lg font-bold">{slot.time}</div>
+                      <div className="text-xs mt-1 font-medium">
+                        {slot.available && slot.tablesCount > 0
+                          ? `${slot.tablesCount} mesa${slot.tablesCount === 1 ? '' : 's'}`
+                          : 'Lleno'}
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </div>
 
-          {/* Available Tables */}
-          {result.available && result.tables && result.tables.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
-              <h4 className="font-semibold text-lg mb-4">Mesas Disponibles ({result.count})</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {result.tables.map((table) => (
-                  <div
-                    key={table.id}
-                    className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg border border-neutral-200"
-                  >
-                    <div>
-                      <span className="font-medium">{table.tableCode}</span>
-                      <span className="text-neutral-500 text-sm ml-2">
-                        (Mesa {table.tableNumber})
-                      </span>
-                    </div>
-                    <div className="text-sm text-neutral-600">
-                      {table.capacity} pax · {table.location}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Details Panel */}
+          <div className="space-y-4">
+            {/* Selected Slot Details */}
+            {selectedSlot && slotDetails ? (
+              <div className="bg-white rounded-xl border border-neutral-200 p-4">
+                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                  <Clock className="w-5 h-5" />
+                  {selectedSlot}
+                </h3>
 
-          {/* Suggested Times */}
-          {!result.available && result.suggestedTimes && result.suggestedTimes.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
-              <h4 className="font-semibold text-lg mb-4">Horarios Alternativos</h4>
-              <div className="flex flex-wrap gap-2">
-                {result.suggestedTimes.map((slot) => (
-                  <button
-                    key={slot}
-                    onClick={() => {
-                      setTime(slot)
-                      handleCheck()
-                    }}
-                    className="px-4 py-2 bg-black text-white rounded-lg hover:bg-neutral-800 font-medium"
-                  >
-                    {slot}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+                {slotDetails.available && slotDetails.availableTables && slotDetails.availableTables.length > 0 ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-green-700">
+                      <CheckCircle className="w-5 h-5" />
+                      <span className="font-medium">¡Disponible!</span>
+                    </div>
 
-          {/* Active Services (when outside hours) */}
-          {result.activeServices && result.activeServices.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
-              <h4 className="font-semibold text-lg mb-4">Servicios Activos Esta Fecha</h4>
-              <div className="space-y-2">
-                {result.activeServices.map((service) => (
-                  <div
-                    key={service.id}
-                    className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg"
-                  >
-                    <div>
-                      <span className="font-medium">{service.name}</span>
-                    </div>
-                    <div className="text-sm text-neutral-600">
-                      {service.start} - {service.end}
-                    </div>
+                    {slotDetails.service && (
+                      <div className="text-sm text-neutral-600">
+                        <span className="font-medium">Servicio:</span> {slotDetails.service.name}
+                        <span className="ml-2 bg-neutral-100 px-2 py-0.5 rounded">
+                          {slotDetails.service.startTime} - {slotDetails.service.endTime}
+                        </span>
+                      </div>
+                    )}
+
+                    {slotDetails.availableTables && slotDetails.availableTables.length > 0 && (
+                      <div>
+                        <h4 className="font-medium text-sm mb-2">
+                          Mesas Disponibles ({slotDetails.availableTables.length})
+                        </h4>
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                          {slotDetails.availableTables.map((table) => (
+                            <div
+                              key={table.id}
+                              className="flex items-center justify-between p-2 bg-neutral-50 rounded-lg text-sm"
+                            >
+                              <span className="font-medium">{table.tableCode || table.tableNumber}</span>
+                              <span className="text-neutral-600">
+                                {table.capacity}p · {table.location}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                ))}
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-red-700">
+                      <XCircle className="w-5 h-5" />
+                      <span className="font-medium">No Disponible</span>
+                    </div>
+                    <p className="text-sm text-neutral-600">{slotDetails.message || 'Sin información'}</p>
+
+                    {slotDetails.alternativeSlots && slotDetails.alternativeSlots.length > 0 && (
+                      <div>
+                        <h4 className="font-medium text-sm mb-2">Horarios Alternativos:</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {slotDetails.alternativeSlots.map((slot) => (
+                            <button
+                              key={slot.time}
+                              onClick={() => handleSlotClick(slot.time)}
+                              className={`px-3 py-1 rounded-lg text-sm ${
+                                slot.available
+                                  ? 'bg-green-600 text-white hover:bg-green-700'
+                                  : 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                              }`}
+                              disabled={!slot.available}
+                            >
+                              {slot.time}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl border border-neutral-200 p-6 text-center">
+                <AlertCircle className="w-12 h-12 text-neutral-300 mx-auto mb-3" />
+                <p className="text-neutral-500">Selecciona un horario para ver detalles</p>
+              </div>
+            )}
+
+            {/* Quick Summary */}
+            <div className="bg-white rounded-xl border border-neutral-200 p-4">
+              <h3 className="font-semibold text-sm mb-3">Resumen del Día</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-neutral-600">Total slots:</span>
+                  <span className="font-medium">{allTimeSlots.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-600">Disponibles:</span>
+                  <span className="font-medium text-green-600">
+                    {availabilityData.slots.filter(s => s.available).length}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-600">Llenos:</span>
+                  <span className="font-medium text-red-600">
+                    {availabilityData.slots.filter(s => !s.available).length}
+                  </span>
+                </div>
               </div>
             </div>
-          )}
+
+            {/* Tips */}
+            <div className="bg-blue-50 rounded-xl border border-blue-100 p-4">
+              <h4 className="font-medium text-blue-900 text-sm mb-2">💡 Consejos</h4>
+              <ul className="text-xs text-blue-800 space-y-1">
+                <li>• Click en cualquier horario para ver mesas disponibles</li>
+                <li>• Los horarios en ámbar tienen pocas mesas</li>
+                <li>• Cambia la cantidad de personas para ver opciones diferentes</li>
+              </ul>
+            </div>
+          </div>
         </div>
       )}
     </div>
