@@ -20,6 +20,7 @@ export default function AdminPage() {
   // State
   const [dateFilter, setDateFilter] = useState("")
   const [filter, setFilter] = useState<FilterValue>("all")
+  const [timeFilter, setTimeFilter] = useState<string>("all")
 
   // Keyboard shortcuts for date navigation
   useEffect(() => {
@@ -68,6 +69,7 @@ export default function AdminPage() {
     restaurantId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     filter,
     dateFilter,
+    timeFilter,
   })
 
   const {
@@ -198,6 +200,8 @@ export default function AdminPage() {
         onFilterChange={handleFilterChange}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        timeFilter={timeFilter}
+        onTimeFilterChange={setTimeFilter}
       />
 
       {/* Action Bar */}

@@ -9,9 +9,10 @@ interface UseReservationsProps {
   restaurantId: string
   filter: FilterValue
   dateFilter: string
+  timeFilter?: string
 }
 
-export function useReservations({ restaurantId, filter, dateFilter }: UseReservationsProps) {
+export function useReservations({ restaurantId, filter, dateFilter, timeFilter }: UseReservationsProps) {
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -39,14 +40,34 @@ export function useReservations({ restaurantId, filter, dateFilter }: UseReserva
       }
 
       const data = await response.json()
-      setReservations(data.reservations || [])
+      let reservations = data.reservations || []
+
+      // Client-side filtering by time/service
+      if (timeFilter && timeFilter !== "all") {
+        reservations = reservations.filter((r: Reservation) => {
+          const hour = parseInt(r.reservationTime.split(':')[0])
+
+          if (timeFilter === "comida") {
+            // Comida: 13:00 - 15:59
+            return hour >= 13 && hour < 16
+          } else if (timeFilter === "cena") {
+            // Cena: 19:00 - 23:00
+            return hour >= 19 && hour < 24
+          } else {
+            // Specific time like "20:00"
+            return r.reservationTime === timeFilter
+          }
+        })
+      }
+
+      setReservations(reservations)
     } catch (err) {
       console.error("Error loading reservations:", err)
       setError(err instanceof Error ? err.message : "Unknown error")
     } finally {
       setLoading(false)
     }
-  }, [restaurantId, filter, dateFilter])
+  }, [restaurantId, filter, dateFilter, timeFilter])
 
   useEffect(() => {
     loadReservations()
