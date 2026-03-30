@@ -2,10 +2,15 @@
 
 import React, { Component, ErrorInfo, ReactNode } from "react"
 import { Button } from "./Button"
+import { ErrorFallback, ErrorFallbackProps } from "./ErrorFallback"
+import { logError } from "@/lib/errors"
 
 interface Props {
   children: ReactNode
   fallback?: (error: Error, retry: () => void) => ReactNode
+  fallbackProps?: Partial<ErrorFallbackProps>
+  variant?: "page" | "section" | "inline"
+  onError?: (error: Error, errorInfo: ErrorInfo) => void
 }
 
 interface State {
@@ -13,6 +18,19 @@ interface State {
   error: Error | null
 }
 
+/**
+ * ErrorBoundary - Captura errores en componentes React y muestra una UI amigable
+ *
+ * @example
+ * <ErrorBoundary>
+ *   <MyComponent />
+ * </ErrorBoundary>
+ *
+ * @example Con fallback personalizado
+ * <ErrorBoundary fallbackProps={{ title: "Error personalizado" }}>
+ *   <MyComponent />
+ * </ErrorBoundary>
+ */
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props)
@@ -24,7 +42,14 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo)
+    // Log del error usando nuestro sistema centralizado
+    logError(error, {
+      componentStack: errorInfo.componentStack,
+      digest: (errorInfo as any).digest,
+    })
+
+    // Callback personalizado si se proporciona
+    this.props.onError?.(error, errorInfo)
   }
 
   handleRetry = () => {
@@ -32,41 +57,20 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   render() {
-    if (this.state.hasError) {
+    if (this.state.hasError && this.state.error) {
+      // Fallback personalizado proporcionado como función
       if (this.props.fallback) {
-        return this.props.fallback(this.state.error!, this.handleRetry)
+        return this.props.fallback(this.state.error, this.handleRetry)
       }
 
+      // Usar el componente ErrorFallback con las props proporcionadas
       return (
-        <div className="min-h-screen bg-cream flex items-center justify-center p-4">
-          <div className="bg-white border border-neutral-200 rounded-lg p-8 max-w-md w-full text-center">
-            <div className="text-6xl mb-4">⚠️</div>
-            <h2 className="font-display text-2xl uppercase tracking-wider text-black mb-2">
-              Algo salió mal
-            </h2>
-            <p className="font-sans text-neutral-500 mb-6">
-              Ha ocurrido un error inesperado. Por favor, intenta de nuevo.
-            </p>
-            {this.state.error && (
-              <details className="mb-6 text-left">
-                <summary className="text-sm text-neutral-400 cursor-pointer">
-                  Ver detalles del error
-                </summary>
-                <pre className="mt-2 text-xs text-red-600 overflow-auto bg-red-50 p-2 rounded">
-                  {this.state.error.message}
-                </pre>
-              </details>
-            )}
-            <Button
-              variant="primary"
-              size="md"
-              onClick={this.handleRetry}
-              className="w-full"
-            >
-              Intentar de nuevo
-            </Button>
-          </div>
-        </div>
+        <ErrorFallback
+          error={this.state.error}
+          retry={this.handleRetry}
+          variant={this.props.variant}
+          {...this.props.fallbackProps}
+        />
       )
     }
 
@@ -74,16 +78,33 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-// Hook-based error boundary for simpler usage
+/**
+ * HOC para envolver componentes con ErrorBoundary
+ *
+ * @example
+ * export default withErrorBoundary(MyComponent, {
+ *   fallbackProps: { title: "Error en Mi Componente" }
+ * })
+ */
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
-  fallback?: (error: Error, retry: () => void) => ReactNode
+  errorBoundaryProps?: Omit<Props, "children">
 ) {
   return function WithErrorBoundaryWrapper(props: P) {
     return (
-      <ErrorBoundary fallback={fallback}>
+      <ErrorBoundary {...errorBoundaryProps}>
         <Component {...props} />
       </ErrorBoundary>
     )
+  }
+}
+
+/**
+ * Hook para usar ErrorBoundary en componentes funcionales
+ * Requiere que el componente esté envuelto en un ErrorBoundary
+ */
+export function useErrorHandler() {
+  return (error: Error) => {
+    throw error
   }
 }

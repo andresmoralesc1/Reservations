@@ -36,6 +36,13 @@
       "when": 1774574092116,
       "tag": "0004_flat_champions",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1774865411896,
+      "tag": "0005_glorious_wild_child",
+      "breakpoints": true
     }
   ]
 }

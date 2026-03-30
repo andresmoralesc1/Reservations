@@ -24,6 +24,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      '@/drizzle': path.resolve(__dirname, './drizzle'),
+      '@/lib': path.resolve(__dirname, './src/lib'),
       '@': path.resolve(__dirname, './src'),
     },
   },

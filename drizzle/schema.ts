@@ -35,9 +35,14 @@ export const tables = pgTable("tables", {
   stoolPositions: jsonb("stool_positions").$type<number[]>(), // Posiciones de sillas en barra
 
   createdAt: timestamp("created_at").defaultNow(),
+
+  // Soft Delete
+  deletedAt: timestamp("deleted_at"),
+  deletedBy: text("deleted_by"), // Email o username de quien eliminó el registro
 }, (table) => ({
   // Índice único para código de mesa por restaurante
   tableCodeIdx: index("tables_table_code_idx").on(table.tableCode, table.restaurantId),
+  deletedAtIdx: index("tables_deleted_at_idx").on(table.deletedAt),
 }))
 
 export const services = pgTable("services", {
@@ -81,6 +86,10 @@ export const services = pgTable("services", {
 
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+
+  // Soft Delete
+  deletedAt: timestamp("deleted_at"),
+  deletedBy: text("deleted_by"), // Email o username de quien eliminó el registro
 }, (table) => ({
   // Índices para rendimiento
   restaurantIdx: index("services_restaurant_idx").on(table.restaurantId),
@@ -88,6 +97,7 @@ export const services = pgTable("services", {
   serviceTypeIdx: index("services_service_type_idx").on(table.serviceType),
   // Prevenir services solapados para mismo restaurant, día y hora
   uniqueService: unique().on(table.restaurantId, table.dayType, table.startTime),
+  deletedAtIdx: index("services_deleted_at_idx").on(table.deletedAt),
 }))
 
 export const customers = pgTable("customers", {
@@ -141,11 +151,16 @@ export const reservations = pgTable("reservations", {
   confirmedAt: timestamp("confirmed_at"),
   cancelledAt: timestamp("cancelled_at"),
   updatedAt: timestamp("updated_at").defaultNow(),
+
+  // Soft Delete
+  deletedAt: timestamp("deleted_at"),
+  deletedBy: text("deleted_by"), // Email o username de quien eliminó el registro
 }, (table) => ({
   // Índices para rendimiento de búsquedas comunes
   dateRestaurantIdx: index("reservations_date_restaurant_idx").on(table.reservationDate, table.restaurantId),
   dateServiceIdx: index("reservations_date_service_idx").on(table.reservationDate, table.serviceId),
   statusIdx: index("reservations_status_idx").on(table.status),
+  deletedAtIdx: index("reservations_deleted_at_idx").on(table.deletedAt),
 }))
 
 export const reservationHistory = pgTable("reservation_history", {
