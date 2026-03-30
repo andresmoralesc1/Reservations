@@ -169,6 +169,55 @@ export const reservations = pgTable("reservations", {
   sourceDateIdx: index("reservations_source_date_idx").on(table.source, table.reservationDate),
 }))
 
+// Tabla de archivo para reservas históricas
+// Las reservas se mueven aquí cuando se archivan (más de 48h en PENDIENTE, o reservas muy antiguas)
+export const reservationsArchive = pgTable("reservations_archive", {
+  id: uuid("id").primaryKey(),
+  reservationCode: text("reservation_code").notNull(),
+
+  // Cliente
+  customerId: uuid("customer_id"),
+  customerName: text("customer_name").notNull(),
+  customerPhone: text("customer_phone").notNull(),
+
+  // Reserva
+  restaurantId: uuid("restaurant_id").notNull(),
+  reservationDate: text("reservation_date").notNull(),
+  reservationTime: text("reservation_time").notNull(),
+  partySize: integer("party_size").notNull(),
+  tableIds: uuid("table_ids").array(),
+
+  // Estado final
+  status: text("status").notNull(),
+  source: text("source").notNull(),
+
+  // Service info
+  serviceId: uuid("service_id"),
+  estimatedDurationMinutes: integer("estimated_duration_minutes"),
+  actualEndTime: text("actual_end_time"),
+
+  // Especial
+  specialRequests: text("special_requests"),
+  isComplexCase: boolean("is_complex_case").default(false),
+
+  // Timestamps originales
+  createdAt: timestamp("created_at").notNull(),
+  confirmedAt: timestamp("confirmed_at"),
+  cancelledAt: timestamp("cancelled_at"),
+  updatedAt: timestamp("updated_at").notNull(),
+
+  // Metadatos de archivo
+  archivedAt: timestamp("archived_at").notNull().defaultNow(),
+  archiveReason: text("archive_reason").notNull(), // 'expired_pending', 'old_reservation', 'manual'
+  daysSinceCreation: integer("days_since_creation").notNull(),
+}, (table) => ({
+  // Índices para búsquedas en archivo
+  dateRestaurantIdx: index("reservations_archive_date_restaurant_idx").on(table.reservationDate, table.restaurantId),
+  statusIdx: index("reservations_archive_status_idx").on(table.status),
+  archivedAtIdx: index("reservations_archive_archived_at_idx").on(table.archivedAt),
+  customerPhoneIdx: index("reservations_archive_customer_phone_idx").on(table.customerPhone),
+}))
+
 export const reservationHistory = pgTable("reservation_history", {
   id: uuid("id").primaryKey().defaultRandom(),
   reservationId: uuid("reservation_id")

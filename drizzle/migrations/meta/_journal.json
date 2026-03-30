@@ -50,6 +50,13 @@
       "when": 1774910463610,
       "tag": "0006_material_dark_phoenix",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1774911497779,
+      "tag": "0007_friendly_fantastic_four",
+      "breakpoints": true
     }
   ]
 }
