@@ -5,6 +5,8 @@
  * - reservas (no reservations)
  * - mesas_disponibles (no tables)
  * - info_llamadas (no call_logs)
+ *
+ * Type-safe: Usa type guards en lugar de 'as unknown as'
  */
 
 import { createLegacyReservation, getLegacyReservation, cancelLegacyReservation, checkLegacyAvailability, logLegacyCall } from "@/lib/services/legacy-service"
@@ -16,7 +18,70 @@ import type {
   GetReservationInput,
   CancelReservationInput,
   ModifyReservationInput,
+  VoiceAction,
 } from "@/lib/voice/voice-types"
+import {
+  VoiceCheckAvailabilitySchema,
+  VoiceCreateReservationSchema,
+  VoiceGetReservationSchema,
+  VoiceCancelReservationSchema,
+  VoiceModifyReservationSchema,
+} from "@/lib/schemas/reservation-schemas"
+
+// ============ Type Guards ============
+
+/**
+ * Type guard para CheckAvailabilityInput
+ */
+function isCheckAvailabilityInput(params: unknown): params is CheckAvailabilityInput {
+  const result = VoiceCheckAvailabilitySchema.safeParse(params)
+  return result.success
+}
+
+/**
+ * Type guard para CreateReservationInput
+ */
+function isCreateReservationInput(params: unknown): params is CreateReservationInput {
+  const result = VoiceCreateReservationSchema.safeParse(params)
+  return result.success
+}
+
+/**
+ * Type guard para GetReservationInput
+ */
+function isGetReservationInput(params: unknown): params is GetReservationInput {
+  const result = VoiceGetReservationSchema.safeParse(params)
+  return result.success
+}
+
+/**
+ * Type guard para CancelReservationInput
+ */
+function isCancelReservationInput(params: unknown): params is CancelReservationInput {
+  const result = VoiceCancelReservationSchema.safeParse(params)
+  return result.success
+}
+
+/**
+ * Type guard para ModifyReservationInput
+ */
+function isModifyReservationInput(params: unknown): params is ModifyReservationInput {
+  const result = VoiceModifyReservationSchema.safeParse(params)
+  return result.success
+}
+
+/**
+ * Type guard para logCallStart params
+ */
+interface LogCallStartParams {
+  callerPhone: string
+  restaurantId?: string
+}
+
+function isLogCallStartParams(params: unknown): params is LogCallStartParams {
+  return typeof params === "object" && params !== null && "callerPhone" in params &&
+         typeof (params as Record<string, unknown>).callerPhone === "string"
+}
 
 // ============ Función 1: checkAvailability ============
 export async function checkAvailability(params: CheckAvailabilityInput): Promise<VoiceActionResult> {
@@ -219,35 +284,71 @@ export async function modifyReservation(params: ModifyReservationInput): Promise
 // ============ Función Router: processVoiceAction ============
 export async function processVoiceAction(
   action: string,
-  params: Record<string, unknown>
+  params: unknown
 ): Promise<VoiceActionResult> {
   switch (action) {
     case "checkAvailability":
-      return checkAvailability(params as unknown as CheckAvailabilityInput)
+      if (!isCheckAvailabilityInput(params)) {
+        return {
+          success: false,
+          message: "Parámetros inválidos para verificar disponibilidad. Se requieren: fecha, hora, número de personas",
+        }
+      }
+      return checkAvailability(params)
 
     case "createReservation":
-      return createReservation(params as unknown as CreateReservationInput)
+      if (!isCreateReservationInput(params)) {
+        return {
+          success: false,
+          message: "Parámetros inválidos para crear reserva. Se requieren: nombre, teléfono, fecha, hora, número de personas",
+        }
+      }
+      return createReservation(params)
 
     case "getReservation":
-      return getReservation(params as unknown as GetReservationInput)
+      if (!isGetReservationInput(params)) {
+        return {
+          success: false,
+          message: "Parámetros inválidos. Se requiere: código de reserva (RES-XXXXX)",
+        }
+      }
+      return getReservation(params)
 
     case "cancelReservation":
-      return cancelReservation(params as unknown as CancelReservationInput)
+      if (!isCancelReservationInput(params)) {
+        return {
+          success: false,
+          message: "Parámetros inválidos. Se requieren: código de reserva y teléfono",
+        }
+      }
+      return cancelReservation(params)
 
     case "modifyReservation":
-      return modifyReservation(params as unknown as ModifyReservationInput)
+      if (!isModifyReservationInput(params)) {
+        return {
+          success: false,
+          message: "Parámetros inválidos. Se requieren: código de reserva, teléfono y al menos un cambio",
+        }
+      }
+      return modifyReservation(params)
 
     case "logCallStart":
+      if (!isLogCallStartParams(params)) {
+        return {
+          success: false,
+          message: "Parámetros inválidos para logCallStart. Se requiere: callerPhone",
+        }
+      }
       // Registrar inicio de llamada
       const logResult = await logLegacyCall({
-        telefono: (params as any).callerPhone || "unknown",
-        restaurante: (params as any).restaurantId
+        telefono: params.callerPhone,
+        restaurante: params.restaurantId
       })
-      return { success: true, callLogId: logResult.callId } as any
+      return { success: true, message: "Llamada registrada", callLogId: logResult.callId } as VoiceActionResult
 
     case "logCallEnd":
       // Finalizar llamada (no implementado aún)
-      return { success: true } as any
+      return { success: true, message: "Llamada finalizada" }
 
     default:
       return {

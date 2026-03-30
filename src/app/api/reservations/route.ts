@@ -1,27 +1,31 @@
 import { NextRequest, NextResponse } from "next/server"
 import { config } from "@/lib/config/env"
 import { createLegacyReservation, getLegacyReservation, cancelLegacyReservation, listLegacyReservations } from "@/lib/services/legacy-service"
+import { validateRequestBody, formatZodError, CreateReservationSchema, spanishPhoneSchema } from "@/lib/schemas/reservation-schemas"
 import { z } from "zod"
 
-// Validation schema for creating a reservation (supports both Spanish and English field names)
-const createReservationSchema = z.object({
-  // Spanish fields
-  nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres").optional(),
-  numero: z.string().min(9, "Número de teléfono inválido").optional(),
-  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha inválido (YYYY-MM-DD)").optional(),
-  hora: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido (HH:MM)").optional(),
+/**
+ * Schema híbrido que acepta campos en español o inglés
+ * Mantiene compatibilidad con el sistema existente
+ */
+const HybridCreateReservationSchema = z.object({
+  // Spanish fields (legacy)
+  nombre: z.string().min(2).optional(),
+  numero: spanishPhoneSchema.optional(),
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  hora: z.string().regex(/^\d{2}:\d{2}$/).optional(),
   invitados: z.number().int().min(1).max(50).optional(),
   idMesa: z.string().optional(),
-  fuente: z.enum(["WEB", "WHATSAPP", "VOICE", "MANUAL", "IVR"]).default("WEB").optional(),
+  fuente: z.enum(["WEB", "WHATSAPP", "VOICE", "MANUAL", "IVR"]).optional(),
   restaurante: z.string().optional(),
-  observaciones: z.string().optional(),
+  observaciones: z.string().max(500).optional(),
   // English fields (admin modal)
-  customerName: z.string().min(2, "El nombre debe tener al menos 2 caracteres").optional(),
-  customerPhone: z.string().min(9, "Número de teléfono inválido").optional(),
-  reservationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha inválido (YYYY-MM-DD)").optional(),
-  reservationTime: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido (HH:MM)").optional(),
+  customerName: z.string().min(2).optional(),
+  customerPhone: spanishPhoneSchema.optional(),
+  reservationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  reservationTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
   partySize: z.number().int().min(1).max(50).optional(),
-  specialRequests: z.string().optional(),
+  specialRequests: z.string().max(500).optional(),
   source: z.enum(["WEB", "WHATSAPP", "VOICE", "MANUAL", "IVR"]).optional(),
   restaurantId: z.string().optional(),
   confirmImmediately: z.boolean().optional(),
@@ -81,8 +85,14 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    // Validar datos (supports both Spanish and English)
-    const validatedData = createReservationSchema.parse(body)
+    // Validar datos con schema mejorado
+    const validated = validateRequestBody(body, HybridCreateReservationSchema)
+
+    if (!validated.success) {
+      return NextResponse.json(validated.error, { status: 400 })
+    }
+
+    const validatedData = validated.data
 
     // Normalize to Spanish format for legacy service
     const nombre = validatedData.nombre || validatedData.customerName!
@@ -118,7 +128,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Datos inválidos", details: error.errors },
+        formatZodError(error),
         { status: 400 }
       )
     }
