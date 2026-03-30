@@ -161,6 +161,12 @@ export const reservations = pgTable("reservations", {
   dateServiceIdx: index("reservations_date_service_idx").on(table.reservationDate, table.serviceId),
   statusIdx: index("reservations_status_idx").on(table.status),
   deletedAtIdx: index("reservations_deleted_at_idx").on(table.deletedAt),
+
+  // Índices optimizados para Analíticas y Dashboard
+  statusDateIdx: index("reservations_status_date_idx").on(table.status, table.reservationDate),
+  codeIdx: index("reservations_code_idx").on(table.reservationCode),
+  customerStatusIdx: index("reservations_customer_status_idx").on(table.customerId, table.status),
+  sourceDateIdx: index("reservations_source_date_idx").on(table.source, table.reservationDate),
 }))
 
 export const reservationHistory = pgTable("reservation_history", {
@@ -187,7 +193,11 @@ export const reservationSessions = pgTable("reservation_sessions", {
   collectedData: jsonb("collected_data").notNull().$type<Record<string, unknown>>(),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-})
+}, (table) => ({
+  // Índice para búsquedas de sesiones activas (sin WHERE en Drizzle, se filtra a nivel de app)
+  expiresAtIdx: index("reservation_sessions_expires_at_idx").on(table.expiresAt),
+  phoneNumberIdx: index("reservation_sessions_phone_number_idx").on(table.phoneNumber),
+}))
 
 export const whatsappMessages = pgTable("whatsapp_messages", {
   id: uuid("id").primaryKey().defaultRandom(),

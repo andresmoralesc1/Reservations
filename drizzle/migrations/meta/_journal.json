@@ -43,6 +43,13 @@
       "when": 1774865411896,
       "tag": "0005_glorious_wild_child",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1774910463610,
+      "tag": "0006_material_dark_phoenix",
+      "breakpoints": true
     }
   ]
 }
