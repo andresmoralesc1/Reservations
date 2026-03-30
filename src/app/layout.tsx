@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Inter, Oswald, Playfair_Display } from "next/font/google"
 import "./globals.css"
 import { ToastProvider } from "@/components/Toast"
@@ -27,18 +27,19 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "El Posit - Reservas",
   description: "Sistema de reservas - Cocina Marinera Tradicional",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-  },
   manifest: "/manifest.json",
-  themeColor: "#000000",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "El Posit",
   },
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#000000",
 }
 
 export default function RootLayout({
