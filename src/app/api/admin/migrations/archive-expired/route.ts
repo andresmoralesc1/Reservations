@@ -61,34 +61,36 @@ export async function POST() {
 
     // 2. Insertar en tabla de archivo
     const archiveData = expiredReservations.map((r) => {
+      const createdDate = r.createdAt ? new Date(r.createdAt) : now
+      const updatedDate = r.updatedAt ? new Date(r.updatedAt) : now
       const daysSinceCreation = Math.floor(
-        (now.getTime() - new Date(r.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+        (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24)
       )
 
       return {
         id: r.id,
         reservationCode: r.reservationCode,
-        customerId: r.customerId,
+        customerId: r.customerId || null,
         customerName: r.customerName,
         customerPhone: r.customerPhone,
         restaurantId: r.restaurantId,
         reservationDate: r.reservationDate,
         reservationTime: r.reservationTime,
         partySize: r.partySize,
-        tableIds: r.tableIds,
-        status: "EXPIRADA",
+        tableIds: r.tableIds || [],
+        status: "EXPIRADA" as const,
         source: r.source,
-        serviceId: r.serviceId,
-        estimatedDurationMinutes: r.estimatedDurationMinutes,
-        actualEndTime: r.actualEndTime,
-        specialRequests: r.specialRequests,
-        isComplexCase: r.isComplexCase,
-        createdAt: r.createdAt,
-        confirmedAt: r.confirmedAt,
-        cancelledAt: r.cancelledAt,
-        updatedAt: r.updatedAt,
+        serviceId: r.serviceId || null,
+        estimatedDurationMinutes: r.estimatedDurationMinutes || null,
+        actualEndTime: r.actualEndTime || null,
+        specialRequests: r.specialRequests || null,
+        isComplexCase: r.isComplexCase ?? false,
+        createdAt: createdDate,
+        confirmedAt: r.confirmedAt ? new Date(r.confirmedAt) : null,
+        cancelledAt: r.cancelledAt ? new Date(r.cancelledAt) : null,
+        updatedAt: updatedDate,
         archivedAt: now,
-        archiveReason: "expired_pending",
+        archiveReason: "expired_pending" as const,
         daysSinceCreation,
       }
     })
