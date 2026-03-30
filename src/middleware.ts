@@ -187,15 +187,9 @@ export async function middleware(request: NextRequest) {
   // Agregar header de request ID para tracing
   response.headers.set("x-request-id", crypto.randomUUID())
 
-  // Logging al completar la request (usar response.clone() si necesitamos capturar el status)
-  const originalJson = response.json
-
-  response.json = async (...args) => {
-    const result = await originalJson(...args)
-    const latency = Date.now() - startTime
-    logRequest(request, result.status || 200, latency)
-    return result
-  }
+  // Log de la request completada
+  const latency = Date.now() - startTime
+  logRequest(request, 200, latency)
 
   return response
 }
