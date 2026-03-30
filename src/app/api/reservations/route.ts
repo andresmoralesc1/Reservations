@@ -3,6 +3,7 @@ import { config } from "@/lib/config/env"
 import { createLegacyReservation, getLegacyReservation, cancelLegacyReservation, listLegacyReservations } from "@/lib/services/legacy-service"
 import { validateRequestBody, formatZodError, CreateReservationSchema, spanishPhoneSchema } from "@/lib/schemas/reservation-schemas"
 import { z } from "zod"
+import { invalidateReservationCache } from "@/lib/cache"
 
 /**
  * Schema híbrido que acepta campos en español o inglés
@@ -120,6 +121,9 @@ export async function POST(request: NextRequest) {
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 500 })
     }
+
+    // Invalidar caché de dashboard/analytics
+    await invalidateReservationCache(restaurante, fecha)
 
     return NextResponse.json({
       reservation: result.data,

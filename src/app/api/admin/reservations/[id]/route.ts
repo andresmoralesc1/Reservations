@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { approveReservation, rejectReservation, ReservationNotFoundError } from "@/lib/services"
+import { invalidateReservationCache } from "@/lib/cache"
+import { db } from "@/lib/db"
+import { reservations } from "@/drizzle/schema"
+import { eq } from "drizzle-orm"
 
 // POST /api/admin/reservations/[id] - Actions on reservation
 export async function POST(
@@ -13,12 +17,20 @@ export async function POST(
 
     if (action === "approve") {
       const updated = await approveReservation(id)
+
+      // Invalidar caché
+      await invalidateReservationCache(updated.restaurantId, updated.reservationDate)
+
       return NextResponse.json({ reservation: updated })
     }
 
     if (action === "reject") {
       const { reason } = body
       const updated = await rejectReservation(id, reason)
+
+      // Invalidar caché
+      await invalidateReservationCache(updated.restaurantId, updated.reservationDate)
+
       return NextResponse.json({ reservation: updated })
     }
 
@@ -48,6 +60,10 @@ export async function PUT(
     if (body.status === "NO_SHOW") {
       const { markNoShow } = await import("@/lib/services")
       const updated = await markNoShow(id)
+
+      // Invalidar caché
+      await invalidateReservationCache(updated.restaurantId, updated.reservationDate)
+
       return NextResponse.json({ reservation: updated })
     }
 
