@@ -72,12 +72,21 @@ export async function GET(request: NextRequest) {
       // Ensure tableIds is an array
       const tableIds = Array.isArray(reservation.tableIds) ? reservation.tableIds : []
 
+      const noShowCount = reservation.customer?.noShowCount || 0
+      // Log para depurar - muestra los datos del cliente
+      if (noShowCount > 0) {
+        console.log(`[Admin Reservations] Reservation ${reservation.reservationCode} - Customer: ${reservation.customer?.name || 'N/A'}, Phone: ${reservation.customerPhone}, NoShowCount: ${noShowCount}, CustomerID: ${reservation.customerId}`)
+      }
+
       return {
         ...reservation,
         tableIds, // Use the cleaned array
         tables: tableIds
           .map((id) => typeof id === 'string' ? tablesMap.get(id) : undefined)
           .filter((t): t is typeof tables.$inferSelect => t !== undefined),
+        // Include customer no-show info for UI display
+        customerNoShowCount: noShowCount,
+        customerTags: reservation.customer?.tags || [],
       }
     })
 
@@ -131,17 +140,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find or create customer
+    // Normalize phone number (remove non-digits, optional +34 prefix)
+    const normalizedPhone = customerPhone.replace(/\D/g, "")
+    const cleanPhone = normalizedPhone.startsWith("34") && normalizedPhone.length === 11
+      ? normalizedPhone.slice(2)
+      : normalizedPhone
+
+    // Find or create customer (use normalized phone)
     let customer = await db.query.customers.findFirst({
-      where: eq(customers.phoneNumber, customerPhone),
+      where: eq(customers.phoneNumber, cleanPhone),
     })
 
     if (!customer) {
-      const [newCustomer] = await db.insert(customers).values({
-        phoneNumber: customerPhone,
-        name: customerName,
-      }).returning()
-      customer = newCustomer
+      // Try to find by phone with any format before creating new
+      const allCustomers = await db.query.customers.findMany({
+        where: eq(customers.phoneNumber, customerPhone),
+      limit: 5,
+      })
+
+      if (allCustomers.length > 0) {
+        // Found customer with different format, use it
+        customer = allCustomers[0]
+      } else {
+        // Create new customer with normalized phone
+        const [newCustomer] = await db.insert(customers).values({
+          phoneNumber: cleanPhone,
+          name: customerName,
+        }).returning()
+        customer = newCustomer
+      }
     }
 
     // Find active service for the date/time
@@ -196,7 +223,7 @@ export async function POST(request: NextRequest) {
       reservationCode,
       customerId: customer.id,
       customerName,
-      customerPhone,
+      customerPhone: cleanPhone, // Use normalized phone
       restaurantId,
       reservationDate,
       reservationTime,

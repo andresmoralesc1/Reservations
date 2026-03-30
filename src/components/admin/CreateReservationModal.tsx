@@ -6,6 +6,7 @@ import { Input } from "@/components/Input"
 import { Select } from "@/components/Select"
 import { toast } from "@/components/Toast"
 import { XIcon, CalendarIcon, ClockIcon, UsersIcon } from "@/components/admin/Icons"
+import { CustomerRiskBadge } from "./CustomerRiskBadge"
 
 const RESTAURANT_ID = process.env.NEXT_PUBLIC_RESTAURANT_ID || "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 
@@ -34,11 +35,21 @@ interface TimeSlot {
   available: boolean
 }
 
+interface CustomerRisk {
+  exists: boolean
+  noShowCount: number
+  tags: string[]
+  riskLevel: "none" | "medium" | "high"
+  name?: string
+}
+
 export function CreateReservationModal({ isOpen, onClose, onSuccess }: CreateReservationModalProps) {
   const [loading, setLoading] = useState(false)
   const [checkingAvailability, setCheckingAvailability] = useState(false)
+  const [checkingCustomer, setCheckingCustomer] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
+  const [customerRisk, setCustomerRisk] = useState<CustomerRisk | null>(null)
 
   const [formData, setFormData] = useState({
     date: "",
@@ -64,8 +75,41 @@ export function CreateReservationModal({ isOpen, onClose, onSuccess }: CreateRes
       })
       setErrors({})
       setTimeSlots([])
+      setCustomerRisk(null)
     }
   }, [isOpen])
+
+  // Check customer risk when phone is valid
+  useEffect(() => {
+    const phone = formData.phone
+    // Validar teléfono español: 9 dígitos empezando por 6, 7, 8, o 9
+    if (/^[6789]\d{8}$/.test(phone)) {
+      checkCustomerRisk(phone)
+    } else {
+      setCustomerRisk(null)
+    }
+  }, [formData.phone])
+
+  async function checkCustomerRisk(phone: string) {
+    setCheckingCustomer(true)
+    try {
+      const response = await fetch(`/api/admin/customers/${phone}`)
+      if (response.ok) {
+        const data = await response.json()
+        console.log("[CreateReservationModal] Customer risk data:", data)
+        setCustomerRisk(data)
+
+        // Auto-fill name if customer exists and name field is empty
+        if (data.exists && data.name && !formData.name) {
+          setFormData((prev) => ({ ...prev, name: data.name }))
+        }
+      }
+    } catch (error) {
+      console.error("Error checking customer risk:", error)
+    } finally {
+      setCheckingCustomer(false)
+    }
+  }
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -124,8 +168,8 @@ export function CreateReservationModal({ isOpen, onClose, onSuccess }: CreateRes
     if (!formData.name || formData.name.length < 2) {
       newErrors.name = "El nombre debe tener al menos 2 caracteres"
     }
-    if (!formData.phone || !/^3\d{9}$/.test(formData.phone)) {
-      newErrors.phone = "Teléfono inválido (formato: 3XXXXXXXXX)"
+    if (!formData.phone || !/^[6789]\d{8}$/.test(formData.phone)) {
+      newErrors.phone = "Teléfono inválido (formato: 6XXXXXXXX o +34 6XX XXX XXX)"
     }
 
     setErrors(newErrors)
@@ -192,6 +236,44 @@ export function CreateReservationModal({ isOpen, onClose, onSuccess }: CreateRes
             <XIcon className="h-6 w-6" />
           </button>
         </div>
+
+        {/* Risk Warning Banner */}
+        {customerRisk && customerRisk.noShowCount > 0 && (
+          <div className={`
+            mx-6 mt-4 p-4 rounded-lg border flex items-start gap-3
+            ${customerRisk.riskLevel === "high"
+              ? "bg-red-50 border-red-200"
+              : "bg-amber-50 border-amber-200"}
+          `}>
+            <span className="text-xl">
+              {customerRisk.riskLevel === "high" ? "🔴" : "🟡"}
+            </span>
+            <div className="flex-1">
+              <p className={`
+                font-medium text-sm
+                ${customerRisk.riskLevel === "high" ? "text-red-800" : "text-amber-800"}
+              `}>
+                {customerRisk.riskLevel === "high"
+                  ? "Cliente con historial de no-shows"
+                  : "Precaución: Cliente con no-shows previos"}
+              </p>
+              <p className={`
+                text-xs mt-1
+                ${customerRisk.riskLevel === "high" ? "text-red-700" : "text-amber-700"}
+              `}>
+                Este cliente tiene {(customerRisk.noShowCount || 0) + 1} no-show{(customerRisk.noShowCount || 0) + 1 === 1 ? "" : "s"} en su historial.
+                {customerRisk.riskLevel === "high" && " Se recomienda confirmar reserva por llamada."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setCustomerRisk(null)}
+              className="text-neutral-400 hover:text-neutral-600"
+            >
+              <XIcon className="h-4 w-4" />
+            </button>
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -293,9 +375,15 @@ export function CreateReservationModal({ isOpen, onClose, onSuccess }: CreateRes
               type="tel"
               value={formData.phone}
               onChange={(e) => handleInputChange("phone", e.target.value)}
-              placeholder="3XXXXXXXXX"
+              placeholder="6XXXXXXXX"
               error={errors.phone}
-              helperText="Formato: 3 seguido de 9 dígitos"
+              helperText={
+                checkingCustomer
+                  ? "Verificando historial..."
+                  : customerRisk?.exists
+                    ? `Cliente encontrado${customerRisk.noShowCount > 0 ? ` (${customerRisk.noShowCount} no-shows)` : ""}`
+                    : "Formato: 9 dígitos (6XX XXX XXX)"
+              }
               required
             />
           </div>

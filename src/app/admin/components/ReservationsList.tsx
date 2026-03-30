@@ -18,6 +18,7 @@ interface ReservationsListProps {
   onRefresh: () => void
   onApprove: (id: string) => void
   onReject: (id: string) => void
+  onNoShow?: (id: string) => void
   selectedIds: Set<string>
   onToggleSelection: (id: string) => void
   onViewDetails: (id: string) => void
@@ -33,6 +34,7 @@ export function ReservationsList({
   onRefresh,
   onApprove,
   onReject,
+  onNoShow,
   selectedIds,
   onToggleSelection,
   onViewDetails,
@@ -59,6 +61,7 @@ export function ReservationsList({
         reservations={paginatedReservations}
         onApprove={onApprove}
         onReject={onReject}
+        onNoShow={onNoShow}
         loading={loading}
         selectedIds={selectedIds}
         onToggleSelection={onToggleSelection}

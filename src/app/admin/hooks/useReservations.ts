@@ -7,7 +7,7 @@ import type { Reservation, FilterValue } from "../types"
 
 interface UseReservationsProps {
   restaurantId: string
-  filter: FilterValue
+  filter?: FilterValue // Optional - filtering is done client-side in useFilters
   dateFilter: string
   timeFilter?: string
 }
@@ -25,8 +25,17 @@ export function useReservations({ restaurantId, filter, dateFilter, timeFilter }
       const params = new URLSearchParams()
       params.set("restaurantId", restaurantId)
 
-      if (filter !== "all") {
-        params.set("status", filter.toUpperCase())
+      // Map filter values to database status (Spanish)
+      const statusMap: Record<FilterValue, string | null> = {
+        all: null,
+        pending: "PENDIENTE",
+        confirmed: "CONFIRMADO",
+        cancelled: "CANCELADO",
+        noShows: null, // Client-side filter, not a DB status
+      }
+
+      if (filter && filter !== "all") {
+        params.set("status", statusMap[filter] || "")
       }
 
       if (dateFilter) {

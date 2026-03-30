@@ -7,7 +7,7 @@ import { z } from "zod"
 // Validation schema for updating a reservation
 const updateReservationSchema = z.object({
   customerName: z.string().min(2).optional(),
-  customerPhone: z.string().regex(/^3\d{9}$/).optional(),
+  customerPhone: z.string().regex(/^\+?\d{9,12}$/).optional(), // Español: 9 dígitos, opcionalmente con +34
   reservationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   reservationTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
   partySize: z.number().int().min(1).max(50).optional(),
@@ -81,7 +81,10 @@ export async function PUT(
     if (validatedData.tableIds) updateData.tableIds = validatedData.tableIds
 
     // Handle status changes with timestamps
-    if (validatedData.status && validatedData.status !== existing.status) {
+    const isStatusChange = validatedData.status && validatedData.status !== existing.status
+    const isNoShow = validatedData.status === "NO_SHOW"
+
+    if (isStatusChange) {
       updateData.status = validatedData.status
 
       if (validatedData.status === "CONFIRMADO") {
@@ -89,40 +92,80 @@ export async function PUT(
       } else if (validatedData.status === "CANCELADO") {
         updateData.cancelledAt = new Date()
       }
-
-      // Record history
-      await db.insert(reservationHistory).values({
-        reservationId: id,
-        oldStatus: existing.status,
-        newStatus: validatedData.status,
-        changedBy: "ADMIN",
-        metadata: {
-          previousData: existing,
-          updateData: validatedData,
-        },
-      })
     }
 
-    // Update customer if name/phone changed
-    if (validatedData.customerName || validatedData.customerPhone) {
-      if (existing.customerId) {
-        const customerUpdate: Record<string, unknown> = {}
-        if (validatedData.customerName) customerUpdate.name = validatedData.customerName
-        if (validatedData.customerPhone) customerUpdate.phoneNumber = validatedData.customerPhone
-
-        await db
-          .update(customers)
-          .set(customerUpdate)
-          .where(eq(customers.id, existing.customerId))
-      }
-    }
-
-    // Update reservation
+    // Update reservation first
     const [updated] = await db
       .update(reservations)
       .set(updateData)
       .where(eq(reservations.id, id))
       .returning()
+
+    // Handle no-show customer update AFTER reservation is updated
+    if (isNoShow && existing.customerId) {
+      try {
+        const customer = await db.query.customers.findFirst({
+          where: eq(customers.id, existing.customerId)
+        })
+
+        if (customer) {
+          const currentTags = (customer.tags as string[]) || []
+          const updatedTags = currentTags.includes("no-show")
+            ? currentTags
+            : [...currentTags, "no-show"]
+
+          await db
+            .update(customers)
+            .set({
+              noShowCount: (customer.noShowCount || 0) + 1,
+              tags: updatedTags,
+              updatedAt: new Date(),
+            })
+            .where(eq(customers.id, existing.customerId))
+
+          console.log(`[No-Show] Customer ${existing.customerId} updated: noShowCount = ${(customer.noShowCount || 0) + 1}`)
+        }
+      } catch (customerError) {
+        // Log but don't fail - reservation is already updated
+        console.error("[No-Show] Error updating customer (reservation was still updated):", customerError)
+      }
+    }
+
+    // Record history
+    if (isStatusChange) {
+      try {
+        await db.insert(reservationHistory).values({
+          reservationId: id,
+          oldStatus: existing.status,
+          newStatus: validatedData.status!,
+          changedBy: "ADMIN",
+          metadata: {
+            previousData: existing,
+            updateData: validatedData,
+          },
+        })
+      } catch (historyError) {
+        console.error("[History] Error recording history:", historyError)
+      }
+    }
+
+    // Update customer if name/phone changed
+    if (validatedData.customerName || validatedData.customerPhone) {
+      if (existing.customerId) {
+        try {
+          const customerUpdate: Record<string, unknown> = {}
+          if (validatedData.customerName) customerUpdate.name = validatedData.customerName
+          if (validatedData.customerPhone) customerUpdate.phoneNumber = validatedData.customerPhone
+
+          await db
+            .update(customers)
+            .set(customerUpdate)
+            .where(eq(customers.id, existing.customerId))
+        } catch (customerUpdateError) {
+          console.error("[Customer] Error updating customer info:", customerUpdateError)
+        }
+      }
+    }
 
     // Return updated reservation
     const result = await db.query.reservations.findFirst({

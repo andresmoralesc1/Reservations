@@ -35,21 +35,35 @@ export function useFilters({
   // Calculate total pages
   const totalPages = Math.ceil(filteredReservations.length / itemsPerPage)
 
-  // Filter by search query
+  // Filter by search query AND status filter
   useEffect(() => {
+    let filtered = reservations
+
+    // Apply status filter
+    if (filter === "pending") {
+      filtered = filtered.filter((r) => r.status === "PENDIENTE")
+    } else if (filter === "confirmed") {
+      filtered = filtered.filter((r) => r.status === "CONFIRMADO")
+    } else if (filter === "cancelled") {
+      filtered = filtered.filter((r) => r.status === "CANCELADO")
+    } else if (filter === "noShows") {
+      // Filter reservations from customers with no-show history
+      filtered = filtered.filter((r) => (r.customerNoShowCount || 0) > 0)
+    }
+
+    // Apply search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
-      const filtered = reservations.filter((r) =>
+      filtered = filtered.filter((r) =>
         r.customerName.toLowerCase().includes(query) ||
         r.reservationCode.toLowerCase().includes(query) ||
         r.customerPhone.includes(query)
       )
-      setFilteredReservations(filtered)
-    } else {
-      setFilteredReservations(reservations)
     }
+
+    setFilteredReservations(filtered)
     setCurrentPage(1) // Reset to first page when filter changes
-  }, [searchQuery, reservations])
+  }, [searchQuery, reservations, filter])
 
   // Paginated reservations
   const paginatedReservations = filteredReservations.slice(

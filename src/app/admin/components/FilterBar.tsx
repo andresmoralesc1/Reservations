@@ -5,6 +5,7 @@
 import { FilterTabs } from "@/components/FilterTabs"
 import { SearchBar } from "@/components/SearchBar"
 import { filterOptions } from "../types"
+import type { Reservation } from "../types"
 
 interface FilterBarProps {
   filter: string
@@ -13,6 +14,7 @@ interface FilterBarProps {
   onSearchChange: (query: string) => void
   timeFilter?: string // "all", "comida", "cena", or specific time like "20:00"
   onTimeFilterChange?: (time: string) => void
+  reservations?: Reservation[] // For no-show counter
 }
 
 export function FilterBar({
@@ -22,16 +24,46 @@ export function FilterBar({
   onSearchChange,
   timeFilter = "all",
   onTimeFilterChange,
+  reservations = [],
 }: FilterBarProps) {
+  // Count customers with no-show history
+  const noShowCount = reservations.filter((r) => (r.customerNoShowCount || 0) > 0).length
   return (
     <div className="flex flex-col gap-4">
       {/* First row: Status filters + Service/Time filters */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <FilterTabs
-          options={filterOptions}
-          value={filter as any}
-          onChange={onFilterChange as any}
-        />
+        {/* Custom filter tabs with no-show counter */}
+        <div className="flex flex-wrap gap-2">
+          {filterOptions.map((option) => {
+            const isActive = filter === option.value
+            const showCount = option.value === "noShows" && noShowCount > 0
+
+            return (
+              <button
+                key={option.value}
+                onClick={() => onFilterChange(option.value)}
+                className={`
+                  px-4 py-2 rounded-lg text-sm font-medium transition-all relative
+                  ${isActive
+                    ? option.value === "noShows"
+                      ? "bg-red-500 text-white"
+                      : "bg-black text-white"
+                    : option.value === "noShows"
+                      ? "bg-red-50 text-red-700 hover:bg-red-100"
+                      : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                  }
+                `}
+              >
+                {option.label}
+                {showCount && (
+                  <span className="ml-2 px-2 py-0.5 bg-white text-red-600 rounded-full text-xs font-bold">
+                    {noShowCount}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
 
         {onTimeFilterChange && (
           <div className="flex items-center gap-2">

@@ -17,9 +17,8 @@ import { useAdminStats, useFilters, useReservations, useReservationActions, useR
 import type { Reservation, FilterValue } from "./types"
 
 export default function AdminPage() {
-  // State
-  const [dateFilter, setDateFilter] = useState("")
-  const [filter, setFilter] = useState<FilterValue>("all")
+  // State - Start at 2026-04-02 to see Andres' reservation with 3 no-shows
+  const [dateFilter, setDateFilter] = useState("2026-04-02")
   const [timeFilter, setTimeFilter] = useState<string>("all")
 
   // Keyboard shortcuts for date navigation
@@ -67,12 +66,13 @@ export default function AdminPage() {
 
   const { reservations, loading: reservationsLoading, reload: reloadReservations } = useReservations({
     restaurantId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    filter,
     dateFilter,
     timeFilter,
   })
 
   const {
+    filter,
+    setFilter,
     filteredReservations,
     paginatedReservations,
     searchQuery,
@@ -106,6 +106,37 @@ export default function AdminPage() {
       }
     },
     [reservations, handleReject]
+  )
+
+  const handleNoShowById = useCallback(
+    async (id: string) => {
+      const reservation = reservations.find((r: Reservation) => r.id === id)
+      if (!reservation) return
+
+      if (!confirm(`¿Marcar la reserva de ${reservation.customerName} como NO SHOW?\n\nEsto incrementará su contador de no-shows.`)) {
+        return
+      }
+
+      try {
+        const response = await fetch(`/api/reservations/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "NO_SHOW" }),
+        })
+
+        if (response.ok) {
+          toast("Reserva marcada como No Show", "success")
+          reloadReservations()
+          reloadStats()
+        } else {
+          toast("Error al marcar No Show", "error")
+        }
+      } catch (error) {
+        console.error("Error marking no-show:", error)
+        toast("Error al marcar No Show", "error")
+      }
+    },
+    [reservations, reloadReservations, reloadStats]
   )
 
   const handleViewDetails = useCallback(
@@ -172,12 +203,13 @@ export default function AdminPage() {
     handleRefreshAll()
   }, [handleRefreshAll])
 
+  // Loading combined
+  const loading = statsLoading || reservationsLoading
+
+  // After hooks are defined, create handler
   const handleFilterChange = useCallback((newFilter: string) => {
     setFilter(newFilter as FilterValue)
   }, [])
-
-  // Loading combined
-  const loading = statsLoading || reservationsLoading
 
   return (
     <div className="space-y-6">
@@ -202,6 +234,7 @@ export default function AdminPage() {
         onSearchChange={setSearchQuery}
         timeFilter={timeFilter}
         onTimeFilterChange={setTimeFilter}
+        reservations={reservations}
       />
 
       {/* Action Bar */}
@@ -227,6 +260,7 @@ export default function AdminPage() {
         onRefresh={handleRefreshAll}
         onApprove={handleApproveById}
         onReject={handleRejectById}
+        onNoShow={handleNoShowById}
         selectedIds={selectedIds}
         onToggleSelection={toggleSelection}
         onViewDetails={handleViewDetails}

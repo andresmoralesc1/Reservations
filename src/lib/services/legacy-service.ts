@@ -31,14 +31,20 @@ export async function createLegacyReservation(params: {
     // Generar código de reserva
     const reservationCode = generateReservationCode()
 
-    // Buscar o crear cliente
+    // Normalize phone number (remove non-digits, optional +34 prefix)
+    const normalizedPhone = params.numero.replace(/\D/g, "")
+    const cleanPhone = normalizedPhone.startsWith("34") && normalizedPhone.length === 11
+      ? normalizedPhone.slice(2)
+      : normalizedPhone
+
+    // Buscar o crear cliente (use normalized phone)
     let customer = await db.query.customers.findFirst({
-      where: eq(customers.phoneNumber, params.numero)
+      where: eq(customers.phoneNumber, cleanPhone),
     })
 
     if (!customer) {
       const [newCustomer] = await db.insert(customers).values({
-        phoneNumber: params.numero,
+        phoneNumber: cleanPhone,
         name: params.nombre
       }).returning()
       customer = newCustomer
@@ -71,7 +77,7 @@ export async function createLegacyReservation(params: {
       reservationCode,
       customerId: customer.id,
       customerName: params.nombre,
-      customerPhone: params.numero,
+      customerPhone: cleanPhone, // Use normalized phone
       restaurantId: params.restaurante || "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
       reservationDate: params.fecha,
       reservationTime: params.hora,

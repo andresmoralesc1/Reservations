@@ -33,6 +33,9 @@ export interface Reservation {
     phone: string
     address: string
   }
+  // Customer risk info
+  customerNoShowCount?: number
+  customerTags?: string[]
 }
 
 export interface EnhancedStats {
@@ -87,13 +90,14 @@ export interface ChartData {
   }
 }
 
-export type FilterValue = "all" | "pending" | "confirmed" | "cancelled"
+export type FilterValue = "all" | "pending" | "confirmed" | "cancelled" | "noShows"
 
 export const filterOptions: { value: FilterValue; label: string }[] = [
   { value: "all", label: "Todas" },
   { value: "pending", label: "Pendientes" },
   { value: "confirmed", label: "Confirmadas" },
   { value: "cancelled", label: "Canceladas" },
+  { value: "noShows", label: "No-Shows" },
 ]
 
 // TODO: Get from environment or auth

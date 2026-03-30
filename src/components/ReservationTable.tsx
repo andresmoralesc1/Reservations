@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils"
 import { Button } from "./Button"
 import { StatusBadge } from "./StatusBadge"
+import { CustomerRiskBadge } from "./admin/CustomerRiskBadge"
 
 interface Table {
   id: string
@@ -23,12 +24,14 @@ interface Reservation {
   status: string
   source: string
   tables?: Table[]
+  customerNoShowCount?: number
 }
 
 interface ReservationTableProps {
   reservations: Reservation[]
   onApprove?: (id: string) => void
   onReject?: (id: string) => void
+  onNoShow?: (id: string) => void
   loading?: boolean
   selectedIds?: Set<string>
   onToggleSelection?: (id: string) => void
@@ -39,6 +42,7 @@ export function ReservationTable({
   reservations,
   onApprove,
   onReject,
+  onNoShow,
   loading,
   selectedIds = new Set(),
   onToggleSelection,
@@ -135,8 +139,18 @@ export function ReservationTable({
                 <span className="font-display text-sm">{reservation.reservationCode}</span>
               </td>
               <td className="px-6 py-4">
-                <div className="font-sans text-sm font-medium text-black">{reservation.customerName}</div>
-                <div className="font-sans text-xs text-neutral-500">{reservation.customerPhone}</div>
+                <div className="flex items-center gap-2">
+                  <div>
+                    <div className="font-sans text-sm font-medium text-black">{reservation.customerName}</div>
+                    <div className="font-sans text-xs text-neutral-500">{reservation.customerPhone}</div>
+                  </div>
+                  {reservation.customerNoShowCount && reservation.customerNoShowCount > 0 && (
+                    <>
+                      {console.log(`[ReservationTable] ${reservation.reservationCode} - noShowCount: ${reservation.customerNoShowCount}`)}
+                      <CustomerRiskBadge noShowCount={reservation.customerNoShowCount} />
+                    </>
+                  )}
+                </div>
               </td>
               <td className="whitespace-nowrap px-6 py-4 font-sans text-sm">
                 {reservation.reservationDate} - {reservation.reservationTime}
@@ -199,6 +213,16 @@ export function ReservationTable({
                         Rechazar
                       </Button>
                     </>
+                  )}
+                  {reservation.status === "CONFIRMADO" && onNoShow && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onNoShow(reservation.id)}
+                      className="border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400"
+                    >
+                      No Show
+                    </Button>
                   )}
                 </div>
               </td>
