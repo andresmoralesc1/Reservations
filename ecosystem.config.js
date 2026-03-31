@@ -6,6 +6,8 @@
  * - pm2 restart all
  * - pm2 logs
  * - pm2 save
+ *
+ * Nota: El cron de analytics se maneja via crontab Linux, no PM2
  */
 
 module.exports = {
@@ -22,21 +24,6 @@ module.exports = {
       },
       error_file: "./logs/err.log",
       out_file: "./logs/out.log",
-      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
-    },
-    {
-      name: "analytics-aggregator",
-      script: "./node_modules/tsx/dist/cli.mjs",
-      args: "./scripts/analytics-cron.ts",
-      // Ejecutar todos los días a las 2:00 AM
-      cron_restart: "0 2 * * *",
-      // Alternativa: ejecutar cada hora (para testing)
-      // cron_restart: "0 * * * *",
-      env: {
-        NODE_ENV: "production",
-      },
-      error_file: "./logs/analytics-err.log",
-      out_file: "./logs/analytics-out.log",
       log_date_format: "YYYY-MM-DD HH:mm:ss Z",
     },
   ],
