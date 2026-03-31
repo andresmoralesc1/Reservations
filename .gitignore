@@ -57,3 +57,7 @@ Agente de reservasRest1*.json
 .env.development.local
 .env.test.local
 .env.production.local
+
+# PM2 logs
+/logs
+*.log

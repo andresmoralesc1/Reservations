@@ -40,6 +40,15 @@ export {
   type ChartData,
 } from "./analytics.service"
 
+// Analytics Aggregation Service (Pre-calculated daily metrics)
+export {
+  calculateAndStoreDailyAnalytics,
+  backfillDailyAnalytics,
+  getPreCalculatedAnalytics,
+  getHybridAnalytics,
+  type DailyAnalyticsInput,
+} from "./analytics-aggregate.service"
+
 // Table Service
 export {
   getTables,

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { reservations, tables } from "@/drizzle/schema"
-import { eq, and, gte, lte, desc } from "drizzle-orm"
+import { reservations, tables, dailyAnalytics } from "@/drizzle/schema"
+import { eq, and, gte, lte, desc, sql } from "drizzle-orm"
 import { subDays } from "date-fns"
 import { getCachedAnalytics } from "@/lib/cache"
 import { redisEnabled } from "@/lib/redis"
+import { getDashboardStats } from "@/lib/services/analytics.service"
 
 // Tipo de respuesta de analíticas
 interface AnalyticsResponse {
@@ -44,8 +45,165 @@ interface AnalyticsResponse {
   sourceBreakdown: Record<string, number>
 }
 
-// Función para obtener analíticas (extraída para usar con caché)
-async function fetchAnalytics(
+/**
+ * Obtiene analíticas usando datos pre-calculados de daily_analytics
+ * Combina datos históricos pre-calculados con datos de hoy en tiempo real
+ */
+async function fetchAnalyticsOptimized(
+  restaurantId: string,
+  startDateStr: string,
+  endDateStr: string
+): Promise<AnalyticsResponse> {
+  const today = new Date().toISOString().split("T")[0]
+  const needsTodayData = startDateStr <= today && today <= endDateStr
+
+  console.log(`📊 [OPTIMIZED] Fetching analytics from ${startDateStr} to ${endDateStr}`)
+
+  // Obtener datos pre-calculados para el rango (excluyendo hoy si está en el rango)
+  const historicalDateEnd = needsTodayData
+    ? new Date(new Date(today).getTime() - 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+    : endDateStr
+
+  const historicalData = await db.query.dailyAnalytics.findMany({
+    where: and(
+      eq(dailyAnalytics.restaurantId, restaurantId),
+      sql`${dailyAnalytics.date} >= ${startDateStr} AND ${dailyAnalytics.date} <= ${historicalDateEnd}`
+    ),
+    orderBy: [desc(dailyAnalytics.date)],
+  })
+
+  console.log(`📊 [OPTIMIZED] Found ${historicalData.length} pre-calculated days`)
+
+  // Si hoy está en el rango, obtener datos en tiempo real
+  let todayData: any = null
+  if (needsTodayData) {
+    const stats = await getDashboardStats({ restaurantId, date: today })
+    todayData = {
+      date: today,
+      totalReservations: stats.totalToday,
+      confirmedCount: stats.confirmedCount,
+      pendingCount: stats.pendingCount,
+      cancelledCount: stats.cancelledCount,
+      noShowCount: stats.noShowCount,
+      totalCovers: stats.totalCovers,
+      avgPartySize: stats.avgPartySize,
+      confirmationRate: stats.confirmationRate,
+    }
+    console.log(`📊 [OPTIMIZED] Today's stats calculated in real-time`)
+  }
+
+  // Combinar datos históricos con hoy
+  const allDailyData = [...historicalData]
+  if (todayData) {
+    allDailyData.push(todayData)
+  }
+
+  // Calcular resumen agregado
+  const totalReservations = allDailyData.reduce((sum, d) => sum + d.totalReservations, 0)
+  const confirmedCount = allDailyData.reduce((sum, d) => sum + d.confirmedCount, 0)
+  const pendingCount = allDailyData.reduce((sum, d) => sum + d.pendingCount, 0)
+  const cancelledCount = allDailyData.reduce((sum, d) => sum + d.cancelledCount, 0)
+  const noShowCount = allDailyData.reduce((sum, d) => sum + d.noShowCount, 0)
+  const totalCovers = allDailyData.reduce((sum, d) => sum + d.totalCovers, 0)
+
+  const nonCancelledTotal = allDailyData.reduce((sum, d) => {
+    return sum + d.totalReservations - d.cancelledCount
+  }, 0)
+
+  const avgPartySize = nonCancelledTotal > 0
+    ? Math.round((totalCovers / nonCancelledTotal) * 10) / 10
+    : 0
+
+  // Desglose por hora (agregado de todos los días)
+  const hourlyMap = new Map<number, { count: number; covers: number }>()
+  for (let h = 13; h <= 23; h++) {
+    hourlyMap.set(h, { count: 0, covers: 0 })
+  }
+
+  for (const day of allDailyData) {
+    if (day.hourlyBreakdown) {
+      for (const hourData of day.hourlyBreakdown) {
+        const current = hourlyMap.get(hourData.hour) || { count: 0, covers: 0 }
+        current.count += hourData.count
+        current.covers += hourData.covers
+        hourlyMap.set(hourData.hour, current)
+      }
+    }
+  }
+
+  const hourlyBreakdown = Array.from(hourlyMap.entries())
+    .filter(([_, data]) => data.count > 0)
+    .map(([hour, data]) => ({ hour, ...data }))
+    .sort((a, b) => a.hour - b.hour)
+
+  // Desglose por origen (agregado de todos los días)
+  const sourceBreakdown: Record<string, number> = {}
+  for (const day of allDailyData) {
+    if (day.sourceBreakdown) {
+      for (const [source, count] of Object.entries(day.sourceBreakdown)) {
+        sourceBreakdown[source] = (sourceBreakdown[source] || 0) + count
+      }
+    }
+  }
+
+  // Obtener info de mesas
+  const allTables = await db.query.tables.findMany({
+    where: eq(tables.restaurantId, restaurantId),
+  })
+
+  const totalCapacity = allTables.reduce((sum, t) => sum + t.capacity, 0)
+  const daysWithData = allDailyData.length
+  const avgOccupancy = (totalCapacity > 0 && daysWithData > 0)
+    ? Math.round((totalCovers / (totalCapacity * daysWithData)) * 100)
+    : 0
+
+  const noShowRate = confirmedCount > 0
+    ? Math.round((noShowCount / confirmedCount) * 100)
+    : 0
+
+  const confirmationRate = (confirmedCount + pendingCount) > 0
+    ? Math.round((confirmedCount / (confirmedCount + pendingCount)) * 100)
+    : 0
+
+  return {
+    period: {
+      startDate: startDateStr,
+      endDate: endDateStr,
+      days: daysWithData,
+    },
+    summary: {
+      totalReservations,
+      confirmedCount,
+      pendingCount,
+      cancelledCount,
+      noShowCount,
+      totalCovers,
+      avgPartySize,
+      confirmationRate,
+      noShowRate,
+      avgOccupancy,
+      totalTables: allTables.length,
+      totalCapacity,
+    },
+    dailyBreakdown: allDailyData.map((d) => ({
+      date: d.date,
+      total: d.totalReservations,
+      confirmed: d.confirmedCount,
+      pending: d.pendingCount,
+      cancelled: d.cancelledCount,
+      noShow: d.noShowCount,
+      covers: d.totalCovers,
+    })).sort((a, b) => b.date.localeCompare(a.date)),
+    hourlyBreakdown,
+    sourceBreakdown,
+  }
+}
+
+/**
+ * Fallback: Obtiene analíticas calculando en tiempo real (sin daily_analytics)
+ * Se usa si no hay datos pre-calculados disponibles
+ */
+async function fetchAnalyticsRealtime(
   restaurantId: string,
   startDateStr: string,
   endDateStr: string
@@ -60,14 +218,12 @@ async function fetchAnalytics(
     orderBy: [desc(reservations.reservationDate), desc(reservations.reservationTime)],
   })
 
-  console.log(`📊 Found ${allReservations.length} reservations from ${startDateStr} to ${endDateStr}`)
+  console.log(`📊 [REALTIME] Found ${allReservations.length} reservations from ${startDateStr} to ${endDateStr}`)
 
   // Get tables
   const allTables = await db.query.tables.findMany({
     where: eq(tables.restaurantId, restaurantId),
   })
-
-  console.log(`📊 Found ${allTables.length} tables`)
 
   // Calculate metrics
   const totalReservations = allReservations.length
@@ -191,6 +347,39 @@ async function fetchAnalytics(
     hourlyBreakdown: Object.values(hourlyBreakdown).sort((a, b) => a.hour - b.hour),
     sourceBreakdown,
   }
+}
+
+// Función principal que decide usar datos pre-calculados o tiempo real
+async function fetchAnalytics(
+  restaurantId: string,
+  startDateStr: string,
+  endDateStr: string
+): Promise<AnalyticsResponse> {
+  // Verificar si hay datos pre-calculados disponibles para el rango
+  const preCalculatedCount = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(dailyAnalytics)
+    .where(
+      and(
+        eq(dailyAnalytics.restaurantId, restaurantId),
+        sql`${dailyAnalytics.date} >= ${startDateStr} AND ${dailyAnalytics.date} <= ${endDateStr}`
+      )
+    )
+    .then((res) => res[0]?.count ?? 0)
+
+  // Si hay suficientes datos pre-calculados, usar la versión optimizada
+  // Usar optimizada si el rango es > 2 días o si hay datos para todo el rango
+  const startDate = new Date(startDateStr)
+  const endDate = new Date(endDateStr)
+  const daysInRange = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+
+  if (preCalculatedCount >= daysInRange - 1) { // -1 porque hoy se calcula en tiempo real
+    console.log(`📊 Using pre-calculated data (${preCalculatedCount} days)`)
+    return fetchAnalyticsOptimized(restaurantId, startDateStr, endDateStr)
+  }
+
+  console.log(`📊 Using realtime calculation (only ${preCalculatedCount} pre-calculated days available)`)
+  return fetchAnalyticsRealtime(restaurantId, startDateStr, endDateStr)
 }
 
 // GET /api/admin/analytics - Get comprehensive analytics data (con caché)
