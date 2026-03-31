@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react"
+import React, { createContext, useContext, ReactNode } from "react"
 
 export interface Restaurant {
   id: string
@@ -17,9 +17,6 @@ interface RestaurantContextValue {
   selectedRestaurantId: string | null
   isLoading: boolean
   error: string | null
-  setSelectedRestaurant: (restaurant: Restaurant) => void
-  setSelectedRestaurantById: (id: string) => void
-  refreshRestaurants: () => Promise<void>
 }
 
 const RestaurantContext = createContext<RestaurantContextValue | undefined>(undefined)
@@ -36,93 +33,28 @@ interface RestaurantProviderProps {
   children: ReactNode
 }
 
-const STORAGE_KEY = "posit_selected_restaurant"
+// Single restaurant for this installation
+const MAIN_RESTAURANT: Restaurant = {
+  id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  name: "El Patio",
+  phone: null,
+  address: null,
+  timezone: "Europe/Madrid",
+  isActive: true,
+}
 
 export function RestaurantProvider({ children }: RestaurantProviderProps) {
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([])
-  const [selectedRestaurantId, setSelectedRestaurantIdState] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  // Load restaurants and selected restaurant on mount
-  useEffect(() => {
-    loadRestaurants()
-  }, [])
-
-  // Load selected restaurant from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      try {
-        setSelectedRestaurantIdState(stored)
-      } catch {
-        localStorage.removeItem(STORAGE_KEY)
-      }
-    }
-  }, [])
-
-  const loadRestaurants = async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
-
-      const response = await fetch("/api/restaurants")
-      if (!response.ok) {
-        throw new Error("Error al cargar restaurantes")
-      }
-
-      const data = await response.json()
-      setRestaurants(data.restaurants)
-
-      // Set first restaurant as default if none selected
-      if (data.restaurants.length > 0 && !selectedRestaurantId) {
-        const firstRestaurant = data.restaurants[0]
-        setSelectedRestaurantIdState(firstRestaurant.id)
-        localStorage.setItem(STORAGE_KEY, firstRestaurant.id)
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido")
-      console.error("Error loading restaurants:", err)
-    } finally {
-      setIsLoading(false)
-    }
+  // No loading, no errors - always return the main restaurant
+  const value: RestaurantContextValue = {
+    restaurants: [MAIN_RESTAURANT],
+    selectedRestaurant: MAIN_RESTAURANT,
+    selectedRestaurantId: MAIN_RESTAURANT.id,
+    isLoading: false,
+    error: null,
   }
 
-  const setSelectedRestaurant = useCallback((restaurant: Restaurant) => {
-    setSelectedRestaurantIdState(restaurant.id)
-    localStorage.setItem(STORAGE_KEY, restaurant.id)
-  }, [])
-
-  const setSelectedRestaurantById = useCallback((id: string) => {
-    const restaurant = restaurants.find((r) => r.id === id)
-    if (restaurant) {
-      setSelectedRestaurant(restaurant)
-    }
-  }, [restaurants, setSelectedRestaurant])
-
-  const refreshRestaurants = useCallback(async () => {
-    await loadRestaurants()
-  }, [])
-
-  // Get the selected restaurant object
-  const selectedRestaurant = React.useMemo(
-    () => restaurants.find((r) => r.id === selectedRestaurantId) || null,
-    [restaurants, selectedRestaurantId]
-  )
-
   return (
-    <RestaurantContext.Provider
-      value={{
-        restaurants,
-        selectedRestaurant,
-        selectedRestaurantId,
-        isLoading,
-        error,
-        setSelectedRestaurant,
-        setSelectedRestaurantById,
-        refreshRestaurants,
-      }}
-    >
+    <RestaurantContext.Provider value={value}>
       {children}
     </RestaurantContext.Provider>
   )

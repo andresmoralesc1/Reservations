@@ -5,6 +5,7 @@ import { Modal } from "@/components/Modal"
 import { Button } from "@/components/Button"
 import { toast } from "@/components/Toast"
 import { TableShape, TableShapeType } from "./TableShape"
+import { generateTableCode } from "@/lib/utils/tableUtils"
 
 export interface Table {
   id: string
@@ -85,7 +86,7 @@ export function TableCard({ table, hasReservations, onEdit, onDelete }: TableCar
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2">
             <h3 className="font-display text-lg font-semibold uppercase tracking-wider text-black">
-              {table.tableNumber}
+              {generateTableCode(table.location, table.tableNumber)}
             </h3>
             {table.isAccessible && (
               <span className="text-xs" title="Accesible">
@@ -180,7 +181,7 @@ export function TableCard({ table, hasReservations, onEdit, onDelete }: TableCar
         }
       >
         <p className="text-neutral-600">
-          ¿Estás seguro de que deseas eliminar la mesa <strong>{table.tableNumber}</strong>?
+          ¿Estás seguro de que deseas eliminar la mesa <strong>{generateTableCode(table.location, table.tableNumber)}</strong>?
         </p>
         <p className="mt-2 text-sm text-neutral-500">
           Esta acción no se puede deshacer.

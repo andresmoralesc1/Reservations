@@ -62,7 +62,6 @@ interface AuthContextValue {
   hasAnyPermission: (permissions: Permission[]) => boolean
   login: (email: string, password: string) => Promise<boolean>
   logout: () => void
-  refreshRestaurant: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -112,61 +111,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check for stored user on mount and refresh restaurant
+    // Check for stored user on mount
     const storedUser = localStorage.getItem("posit_user")
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser)
-
-        // Ensure we have the correct restaurant
-        refreshRestaurant().then((restaurant) => {
-          if (restaurant) {
-            const updatedUser = { ...parsedUser, restaurantId: restaurant.id }
-            setUser(updatedUser)
-            localStorage.setItem("posit_user", JSON.stringify(updatedUser))
-          } else {
-            setUser(parsedUser)
-          }
-          setLoading(false)
-        })
+        setUser(parsedUser)
       } catch {
         localStorage.removeItem("posit_user")
-        setLoading(false)
       }
-    } else {
-      setLoading(false)
     }
+    setLoading(false)
   }, [])
 
   const login = async (email: string, password: string): Promise<boolean> => {
     // Demo login - replace with real authentication
     const foundUser = DEMO_USERS.find((u) => u.email === email)
     if (foundUser && password === "demo123") {
-      // Get the actual restaurant from database
-      await refreshRestaurant()
-      // Update user with correct restaurantId
-      const storedRestaurant = localStorage.getItem("posit_restaurant")
-      const restaurantId = storedRestaurant ? JSON.parse(storedRestaurant).id : foundUser.restaurantId
-
-      const userWithRestaurant = { ...foundUser, restaurantId }
-      setUser(userWithRestaurant)
-      localStorage.setItem("posit_user", JSON.stringify(userWithRestaurant))
+      setUser(foundUser)
+      localStorage.setItem("posit_user", JSON.stringify(foundUser))
       return true
     }
     return false
-  }
-
-  const refreshRestaurant = async () => {
-    try {
-      const response = await fetch("/api/init")
-      if (response.ok) {
-        const data = await response.json()
-        localStorage.setItem("posit_restaurant", JSON.stringify(data.restaurant))
-        return data.restaurant
-      }
-    } catch (error) {
-      console.error("Error refreshing restaurant:", error)
-    }
   }
 
   const logout = () => {
@@ -193,7 +159,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         hasAnyPermission,
         login,
         logout,
-        refreshRestaurant,
       }}
     >
       {children}

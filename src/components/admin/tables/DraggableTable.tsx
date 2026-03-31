@@ -4,6 +4,7 @@ import { RotateCw } from "lucide-react"
 import { Table } from "@/drizzle/schema"
 import { TableShape } from "./TableShape"
 import { BarStools } from "./BarStool"
+import { generateTableCode } from "@/lib/utils/tableUtils"
 
 interface DraggableTableProps {
   table: Table
@@ -120,7 +121,7 @@ export const DraggableTable: React.FC<DraggableTableProps> = ({
           {/* Table number */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center">
-              <div className="text-sm font-bold text-amber-900">{table.tableNumber}</div>
+              <div className="text-sm font-bold text-amber-900">{generateTableCode(table.location, table.tableNumber)}</div>
               <div className="text-xs text-amber-700">{table.capacity}p</div>
             </div>
           </div>

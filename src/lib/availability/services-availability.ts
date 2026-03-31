@@ -2,6 +2,7 @@ import { db } from "@/lib/db"
 import { services, tables, reservations } from "@/drizzle/schema"
 import { eq, and, sql, or } from "drizzle-orm"
 import { parse, format, addMinutes, isWeekend, isValid, parseISO } from "date-fns"
+import { getCurrentSeason } from "@/lib/seasons"
 
 export type ServiceType = 'comida' | 'cena'
 export type Season = 'invierno' | 'primavera' | 'verano' | 'otoño' | 'todos'
@@ -14,6 +15,8 @@ export interface ServiceAvailabilityResult {
   service: Service | null
   message?: string
   alternativeSlots?: Array<{ time: string; available: boolean }>
+  totalReservationsInSlot?: number
+  availableTableIds?: string[]
 }
 
 export interface Service {
@@ -103,15 +106,13 @@ export class ServicesAvailability {
       return false
     }
 
-    // For season, we'll use 'todos' as always match
-    // In future, we can add month-based season detection
+    // Check season - use automatic season detection
     if (service.season === 'todos') {
       return true
     }
 
-    // TODO: Implement season detection based on month
-    // For MVP, all seasons match (can be enhanced later)
-    return true
+    const currentSeason = getCurrentSeason(dateObj)
+    return service.season === currentSeason
   }
 
   /**
@@ -286,6 +287,9 @@ export class ServicesAvailability {
     // Find available tables
     const availableTables = suitableTables.filter((t) => !occupiedTableIds.has(t.id))
 
+    // Count total reservations for this slot (demand indicator)
+    const totalReservationsInSlot = conflictingReservations.length
+
     if (availableTables.length === 0) {
       // Find alternative slots within this service
       const alternativeSlots = await this.findAlternativeSlotsWithinService({
@@ -306,15 +310,22 @@ export class ServicesAvailability {
       }
     }
 
-    // Select optimal tables (smallest suitable first)
+    // Sort tables by capacity (smallest first)
     availableTables.sort((a, b) => a.capacity - b.capacity)
-    const selectedTables = this.selectOptimalTables(availableTables, partySize)
+
+    // Filter to only show "reasonable" tables (avoid showing huge tables for small parties)
+    const reasonableTables = this.filterReasonableTables(availableTables, partySize)
+
+    // Select optimal tables from reasonable options
+    const selectedTables = this.selectOptimalTables(reasonableTables, partySize)
 
     return {
       available: true,
-      availableTables,
+      availableTables: reasonableTables,
       suggestedTables: selectedTables,
       service,
+      totalReservationsInSlot: totalReservationsInSlot,
+      availableTableIds: reasonableTables.map(t => t.id),
     }
   }
 
@@ -368,6 +379,74 @@ export class ServicesAvailability {
     }
 
     return results
+  }
+
+  /**
+   * Score a table for a given party size.
+   * Lower score = better fit.
+   * Perfect match (capacity == partySize) = 0
+   * Slight overcapacity (partySize + 1-2) = 1
+   * Moderate overcapacity (partySize + 3-4) = 2
+   * Large overcapacity (partySize + 5+) = 3
+   */
+  private scoreTable(table: Table, partySize: number): number {
+    const overcapacity = table.capacity - partySize
+
+    if (overcapacity < 0) return Infinity // Cannot accommodate
+    if (overcapacity === 0) return 0 // Perfect fit
+    if (overcapacity <= 2) return 1 // Slight overcapacity
+    if (overcapacity <= 4) return 2 // Moderate overcapacity
+    return 3 // Large overcapacity (wasteful)
+  }
+
+  /**
+   * Filter tables to only include "reasonable" options.
+   * A table is unreasonable if there's a much better option available.
+   * For example: don't offer a table of 8 for 2 people if tables of 2-4 exist.
+   */
+  private filterReasonableTables(availableTables: Table[], partySize: number): Table[] {
+    if (availableTables.length === 0) return []
+
+    // Score all tables
+    const scoredTables = availableTables.map(t => ({
+      table: t,
+      score: this.scoreTable(t, partySize)
+    }))
+
+    // Find the best score (lowest)
+    const bestScore = Math.min(...scoredTables.map(s => s.score))
+
+    // Only include tables with score <= bestScore + 1
+    // This means we include tables that are at most one level worse than the best option
+    return scoredTables
+      .filter(s => s.score <= bestScore + 1)
+      .map(s => s.table)
+  }
+
+  /**
+   * Count total reservations for a given slot (demand indicator)
+   */
+  private async countReservationsInSlot(params: {
+    restaurantId: string
+    date: string
+    time: string
+    service: Service
+  }): Promise<number> {
+    const { restaurantId, date, time, service } = params
+
+    const startTime = parse(time, 'HH:mm', new Date())
+    const endTime = addMinutes(startTime, service.defaultDurationMinutes)
+    const endTimeStr = format(endTime, 'HH:mm')
+
+    const conflictingReservations = await this.getConflictingReservations({
+      restaurantId,
+      date,
+      startTime: time,
+      endTime: endTimeStr,
+      service,
+    })
+
+    return conflictingReservations.length
   }
 
   /**

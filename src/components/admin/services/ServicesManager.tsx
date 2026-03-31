@@ -68,9 +68,6 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
   })
 
   const fetchServices = async () => {
-    console.log("Fetching services... restaurantId:", restaurantId)
-    console.log("[ServicesManager] localStorage restaurant:", localStorage.getItem("posit_restaurant"))
-    console.log("[ServicesManager] localStorage user:", localStorage.getItem("posit_user"))
     try {
       setLoading(true)
       setError(null)
@@ -78,19 +75,12 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
       const params = new URLSearchParams()
       if (restaurantId) {
         params.append("restaurantId", restaurantId)
-        console.log("[ServicesManager] Query params:", params.toString())
-      } else {
-        console.log("[ServicesManager] WARNING: restaurantId is empty/null, fetching ALL services")
       }
 
       const url = `/api/admin/services?${params.toString()}`
-      console.log("Fetching from:", url)
 
       const response = await fetch(url)
-      console.log("Response status:", response.status)
-
       const data = await response.json()
-      console.log("Response data:", data)
 
       if (data.success) {
         setServices(data.data || [])
@@ -106,18 +96,15 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
   }
 
   useEffect(() => {
-    console.log("ServicesManager mounted, restaurantId:", restaurantId)
     fetchServices()
   }, [restaurantId])
 
   const handleCreate = () => {
-    console.log("Creating new service")
     setEditingService(null)
     setModalOpen(true)
   }
 
   const handleEdit = (service: Service) => {
-    console.log("Editing service:", service.id)
     setEditingService(service)
     setModalOpen(true)
   }
@@ -170,14 +157,12 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
 
     try {
       setDeletingService(serviceToDelete)
-      console.log(`Attempting to delete service: ${serviceToDelete.name}`)
 
       const response = await fetch(`/api/admin/services/${serviceToDelete.id}?permanent=true`, {
         method: "DELETE",
       })
 
       const data = await response.json()
-      console.log("Delete response:", data)
 
       if (data.success) {
         alert(`✅ Servicio "${serviceToDelete.name}" eliminado permanentemente`)
@@ -191,7 +176,6 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
             `¿Quieres desactivar el servicio en su lugar? (Se mantendrá en la BD pero oculto)`
           )
           if (deactivate) {
-            console.log("Deactivating service instead of deleting")
             const deactivateResponse = await fetch(`/api/admin/services/${serviceToDelete.id}`, {
               method: "DELETE",
             })
@@ -222,14 +206,11 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
   }
 
   const handleModalSave = async () => {
-    console.log("Service saved, refreshing...")
     try {
       await fetchServices()
-      console.log("Services refreshed successfully")
       setModalOpen(false)
       setEditingService(null)
     } catch (error) {
-      console.error("Error refreshing services:", error)
       alert("Error al actualizar la lista de servicios")
     }
   }
@@ -264,8 +245,6 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
     return true
   })
 
-  console.log("ServicesManager state:", { loading, error, servicesCount: services.length, filteredCount: filteredServices.length, filters })
-
   if (loading) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-8">
@@ -299,11 +278,6 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
                 + Crear Servicio
               </Button>
             </div>
-          </div>
-
-          {/* Debug info */}
-          <div className="mt-2 text-xs text-neutral-400">
-            Restaurant ID: {restaurantId || "No disponible"} | Services: {services.length} | Loading: {loading.toString()}
           </div>
 
           {/* Filters */}

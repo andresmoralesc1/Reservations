@@ -11,6 +11,7 @@ type TimeSlot = {
   available: boolean
   tablesCount: number
   totalCapacity: number
+  reservationsCount: number
 }
 
 type DayAvailability = {
@@ -40,6 +41,8 @@ type AvailabilityResult = {
   } | null
   message?: string
   alternativeSlots?: Array<{ time: string; available: boolean }>
+  totalReservationsInSlot?: number
+  availableTableIds?: string[]
 }
 
 type ExistingReservation = {
@@ -150,6 +153,7 @@ export default function AvailabilityPage() {
             available: isAvailable,
             tablesCount,
             totalCapacity: tables.reduce((sum: number, t: TableInfo) => sum + t.capacity, 0),
+            reservationsCount: result.totalReservationsInSlot || 0,
           })
         } else {
           slots.push({
@@ -157,6 +161,7 @@ export default function AvailabilityPage() {
             available: false,
             tablesCount: 0,
             totalCapacity: 0,
+            reservationsCount: 0,
           })
         }
       }
@@ -204,18 +209,26 @@ export default function AvailabilityPage() {
   const navigateDay = (days: number) => {
     const newDate = addDays(new Date(selectedDate), days)
     setSelectedDate(format(newDate, 'yyyy-MM-dd'))
+    clearSlotDetails()
+  }
+
+  const goToToday = () => {
+    setSelectedDate(format(new Date(), 'yyyy-MM-dd'))
+    clearSlotDetails()
+  }
+
+  // Clear slot details when date changes
+  const clearSlotDetails = () => {
     setSelectedSlot(null)
     setSlotDetails(null)
     setExistingReservations([])
     setShowReservations(false)
   }
 
-  const goToToday = () => {
-    setSelectedDate(format(new Date(), 'yyyy-MM-dd'))
-    setSelectedSlot(null)
-    setSlotDetails(null)
-    setExistingReservations([])
-    setShowReservations(false)
+  // Handle date change from any source
+  const handleDateChange = (newDate: string) => {
+    setSelectedDate(newDate)
+    clearSlotDetails()
   }
 
   // Status badge color
@@ -286,7 +299,7 @@ export default function AvailabilityPage() {
               {quickDates.map(({ label, date }) => (
                 <button
                   key={date}
-                  onClick={() => setSelectedDate(date)}
+                  onClick={() => handleDateChange(date)}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                     selectedDate === date ? "bg-black text-white" : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
                   }`}
@@ -299,7 +312,7 @@ export default function AvailabilityPage() {
             <input
               type="date"
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              onChange={(e) => handleDateChange(e.target.value)}
               className="ml-auto px-3 py-2 border border-neutral-200 rounded-lg text-sm"
             />
           </div>
@@ -358,12 +371,13 @@ export default function AvailabilityPage() {
               <div className="p-4 grid grid-cols-5 sm:grid-cols-6 gap-2">
                 {lunchSlots.map((slot) => {
                   const isSelected = selectedSlot === slot.time
+                  const hasDemand = slot.reservationsCount > 0
                   return (
                     <button
                       key={slot.time}
                       onClick={() => handleSlotClick(slot.time)}
                       className={`
-                        p-3 rounded-lg border-2 text-center transition-all
+                        p-3 rounded-lg border-2 text-center transition-all relative
                         ${getSlotColor(slot.available, slot.tablesCount)}
                         ${isSelected ? 'ring-2 ring-black ring-offset-2' : ''}
                       `}
@@ -374,6 +388,11 @@ export default function AvailabilityPage() {
                           ? `${slot.tablesCount} mesas`
                           : 'Lleno'}
                       </div>
+                      {hasDemand && (
+                        <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                          {slot.reservationsCount}
+                        </div>
+                      )}
                     </button>
                   )
                 })}
@@ -391,12 +410,13 @@ export default function AvailabilityPage() {
               <div className="p-4 grid grid-cols-5 sm:grid-cols-6 gap-2">
                 {dinnerSlots.map((slot) => {
                   const isSelected = selectedSlot === slot.time
+                  const hasDemand = slot.reservationsCount > 0
                   return (
                     <button
                       key={slot.time}
                       onClick={() => handleSlotClick(slot.time)}
                       className={`
-                        p-3 rounded-lg border-2 text-center transition-all
+                        p-3 rounded-lg border-2 text-center transition-all relative
                         ${getSlotColor(slot.available, slot.tablesCount)}
                         ${isSelected ? 'ring-2 ring-black ring-offset-2' : ''}
                       `}
@@ -407,6 +427,11 @@ export default function AvailabilityPage() {
                           ? `${slot.tablesCount} mesas`
                           : 'Lleno'}
                       </div>
+                      {hasDemand && (
+                        <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                          {slot.reservationsCount}
+                        </div>
+                      )}
                     </button>
                   )
                 })}
@@ -457,6 +482,16 @@ export default function AvailabilityPage() {
                         {slotDetails.service && (
                           <div className="text-sm text-neutral-600">
                             <span className="font-medium">Servicio:</span> {slotDetails.service.name}
+                          </div>
+                        )}
+
+                        {/* Demand indicator */}
+                        {slotDetails.totalReservationsInSlot !== undefined && slotDetails.totalReservationsInSlot > 0 && (
+                          <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg p-2 text-sm">
+                            <AlertCircle className="w-4 h-4 text-amber-600" />
+                            <span className="text-amber-800">
+                              <span className="font-medium">{slotDetails.totalReservationsInSlot} reservas</span> ya confirmadas para este horario
+                            </span>
                           </div>
                         )}
 

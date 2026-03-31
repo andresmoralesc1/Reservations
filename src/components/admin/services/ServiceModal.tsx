@@ -210,9 +210,6 @@ export function ServiceModal({
         }),
       }
 
-      console.log("[ServiceModal] Sending payload:", JSON.stringify(payload, null, 2))
-      console.log("[ServiceModal] localStorage restaurant:", localStorage.getItem("posit_restaurant"))
-
       const url = service
         ? `/api/admin/services/${service.id}`
         : "/api/admin/services"
@@ -225,28 +222,21 @@ export function ServiceModal({
         body: JSON.stringify(payload),
       })
 
-      console.log("Response status:", response.status)
-
       const data = await response.json()
-      console.log("Response data:", data)
 
       if (!response.ok) {
-        console.error("HTTP error:", response.status, data)
         throw new Error(data.error || `Error HTTP ${response.status}`)
       }
 
       if (data.success) {
-        console.log("Service saved successfully, calling onSave...")
         onSave()
       } else {
-        console.error("Error saving service:", data)
         setErrors([data.error || "Error al guardar el servicio"])
         if (data.details) {
           setErrors(data.details)
         }
       }
     } catch (err) {
-      console.error("Error saving service:", err)
       setErrors(["Error de conexión al guardar el servicio"])
     } finally {
       setIsSaving(false)

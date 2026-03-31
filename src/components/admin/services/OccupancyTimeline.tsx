@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Modal } from "@/components/Modal"
 import { Button } from "@/components/Button"
+import { generateTableCode } from "@/lib/utils/tableUtils"
 
 interface TimelineReservation {
   id: string
@@ -228,7 +229,7 @@ export function OccupancyTimeline({
                       key={table.id}
                       className="px-4 py-2 text-center text-xs font-medium text-neutral-500 uppercase tracking-wider min-w-[140px]"
                     >
-                      Mesa {table.tableNumber}
+                      Mesa {generateTableCode(table.location, table.tableNumber)}
                       <div className="text-[10px] text-neutral-400">
                         {table.capacity}p
                         {table.location && ` • ${LOCATION_LABELS[table.location] || table.location}`}

@@ -5,9 +5,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Container } from "@/components/Container"
 import { useAuth } from "@/contexts/AuthContext"
-import { useRestaurant } from "@/contexts/RestaurantContext"
 import { Button } from "@/components/Button"
-import { RestaurantSwitcher } from "@/components/admin"
 import { useKeyboardShortcuts, SHORTCUTS } from "@/hooks/useKeyboardShortcuts"
 import { Menu, X } from "lucide-react"
 
@@ -100,17 +98,13 @@ export default function AdminLayout({
       {/* Admin Header - Responsive */}
       <header className="border-b border-neutral-200 bg-white sticky top-0 z-40">
         <Container size="xl">
-          {/* Top row: Logo + Restaurant Switcher + User */}
+          {/* Top row: Logo + User */}
           <div className="flex items-center justify-between py-3">
             <div className="flex items-center gap-4">
               {/* Logo */}
               <Link href="/" className="font-display text-xl uppercase tracking-widest text-black hover:text-neutral-600 transition-colors">
                 ANFITRIÓN
               </Link>
-              {/* Restaurant Switcher */}
-              <div className="hidden sm:block">
-                <RestaurantSwitcher variant="compact" />
-              </div>
             </div>
 
             {/* User info + actions */}
@@ -145,7 +139,7 @@ export default function AdminLayout({
             </div>
           </div>
 
-          {/* Bottom row: Navigation + Mobile Restaurant Switcher */}
+          {/* Bottom row: Navigation */}
           <div className="flex items-center justify-between py-2 border-t border-neutral-100">
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-1">
@@ -165,11 +159,6 @@ export default function AdminLayout({
                 </Link>
               ))}
             </nav>
-
-            {/* Mobile Restaurant Switcher */}
-            <div className="sm:hidden">
-              <RestaurantSwitcher variant="compact" />
-            </div>
           </div>
         </Container>
 
@@ -181,11 +170,6 @@ export default function AdminLayout({
             aria-label="Navegación móvil"
           >
             <Container size="xl">
-              {/* Restaurant Switcher in Mobile Menu */}
-              <div className="mb-4 pb-4 border-b border-neutral-100">
-                <RestaurantSwitcher />
-              </div>
-
               <nav className="flex flex-col gap-1">
                 {visibleNavItems.map((item) => (
                   <Link

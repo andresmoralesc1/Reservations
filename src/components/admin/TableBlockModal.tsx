@@ -6,6 +6,7 @@ import { Input } from "@/components/Input"
 import { Select } from "@/components/Select"
 import { toast } from "@/components/Toast"
 import { XIcon, LockIcon } from "@/components/admin/Icons"
+import { generateTableCode } from "@/lib/utils/tableUtils"
 
 const RESTAURANT_ID = process.env.NEXT_PUBLIC_RESTAURANT_ID || "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 
@@ -228,7 +229,7 @@ export function TableBlockModal({ isOpen, onClose, onSuccess }: TableBlockModalP
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-sans text-sm font-medium text-red-900">
-                          Mesa {block.table.tableNumber}
+                          Mesa {generateTableCode(block.table.location, block.table.tableNumber)}
                         </span>
                         <span className="font-sans text-xs text-red-600">
                           {block.reason.replace("_", " ")}

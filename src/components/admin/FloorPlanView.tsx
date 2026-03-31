@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { differenceInMinutes, addMinutes } from "date-fns"
 
 interface Table {
   id: string
@@ -49,6 +50,43 @@ const LOCATION_INFO = {
   barra: { label: "Barra", icon: "🍷", bg: "bg-purple-50", border: "border-purple-200" },
 }
 
+/**
+ * Calcula el tiempo restante hasta que se libere una mesa
+ * basado en la hora de la reserva y su duración estimada
+ */
+function calculateTimeRemaining(
+  reservationTime: string,
+  estimatedDurationMinutes: number
+): { minutes: number; text: string; isExpiringSoon: boolean } {
+  const now = new Date()
+  const [hours, minutes] = reservationTime.split(':').map(Number)
+
+  // Crear fecha de la reserva con la fecha de hoy (o la fecha seleccionada)
+  const reservationDateTime = new Date()
+  const [year, month, day] = reservationTime.split('-').map(() => 0)
+  // Asumimos que reservationTime tiene formato HH:mm y usamos la fecha actual
+  reservationDateTime.setHours(hours, minutes, 0, 0)
+
+  const endTime = addMinutes(reservationDateTime, estimatedDurationMinutes)
+  const diff = differenceInMinutes(endTime, now)
+
+  if (diff <= 0) {
+    return { minutes: 0, text: "Disponible pronto", isExpiringSoon: false }
+  }
+
+  if (diff < 15) {
+    return { minutes: diff, text: `${diff} min`, isExpiringSoon: true }
+  }
+
+  if (diff < 60) {
+    return { minutes: diff, text: `${diff} min`, isExpiringSoon: false }
+  }
+
+  const hrs = Math.floor(diff / 60)
+  const mins = diff % 60
+  return { minutes: diff, text: `${hrs}h ${mins}m`, isExpiringSoon: false }
+}
+
 export function FloorPlanView({ date, restaurantId, onTableClick, selectedTableId }: FloorPlanViewProps) {
   const [tables, setTables] = useState<Table[]>([])
   const [loading, setLoading] = useState(true)
@@ -60,6 +98,16 @@ export function FloorPlanView({ date, restaurantId, onTableClick, selectedTableI
     blocked: 0,
   })
   const [selectedLocation, setSelectedLocation] = useState<string>("interior")
+  const [currentTime, setCurrentTime] = useState(new Date())
+
+  // Actualizar tiempo cada minuto
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 60000) // Cada minuto
+
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     loadFloorPlan()
@@ -231,6 +279,13 @@ export function FloorPlanView({ date, restaurantId, onTableClick, selectedTableI
             {/* Tables in absolute positions */}
             {locationTables.map((table) => {
               const isSelected = selectedTableId === table.id
+              const activeReservation = table.reservations && table.reservations.length > 0
+                ? table.reservations.find(r => r.status === "CONFIRMADO" || r.status === "PENDIENTE")
+                : null
+
+              const timeRemaining = activeReservation
+                ? calculateTimeRemaining(activeReservation.reservationTime, activeReservation.estimatedDurationMinutes)
+                : null
 
               if (table.shape === "circular") {
                 return (
@@ -264,8 +319,30 @@ export function FloorPlanView({ date, restaurantId, onTableClick, selectedTableI
                       "bg-gray-400"
                     }`} />
 
+                    {/* Time remaining indicator for reserved tables */}
+                    {timeRemaining && table.status === "reserved" && (
+                      <div className={`
+                        absolute -bottom-6 left-1/2 -translate-x-1/2
+                        px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap
+                        ${timeRemaining.isExpiringSoon
+                          ? "bg-orange-500 text-white animate-pulse"
+                          : "bg-black text-white"
+                        }
+                      `}>
+                        {timeRemaining.text}
+                      </div>
+                    )}
+
+                    {/* Customer info tooltip for occupied tables */}
+                    {table.status === "occupied" && activeReservation && (
+                      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-32 bg-black text-white text-xs rounded py-1 px-2 text-center">
+                        <div className="font-medium">{activeReservation.customerName}</div>
+                        <div className="opacity-70">{activeReservation.partySize}p</div>
+                      </div>
+                    )}
+
                     {/* Reservation count */}
-                    {table.reservations && table.reservations.length > 0 && (
+                    {table.reservations && table.reservations.length > 1 && (
                       <div className="absolute -bottom-1 -left-1 bg-black text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
                         {table.reservations.length}
                       </div>
@@ -303,6 +380,20 @@ export function FloorPlanView({ date, restaurantId, onTableClick, selectedTableI
                       table.status === "reserved" ? "bg-amber-500" :
                       "bg-gray-400"
                     }`} />
+
+                    {/* Time remaining for reserved */}
+                    {timeRemaining && table.status === "reserved" && (
+                      <div className={`
+                        absolute -bottom-6 left-1/2 -translate-x-1/2
+                        px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap
+                        ${timeRemaining.isExpiringSoon
+                          ? "bg-orange-500 text-white animate-pulse"
+                          : "bg-black text-white"
+                        }
+                      `}>
+                        {timeRemaining.text}
+                      </div>
+                    )}
                   </div>
                 )
               }
@@ -341,8 +432,30 @@ export function FloorPlanView({ date, restaurantId, onTableClick, selectedTableI
                     "bg-gray-400"
                   }`} />
 
+                  {/* Time remaining indicator for reserved tables */}
+                  {timeRemaining && table.status === "reserved" && (
+                    <div className={`
+                      absolute -bottom-6 left-1/2 -translate-x-1/2
+                      px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap
+                      ${timeRemaining.isExpiringSoon
+                        ? "bg-orange-500 text-white animate-pulse"
+                        : "bg-black text-white"
+                      }
+                    `}>
+                      {timeRemaining.text}
+                    </div>
+                  )}
+
+                  {/* Customer info for occupied tables */}
+                  {table.status === "occupied" && activeReservation && (
+                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-32 bg-black text-white text-xs rounded py-1 px-2 text-center">
+                      <div className="font-medium">{activeReservation.customerName}</div>
+                      <div className="opacity-70">{activeReservation.partySize}p</div>
+                    </div>
+                  )}
+
                   {/* Reservation count */}
-                  {table.reservations && table.reservations.length > 0 && (
+                  {table.reservations && table.reservations.length > 1 && (
                     <div className="absolute -bottom-1 -left-1 bg-black text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
                       {table.reservations.length}
                     </div>
@@ -382,6 +495,14 @@ export function FloorPlanView({ date, restaurantId, onTableClick, selectedTableI
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded bg-gray-300 border-2 border-gray-400"></div>
             <span>Bloqueada</span>
+          </div>
+          <div className="flex items-center gap-2 ml-4">
+            <div className="px-2 py-0.5 rounded-full bg-black text-white text-xs">15 min</div>
+            <span className="text-neutral-500">Se libera pronto</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="px-2 py-0.5 rounded-full bg-orange-500 text-white text-xs animate-pulse"></div>
+            <span className="text-neutral-500">Menos de 15 min</span>
           </div>
         </div>
       </div>
