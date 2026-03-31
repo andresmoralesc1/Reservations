@@ -26,7 +26,8 @@ module.exports = {
     },
     {
       name: "analytics-aggregator",
-      script: "./scripts/analytics-cron.js",
+      script: "./node_modules/tsx/dist/cli.mjs",
+      args: "./scripts/analytics-cron.ts",
       // Ejecutar todos los días a las 2:00 AM
       cron_restart: "0 2 * * *",
       // Alternativa: ejecutar cada hora (para testing)
