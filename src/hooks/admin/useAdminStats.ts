@@ -3,7 +3,7 @@
  */
 
 import { useState, useCallback, useEffect } from "react"
-import type { EnhancedStats, ChartData } from "../types"
+import type { EnhancedStats, ChartData } from "@/types/admin"
 
 const initialStats: EnhancedStats = {
   totalToday: 0,

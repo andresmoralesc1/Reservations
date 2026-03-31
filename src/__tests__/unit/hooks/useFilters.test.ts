@@ -6,8 +6,8 @@
 
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { useFilters } from '@/app/admin/hooks/useFilters'
-import type { Reservation } from '@/app/admin/types'
+import { useFilters } from '@/hooks/admin/useFilters'
+import type { Reservation } from '@/types/admin'
 
 // Mock reservations data
 const mockReservations: Reservation[] = [

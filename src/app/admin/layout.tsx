@@ -5,7 +5,9 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Container } from "@/components/Container"
 import { useAuth } from "@/contexts/AuthContext"
+import { useRestaurant } from "@/contexts/RestaurantContext"
 import { Button } from "@/components/Button"
+import { RestaurantSwitcher } from "@/components/admin"
 import { useKeyboardShortcuts, SHORTCUTS } from "@/hooks/useKeyboardShortcuts"
 import { Menu, X } from "lucide-react"
 
@@ -98,32 +100,20 @@ export default function AdminLayout({
       {/* Admin Header - Responsive */}
       <header className="border-b border-neutral-200 bg-white sticky top-0 z-40">
         <Container size="xl">
-          <div className="flex items-center justify-between py-4">
-            {/* Logo */}
-            <Link href="/" className="font-display text-xl uppercase tracking-widest text-black hover:text-posit-red transition-colors">
-              El Posit
-            </Link>
+          {/* Top row: Logo + Restaurant Switcher + User */}
+          <div className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-4">
+              {/* Logo */}
+              <Link href="/" className="font-display text-xl uppercase tracking-widest text-black hover:text-neutral-600 transition-colors">
+                ANFITRIÓN
+              </Link>
+              {/* Restaurant Switcher */}
+              <div className="hidden sm:block">
+                <RestaurantSwitcher variant="compact" />
+              </div>
+            </div>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-1">
-              {visibleNavItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`
-                    font-display text-sm uppercase tracking-wider px-4 py-2 rounded-lg transition-colors relative
-                    ${pathname === item.href
-                      ? "bg-black text-white"
-                      : "text-black hover:bg-black/5"
-                    }
-                  `}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-
-            {/* Right side - User info + actions */}
+            {/* User info + actions */}
             <div className="flex items-center gap-4">
               <span className="hidden sm:block font-sans text-sm text-neutral-600">
                 {user.name} ({user.role})
@@ -154,6 +144,33 @@ export default function AdminLayout({
               </button>
             </div>
           </div>
+
+          {/* Bottom row: Navigation + Mobile Restaurant Switcher */}
+          <div className="flex items-center justify-between py-2 border-t border-neutral-100">
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-1">
+              {visibleNavItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`
+                    font-display text-sm uppercase tracking-wider px-4 py-2 rounded-lg transition-colors relative
+                    ${pathname === item.href
+                      ? "bg-black text-white"
+                      : "text-black hover:bg-black/5"
+                    }
+                  `}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+
+            {/* Mobile Restaurant Switcher */}
+            <div className="sm:hidden">
+              <RestaurantSwitcher variant="compact" />
+            </div>
+          </div>
         </Container>
 
         {/* Mobile Menu Overlay */}
@@ -164,6 +181,11 @@ export default function AdminLayout({
             aria-label="Navegación móvil"
           >
             <Container size="xl">
+              {/* Restaurant Switcher in Mobile Menu */}
+              <div className="mb-4 pb-4 border-b border-neutral-100">
+                <RestaurantSwitcher />
+              </div>
+
               <nav className="flex flex-col gap-1">
                 {visibleNavItems.map((item) => (
                   <Link
@@ -199,7 +221,7 @@ export default function AdminLayout({
         <Container size="xl">
           <div className="flex items-center justify-between">
             <p className="font-sans text-xs text-neutral-500">
-              Panel de Administración - El Posit
+              Panel de Administración - Anfitrión
             </p>
             <button
               onClick={() => setShowHelp(true)}
@@ -314,7 +336,7 @@ function LoginPage() {
       <div className="bg-white border border-neutral-200 rounded-lg p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="font-display text-3xl uppercase tracking-widest text-black">
-            El Posit
+            ANFITRIÓN
           </h1>
           <p className="font-sans text-neutral-500 mt-2">Panel de Administración</p>
         </div>
@@ -329,7 +351,7 @@ function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-              placeholder="admin@posit.com"
+              placeholder="admin@anfitrion.app"
               required
             />
           </div>

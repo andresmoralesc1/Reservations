@@ -5,29 +5,7 @@ import { HeroWithVideo } from "@/components/HeroWithVideo"
 import { Container } from "@/components/Container"
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/Card"
 import { Button } from "@/components/Button"
-import { Badge } from "@/components/Badge"
-import { RestaurantImage } from "@/components/RestaurantImage"
-
-const RESTAURANTS = [
-  {
-    value: "cambrils",
-    label: "El Posit - Cambrils",
-    imageQuery: "chef cooking onion preparation kitchen",
-    imageUrl: "https://images.pexels.com/photos/14164521/pexels-photo-14164521.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
-  },
-  {
-    value: "tarragona",
-    label: "El Posit - Tarragona",
-    imageQuery: "gourmet food salad restaurant dish",
-    imageUrl: "https://images.pexels.com/photos/5616321/pexels-photo-5616321.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
-  },
-  {
-    value: "vila-seca",
-    label: "El Posit - Vila-Seca",
-    imageQuery: "fresh seafood oysters lemon ice gourmet",
-    imageUrl: "https://images.pexels.com/photos/29058866/pexels-photo-29058866.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=1"
-  },
-]
+import { Calendar, Clock, MessageSquare, BarChart3, Smartphone, Users } from "lucide-react"
 
 export default function HomePage() {
   return (
@@ -37,77 +15,127 @@ export default function HomePage() {
       {/* Hero Section */}
       <HeroWithVideo
         videoId={27917166}
-        fallbackImage="https://images.pexels.com/photos/8352788/pexels-photo-8352788.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
+        fallbackImage="https://images.pexels.com/photos/260922/pexels-photo-260922.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
       >
         <HeroTitle>
-          COCINA<br />MARINERA
+          ANFITRIÓN
         </HeroTitle>
         <HeroSubtitle italic>
-          Tradicional
+          Gestión inteligente de reservas
         </HeroSubtitle>
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link href="#reservar">
+          <Link href="/admin">
             <Button variant="secondary" size="lg">
-              RESERVAR MESA
+              Acceder al Panel
             </Button>
           </Link>
-        </div>
-
-        {/* Progress indicator */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/70">
-          <span className="progress-indicator">01 —— 03</span>
+          <a href="#caracteristicas">
+            <Button variant="outline" size="lg" className="text-white border-white hover:bg-white hover:text-black">
+              Saber Más
+            </Button>
+          </a>
         </div>
       </HeroWithVideo>
 
       {/* Features Section */}
-      <section className="section-light py-24" id="sistema">
+      <section className="section-light py-24" id="caracteristicas">
         <Container>
           <div className="text-center">
             <h2 className="font-display text-display-md uppercase tracking-tight">
-              Sistema de Reservas
+              Todo lo que necesitas
             </h2>
             <p className="mx-auto mt-4 max-w-2xl font-serif text-lg text-neutral-600">
-              Gestiona tus reservas con tecnologia de{" "}
-              <span className="text-accent-italic">vanguardia</span>
+              Simplifica la gestión de tu restaurante con herramientas diseñadas para el mundo real
             </p>
           </div>
 
-          <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-3">
-            {/* IVR Card */}
+          <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Reservas 24/7 */}
             <Card variant="outlined" className="group text-center hover:border-black hover:shadow-lg transition-all duration-300 cursor-default">
               <CardContent className="py-10">
-                <div className="mb-6 text-4xl sm:text-5xl group-hover:scale-110 transition-transform duration-300" role="img" aria-label="Teléfono">
-                  📞
+                <div className="mb-6 flex justify-center">
+                  <div className="p-3 bg-neutral-100 rounded-full group-hover:bg-black group-hover:text-white transition-colors">
+                    <Calendar className="w-6 h-6" />
+                  </div>
                 </div>
-                <CardTitle>IVR Inteligente</CardTitle>
+                <CardTitle>Reservas 24/7</CardTitle>
                 <CardDescription className="text-center">
-                  Sistema de respuesta de voz con reconocimiento automatico para reservas telefonicas 24/7
+                  Tus clientes reservan cuando quieran. Tú gestionas cuando quieras.
                 </CardDescription>
               </CardContent>
             </Card>
 
-            {/* WhatsApp Card */}
+            {/* WhatsApp */}
             <Card variant="outlined" className="group text-center hover:border-black hover:shadow-lg transition-all duration-300 cursor-default">
               <CardContent className="py-10">
-                <div className="mb-6 text-4xl sm:text-5xl group-hover:scale-110 transition-transform duration-300" role="img" aria-label="Chat">
-                  💬
+                <div className="mb-6 flex justify-center">
+                  <div className="p-3 bg-neutral-100 rounded-full group-hover:bg-black group-hover:text-white transition-colors">
+                    <MessageSquare className="w-6 h-6" />
+                  </div>
                 </div>
-                <CardTitle>WhatsApp</CardTitle>
+                <CardTitle>WhatsApp Integrado</CardTitle>
                 <CardDescription className="text-center">
-                  Confirmaciones automaticas con botones interactivos y recordatorios personalizados
+                  Confirmaciones automáticas y recordatorios sin hacer nada.
                 </CardDescription>
               </CardContent>
             </Card>
 
-            {/* Dashboard Card */}
+            {/* Dashboard */}
             <Card variant="outlined" className="group text-center hover:border-black hover:shadow-lg transition-all duration-300 cursor-default">
               <CardContent className="py-10">
-                <div className="mb-6 text-4xl sm:text-5xl group-hover:scale-110 transition-transform duration-300" role="img" aria-label="Gráfico">
-                  📊
+                <div className="mb-6 flex justify-center">
+                  <div className="p-3 bg-neutral-100 rounded-full group-hover:bg-black group-hover:text-white transition-colors">
+                    <BarChart3 className="w-6 h-6" />
+                  </div>
                 </div>
-                <CardTitle>Dashboard</CardTitle>
+                <CardTitle>Dashboard en Tiempo Real</CardTitle>
                 <CardDescription className="text-center">
-                  Panel de administracion completo con estadisticas y gestion en tiempo real
+                  Métricas, ocupación y tendencias al instante.
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            {/* Control de Mesas */}
+            <Card variant="outlined" className="group text-center hover:border-black hover:shadow-lg transition-all duration-300 cursor-default">
+              <CardContent className="py-10">
+                <div className="mb-6 flex justify-center">
+                  <div className="p-3 bg-neutral-100 rounded-full group-hover:bg-black group-hover:text-white transition-colors">
+                    <Users className="w-6 h-6" />
+                  </div>
+                </div>
+                <CardTitle>Control de Mesas</CardTitle>
+                <CardDescription className="text-center">
+                  Visualiza y gestiona tu salón con arrastrar y soltar.
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            {/* Turnos Flexibles */}
+            <Card variant="outlined" className="group text-center hover:border-black hover:shadow-lg transition-all duration-300 cursor-default">
+              <CardContent className="py-10">
+                <div className="mb-6 flex justify-center">
+                  <div className="p-3 bg-neutral-100 rounded-full group-hover:bg-black group-hover:text-white transition-colors">
+                    <Clock className="w-6 h-6" />
+                  </div>
+                </div>
+                <CardTitle>Turnos Flexibles</CardTitle>
+                <CardDescription className="text-center">
+                  Configura servicios, horarios y duración por mesa.
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            {/* Móvil */}
+            <Card variant="outlined" className="group text-center hover:border-black hover:shadow-lg transition-all duration-300 cursor-default">
+              <CardContent className="py-10">
+                <div className="mb-6 flex justify-center">
+                  <div className="p-3 bg-neutral-100 rounded-full group-hover:bg-black group-hover:text-white transition-colors">
+                    <Smartphone className="w-6 h-6" />
+                  </div>
+                </div>
+                <CardTitle>Optimizado para Móvil</CardTitle>
+                <CardDescription className="text-center">
+                  Gestiona desde cualquier lugar, en cualquier dispositivo.
                 </CardDescription>
               </CardContent>
             </Card>
@@ -115,62 +143,28 @@ export default function HomePage() {
         </Container>
       </section>
 
-      {/* CTA Section (Black) */}
-      <section className="section-dark py-24" id="reservar">
+      {/* CTA Section */}
+      <section className="section-dark py-24">
         <Container size="md">
           <div className="text-center">
             <h2 className="font-display text-display-md uppercase text-white tracking-tight">
-              RESERVA TU MESA
+              ¿Listo para simplificar tu restaurante?
             </h2>
             <p className="mx-auto mt-4 max-w-xl font-serif text-lg text-white/80">
-              Disfruta de la mejor cocina marinera tradicional en cualquiera de nuestros restaurantes
+              Únete a los restaurantes que ya gestionan sus reservas con Anfitrión
             </p>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <a href="tel:+34977000000">
-                <Button variant="secondary" size="lg">
-                  LLAMAR AHORA
-                </Button>
-              </a>
               <Link href="/admin">
-                <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-black">
-                  PANEL ADMIN
+                <Button variant="secondary" size="lg">
+                  Acceder al Panel
                 </Button>
               </Link>
+              <a href="mailto:hola@anfitrion.app">
+                <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-black">
+                  Solicitar Demo
+                </Button>
+              </a>
             </div>
-          </div>
-        </Container>
-      </section>
-
-      {/* Locations Section with Pexels Images */}
-      <section className="section-light py-24" id="restaurantes">
-        <Container>
-          <div className="text-center mb-16">
-            <p className="font-display text-sm uppercase tracking-widest text-neutral-500 mb-2">
-              Nuestros Restaurantes
-            </p>
-            <h2 className="font-display text-display-md uppercase tracking-tight">
-              GRUPO EL POSIT
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {RESTAURANTS.map((location) => (
-              <div key={location.value} className="text-center group cursor-pointer">
-                <div className="aspect-[4/3] mb-6 overflow-hidden">
-                  <RestaurantImage
-                    imageUrl={location.imageUrl}
-                    query={location.imageQuery}
-                    alt={location.label}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    priority
-                  />
-                </div>
-                <h3 className="font-display text-xl uppercase tracking-wide">
-                  {location.label.split(" - ")[1]}
-                </h3>
-                <p className="font-serif text-sm text-neutral-500 mt-2">Cocina marinera</p>
-              </div>
-            ))}
           </div>
         </Container>
       </section>
@@ -180,14 +174,16 @@ export default function HomePage() {
         <Container>
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-12">
             <div>
-              <h4 className="font-display text-2xl uppercase tracking-widest mb-4 text-white">El Posit</h4>
+              <h4 className="font-display text-2xl uppercase tracking-widest mb-4 text-white">
+                ANFITRIÓN
+              </h4>
               <p className="font-serif text-white/90 text-sm">
-                Cocina marinera tradicional desde 1980
+                Gestión inteligente de reservas para restaurantes modernos
               </p>
             </div>
             <div>
-              <h5 className="font-display text-sm uppercase tracking-wider mb-4 text-white">Enlaces</h5>
-              <nav className="flex flex-col gap-2" aria-label="Enlaces del sitio">
+              <h5 className="font-display text-sm uppercase tracking-wider mb-4 text-white">Producto</h5>
+              <nav className="flex flex-col gap-2" aria-label="Enlaces del producto">
                 <Link href="/admin" className="font-sans text-sm text-white/90 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded px-2 py-1 transition-colors">
                   Panel Admin
                 </Link>
@@ -200,32 +196,28 @@ export default function HomePage() {
               <h5 className="font-display text-sm uppercase tracking-wider mb-4 text-white">Legal</h5>
               <nav className="flex flex-col gap-2" aria-label="Enlaces legales">
                 <Link href="/privacidad" className="font-sans text-sm text-white/90 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded px-2 py-1 transition-colors">
-                  Política de Privacidad
+                  Privacidad
                 </Link>
                 <Link href="/terminos" className="font-sans text-sm text-white/90 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded px-2 py-1 transition-colors">
-                  Términos de Uso
+                  Términos
                 </Link>
                 <Link href="/cookies" className="font-sans text-sm text-white/90 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded px-2 py-1 transition-colors">
-                  Política de Cookies
+                  Cookies
                 </Link>
               </nav>
             </div>
             <div>
               <h5 className="font-display text-sm uppercase tracking-wider mb-4 text-white">Contacto</h5>
               <p className="font-sans text-sm text-white/90">
-                <a href="mailto:info@elposit.com" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded px-1 transition-colors">
-                  info@elposit.com
-                </a>
-                <br />
-                <a href="tel:+34977000000" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded px-1 transition-colors">
-                  +34 977 00 00 00
+                <a href="mailto:hola@anfitrion.app" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded px-1 transition-colors">
+                  hola@anfitrion.app
                 </a>
               </p>
             </div>
           </div>
           <div className="border-t border-white/20 mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="font-sans text-xs text-white/80">
-              © 2026 El Posit. Todos los derechos reservados.
+              © 2026 Anfitrión. Todos los derechos reservados.
             </p>
             <p className="font-sans text-xs text-white/80">
               Hecho con ❤️ en España

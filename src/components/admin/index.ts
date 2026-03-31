@@ -8,6 +8,7 @@ export { FilterBar } from "./FilterBar"
 export { ActionBar } from "./ActionBar"
 export { ReservationsList } from "./ReservationsList"
 export { PageHeader } from "./PageHeader"
+export { RestaurantSwitcher } from "./RestaurantSwitcher"
 
 // Componentes async para carga progresiva
 export { AdminStatsAsync } from "./AdminStatsAsync"

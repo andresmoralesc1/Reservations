@@ -4,7 +4,7 @@
  */
 
 import { KPICard } from "@/components/KPICard"
-import type { EnhancedStats } from "../types"
+import type { EnhancedStats } from "@/types/admin"
 
 interface AdminStatsProps {
   stats: EnhancedStats

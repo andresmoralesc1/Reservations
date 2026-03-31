@@ -3,6 +3,7 @@ import { Inter, Oswald, Playfair_Display } from "next/font/google"
 import "./globals.css"
 import { ToastProvider } from "@/components/Toast"
 import { AuthProvider } from "@/contexts/AuthContext"
+import { RestaurantProvider } from "@/contexts/RestaurantContext"
 import { ToastProvider as ToastWithUndoProvider } from "@/components/ToastWithUndo"
 import { VoiceWidget } from "@/components/VoiceWidget"
 
@@ -25,13 +26,13 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "El Posit - Reservas",
-  description: "Sistema de reservas - Cocina Marinera Tradicional",
+  title: "Anfitrión - Gestión Inteligente de Reservas",
+  description: "Sistema de gestión de reservas para restaurantes",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "El Posit",
+    title: "Anfitrión",
   },
 }
 
@@ -51,7 +52,9 @@ export default function RootLayout({
     <html lang="es" className={`${oswald.variable} ${playfair.variable} ${inter.variable}`}>
       <body className="font-sans">
         <AuthProvider>
-          {children}
+          <RestaurantProvider>
+            {children}
+          </RestaurantProvider>
         </AuthProvider>
         <ToastProvider />
         <ToastWithUndoProvider />

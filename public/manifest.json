@@ -1,7 +1,7 @@
 {
-  "name": "El Posit - Reservas",
-  "short_name": "El Posit",
-  "description": "Sistema de reservas - Cocina Marinera Tradicional",
+  "name": "Anfitrión - Gestión de Reservas",
+  "short_name": "Anfitrión",
+  "description": "Gestión inteligente de reservas para restaurantes",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FAFAF5",

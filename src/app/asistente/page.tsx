@@ -8,7 +8,7 @@ import { Metadata } from "next";
 import { Mic, Calendar, Clock, Users } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Asistente de Voz | El Posit",
+  title: "Asistente de Voz | Anfitrión",
   description:
     "Haz tu reserva por voz con nuestro asistente inteligente. Disponible 24/7.",
 };
@@ -31,7 +31,7 @@ export default function AsistentePage() {
                   Asistente de Voz
                 </h1>
                 <p className="text-sm text-slate-400">
-                  El Posit - Reservas Inteligentes
+                  Anfitrión - Reservas Inteligentes
                 </p>
               </div>
             </div>

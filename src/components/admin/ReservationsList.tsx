@@ -6,7 +6,7 @@ import { ReservationTable } from "@/components/ReservationTable"
 import { Pagination } from "@/components/Pagination"
 import { LoadingSpinner } from "@/components/LoadingSpinner"
 import { EmptyReservations } from "@/components/EmptyState"
-import type { Reservation } from "../types"
+import type { Reservation } from "@/types/admin"
 
 interface ReservationsListProps {
   reservations: Reservation[]

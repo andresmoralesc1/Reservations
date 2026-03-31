@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import type { Reservation, FilterValue } from "../types"
+import type { Reservation, FilterValue } from "@/types/admin"
 
 interface UseFiltersWithURLProps {
   reservations: Reservation[]

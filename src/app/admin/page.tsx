@@ -12,13 +12,16 @@ import { ReservationDetailsModal } from "@/components/admin/ReservationDetailsMo
 import { CreateReservationModal } from "@/components/admin/CreateReservationModal"
 import { TableBlockModal } from "@/components/admin/TableBlockModal"
 import { toast } from "@/components/Toast"
-import { PageHeader, AdminStats, AdminCharts, FilterBar, ActionBar, ReservationsList } from "./components"
-import { useAdminStats, useFilters, useReservations, useReservationActions, useReservationSelection } from "./hooks"
-import type { Reservation, FilterValue } from "./types"
+import { PageHeader, AdminStats, AdminCharts, FilterBar, ActionBar, ReservationsList } from "@/components/admin"
+import { useAdminStats, useFilters, useReservations, useReservationActions, useReservationSelection, useRestaurantFilter } from "@/hooks/admin"
+import type { Reservation, FilterValue } from "@/types/admin"
 
 export default function AdminPage() {
-  // State - Start at 2026-04-02 to see Andres' reservation with 3 no-shows
-  const [dateFilter, setDateFilter] = useState("2026-04-02")
+  // Restaurant filter from context
+  const { selectedRestaurantId, isLoading: restaurantLoading } = useRestaurantFilter()
+
+  // State - Start at today's date by default
+  const [dateFilter, setDateFilter] = useState(() => format(new Date(), "yyyy-MM-dd"))
   const [timeFilter, setTimeFilter] = useState<string>("all")
 
   // Keyboard shortcuts for date navigation
@@ -58,14 +61,14 @@ export default function AdminPage() {
   const [createReservationModalOpen, setCreateReservationModalOpen] = useState(false)
   const [tableBlockModalOpen, setTableBlockModalOpen] = useState(false)
 
-  // Hooks
+  // Hooks - use selected restaurant ID from context
   const { stats, chartData, loading: statsLoading, reload: reloadStats } = useAdminStats(
-    "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    selectedRestaurantId || "",
     dateFilter
   )
 
   const { reservations, loading: reservationsLoading, reload: reloadReservations } = useReservations({
-    restaurantId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    restaurantId: selectedRestaurantId || "",
     dateFilter,
     timeFilter,
   })
@@ -204,7 +207,19 @@ export default function AdminPage() {
   }, [handleRefreshAll])
 
   // Loading combined
-  const loading = statsLoading || reservationsLoading
+  const loading = statsLoading || reservationsLoading || restaurantLoading
+
+  // Show loading state while restaurant is being loaded
+  if (restaurantLoading || !selectedRestaurantId) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin border-2 border-black border-t-transparent rounded-full mb-4" />
+          <p className="text-neutral-500">Cargando restaurante...</p>
+        </div>
+      </div>
+    )
+  }
 
   // After hooks are defined, create handler
   const handleFilterChange = useCallback((newFilter: string) => {

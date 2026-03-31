@@ -3,7 +3,7 @@
  */
 
 import { useState, useCallback, useEffect } from "react"
-import type { Reservation, FilterValue } from "../types"
+import type { Reservation, FilterValue } from "@/types/admin"
 
 interface UseReservationsProps {
   restaurantId: string

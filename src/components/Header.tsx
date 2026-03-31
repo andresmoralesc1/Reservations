@@ -64,17 +64,17 @@ export function Header({ variant = "light" }: HeaderProps) {
           <Link
             href="/"
             className="font-display text-2xl uppercase tracking-widest text-white hover:opacity-70 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded px-2 py-1 transition-opacity"
-            aria-label="El Posit - Ir al inicio"
+            aria-label="Anfitrión - Ir al inicio"
           >
-            El Posit
+            ANFITRIÓN
           </Link>
 
           {/* Reserve Button */}
           <Link
-            href="#reservar"
+            href="/admin"
             className="font-display text-sm uppercase tracking-wider text-white hover:opacity-70 active:opacity-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black rounded px-3 py-2 transition-opacity"
           >
-            Reservar
+            Panel
           </Link>
         </div>
       </nav>
@@ -92,30 +92,23 @@ export function Header({ variant = "light" }: HeaderProps) {
           <Link
             href="/"
             onClick={() => setIsMenuOpen(false)}
-            className="text-white hover:text-posit-red transition-colors focus:outline-none focus:ring-2 focus:ring-posit-red rounded px-4 py-2"
+            className="text-white hover:text-neutral-300 transition-colors focus:outline-none focus:ring-2 focus:ring-white rounded px-4 py-2"
           >
             Inicio
           </Link>
           <Link
-            href="#restaurantes"
+            href="#caracteristicas"
             onClick={() => setIsMenuOpen(false)}
-            className="text-white hover:text-posit-red transition-colors focus:outline-none focus:ring-2 focus:ring-posit-red rounded px-4 py-2"
+            className="text-white hover:text-neutral-300 transition-colors focus:outline-none focus:ring-2 focus:ring-white rounded px-4 py-2"
           >
-            Restaurantes
-          </Link>
-          <Link
-            href="#reservar"
-            onClick={() => setIsMenuOpen(false)}
-            className="text-white hover:text-posit-red transition-colors focus:outline-none focus:ring-2 focus:ring-posit-red rounded px-4 py-2"
-          >
-            Reservar
+            Características
           </Link>
           <Link
             href="/admin"
             onClick={() => setIsMenuOpen(false)}
-            className="text-white hover:text-posit-red transition-colors focus:outline-none focus:ring-2 focus:ring-posit-red rounded px-4 py-2"
+            className="text-white hover:text-neutral-300 transition-colors focus:outline-none focus:ring-2 focus:ring-white rounded px-4 py-2"
           >
-            Admin
+            Panel Admin
           </Link>
         </nav>
       </div>

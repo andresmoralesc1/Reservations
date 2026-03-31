@@ -4,8 +4,8 @@
 
 import { FilterTabs } from "@/components/FilterTabs"
 import { SearchBar } from "@/components/SearchBar"
-import { filterOptions } from "../types"
-import type { Reservation } from "../types"
+import { filterOptions } from "@/types/admin"
+import type { Reservation } from "@/types/admin"
 
 interface FilterBarProps {
   filter: string

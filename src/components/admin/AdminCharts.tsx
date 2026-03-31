@@ -5,7 +5,7 @@
 
 import { HourlyBarChart } from "@/components/admin/HourlyBarChart"
 import { StatusDonutChart } from "@/components/admin/StatusDonutChart"
-import type { ChartData } from "../types"
+import type { ChartData } from "@/types/admin"
 
 interface AdminChartsProps {
   chartData: ChartData | null
