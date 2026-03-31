@@ -52,8 +52,10 @@ type ExistingReservation = {
   customerPhone: string
   partySize: number
   status: string
+  reservationTime: string
   tables: Array<{ tableCode: string; capacity: number; location: string }>
   specialRequests?: string | null
+  isOverlap?: boolean  // true if reservation overlaps but doesn't start at this slot
 }
 
 export default function AvailabilityPage() {
@@ -116,15 +118,44 @@ export default function AvailabilityPage() {
   const getExistingReservations = useCallback(async (date: string, time: string) => {
     setLoadingReservations(true)
     try {
-      // Filter by date AND time in the API for accurate results
-      const response = await fetch(`/api/admin/reservations?date=${date}&time=${time}&restaurantId=${restaurantId}`)
+      // Get all reservations for the date
+      const response = await fetch(`/api/admin/reservations?date=${date}&restaurantId=${restaurantId}`)
       const data = await response.json()
 
-      // API now filters by time, but we still verify active status
+      // Parse the requested time slot (e.g., "14:00")
+      const [hour, minute] = time.split(':').map(Number)
+      const slotStartMinutes = hour * 60 + minute
+
+      // Standard service duration is 90 minutes
+      const serviceDuration = 90
+      const slotEndMinutes = slotStartMinutes + serviceDuration
+
+      // Filter reservations that overlap with this time slot
       const slotReservations = data.reservations?.filter((r: any) => {
-        // Only show active reservations (match DB schema values)
-        return ['PENDIENTE', 'CONFIRMADO'].includes(r.status)
+        // Only show active reservations
+        if (!['PENDIENTE', 'CONFIRMADO'].includes(r.status)) return false
+
+        // Parse reservation time
+        const [resHour, resMinute] = (r.reservationTime || '').split(':').map(Number) || [0, 0]
+        const resStartMinutes = resHour * 60 + resMinute
+        const resEndMinutes = resStartMinutes + serviceDuration
+
+        // Check if reservation overlaps with slot
+        const overlaps = resStartMinutes < slotEndMinutes && resEndMinutes > slotStartMinutes
+        const isExactTime = resStartMinutes === slotStartMinutes
+
+        // Add metadata for display
+        r.isOverlap = overlaps && !isExactTime
+
+        return overlaps
       }) || []
+
+      // Sort by time, with exact time first
+      slotReservations.sort((a: any, b: any) => {
+        if (a.isOverlap && !b.isOverlap) return 1
+        if (!a.isOverlap && b.isOverlap) return -1
+        return a.reservationTime.localeCompare(b.reservationTime)
+      })
 
       setExistingReservations(slotReservations)
     } catch (error) {
@@ -564,11 +595,16 @@ export default function AvailabilityPage() {
                     ) : (
                       <div className="space-y-3 max-h-80 overflow-y-auto">
                         {existingReservations.map((res) => (
-                          <div key={res.id} className="border border-neutral-200 rounded-lg p-3">
+                          <div key={res.id} className={`border rounded-lg p-3 ${res.isOverlap ? 'bg-amber-50 border-amber-200' : 'border-neutral-200'}`}>
                             <div className="flex items-start justify-between mb-2">
                               <div>
                                 <span className="font-medium">{res.customerName}</span>
                                 <span className="ml-2 text-sm text-neutral-500">{res.partySize}p</span>
+                                {res.isOverlap && (
+                                  <span className="ml-2 px-2 py-0.5 bg-amber-200 text-amber-800 rounded text-xs font-medium">
+                                    {res.reservationTime}
+                                  </span>
+                                )}
                               </div>
                               <span className={`px-2 py-0.5 rounded text-xs font-medium border ${getStatusColor(res.status)}`}>
                                 {res.status === 'CONFIRMADO' ? 'Confirmado' :
