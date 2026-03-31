@@ -194,7 +194,7 @@ export class ServicesAvailability {
       sql`(${reservations.reservationTime}::time + (interval '1 minute') * ${durationMinutes} > ${startTime}::time)`,
       or(
         eq(reservations.status, "PENDIENTE"),
-        eq(reservations.status, "CONFIRMED")
+        eq(reservations.status, "CONFIRMADO")
       ),
     ]
 

@@ -122,8 +122,8 @@ export default function AvailabilityPage() {
       // Filter reservations for the specific time slot
       const slotReservations = data.reservations?.filter((r: any) => {
         if (r.reservationTime !== time) return false
-        // Only show active reservations
-        return ['PENDIENTE', 'CONFIRMED', 'COMPLETED'].includes(r.status)
+        // Only show active reservations (match DB schema values)
+        return ['PENDIENTE', 'CONFIRMADO'].includes(r.status)
       }) || []
 
       setExistingReservations(slotReservations)
@@ -231,13 +231,13 @@ export default function AvailabilityPage() {
     clearSlotDetails()
   }
 
-  // Status badge color
+  // Status badge color (matching DB schema values)
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'CONFIRMED': return 'bg-green-100 text-green-700 border-green-200'
+      case 'CONFIRMADO': return 'bg-green-100 text-green-700 border-green-200'
       case 'PENDIENTE': return 'bg-amber-100 text-amber-700 border-amber-200'
-      case 'COMPLETED': return 'bg-neutral-100 text-neutral-600 border-neutral-200'
-      case 'CANCELLED': return 'bg-red-100 text-red-700 border-red-200'
+      case 'CANCELADO': return 'bg-red-100 text-red-700 border-red-200'
+      case 'NO_SHOW': return 'bg-gray-100 text-gray-600 border-gray-200'
       default: return 'bg-neutral-100 text-neutral-600 border-neutral-200'
     }
   }
@@ -571,9 +571,10 @@ export default function AvailabilityPage() {
                                 <span className="ml-2 text-sm text-neutral-500">{res.partySize}p</span>
                               </div>
                               <span className={`px-2 py-0.5 rounded text-xs font-medium border ${getStatusColor(res.status)}`}>
-                                {res.status === 'CONFIRMED' ? 'Confirmado' :
+                                {res.status === 'CONFIRMADO' ? 'Confirmado' :
                                  res.status === 'PENDIENTE' ? 'Pendiente' :
-                                 res.status === 'COMPLETED' ? 'Completado' : res.status}
+                                 res.status === 'CANCELADO' ? 'Cancelado' :
+                                 res.status === 'NO_SHOW' ? 'No Show' : res.status}
                               </span>
                             </div>
                             <div className="text-sm text-neutral-600 space-y-1">
