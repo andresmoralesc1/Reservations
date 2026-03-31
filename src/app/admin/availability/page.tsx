@@ -116,12 +116,12 @@ export default function AvailabilityPage() {
   const getExistingReservations = useCallback(async (date: string, time: string) => {
     setLoadingReservations(true)
     try {
-      const response = await fetch(`/api/admin/reservations?date=${date}&restaurantId=${restaurantId}`)
+      // Filter by date AND time in the API for accurate results
+      const response = await fetch(`/api/admin/reservations?date=${date}&time=${time}&restaurantId=${restaurantId}`)
       const data = await response.json()
 
-      // Filter reservations for the specific time slot
+      // API now filters by time, but we still verify active status
       const slotReservations = data.reservations?.filter((r: any) => {
-        if (r.reservationTime !== time) return false
         // Only show active reservations (match DB schema values)
         return ['PENDIENTE', 'CONFIRMADO'].includes(r.status)
       }) || []

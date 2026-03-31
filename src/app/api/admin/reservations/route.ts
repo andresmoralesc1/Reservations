@@ -11,8 +11,9 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const status = searchParams.get("status")
     const date = searchParams.get("date")
+    const time = searchParams.get("time")  // New: filter by specific time slot
     const restaurantId = searchParams.get("restaurantId")
-    const limit = parseInt(searchParams.get("limit") || "50")
+    const limit = parseInt(searchParams.get("limit") || "500")  // Increased default
     const offset = parseInt(searchParams.get("offset") || "0")
 
     const conditions = []
@@ -25,6 +26,11 @@ export async function GET(request: NextRequest) {
     // Filter by date
     if (date) {
       conditions.push(eq(reservations.reservationDate, date))
+    }
+
+    // Filter by time (specific slot)
+    if (time) {
+      conditions.push(eq(reservations.reservationTime, time))
     }
 
     // Filter by restaurant
