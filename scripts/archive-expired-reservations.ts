@@ -1,3 +1,7 @@
+// Cargar variables de entorno ANTES de importar db
+import * as dotenv from "dotenv"
+dotenv.config({ path: ".env.local" })
+
 import { db } from "../src/lib/db"
 import { reservations, reservationHistory } from "../drizzle/schema"
 import { eq, and, sql } from "drizzle-orm"
