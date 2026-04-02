@@ -1,12 +1,17 @@
 /**
  * Table Service
  *
- * Gestión de mesas - asignación, liberación, disponibilidad
+ * Gestión de mesas - CRUD básico y disponibilidad
+ *
+ * NOTA: La lógica de disponibilidad está centralizada en
+ * @/lib/availability/services-availability.ts para mantener
+ * un único algoritmo de asignación de mesas.
  */
 
 import { db } from "@/lib/db"
 import { tables, reservations } from "@/drizzle/schema"
-import { eq, and, inArray, sql, isNull } from "drizzle-orm"
+import { eq, and, inArray, isNull } from "drizzle-orm"
+import { servicesAvailability, type Table as AvailabilityTable } from "@/lib/availability/services-availability"
 
 export interface TableAvailability {
   tableId: string
@@ -54,68 +59,48 @@ export async function getTableById(id: string) {
 }
 
 /**
- * Obtener mesas disponibles para una fecha/hora específica
+ * Obtener mesas disponibles para una fecha/hora específica.
+ *
+ * DELEGADO a services-availability.ts para mantener un único
+ * algoritmo de disponibilidad que considere:
+ * - Servicios activos (comida/cena)
+ * - Temporadas y días
+ * - Scoring de mesas (perfect fit, overcapacity)
+ * - Bloqueos y reservas existentes
+ *
+ * @param restaurantId ID del restaurante
+ * @param date Fecha en formato YYYY-MM-DD
+ * @param time Hora en formato HH:MM
+ * @param partySize Número de personas
+ * @param duration Duración en minutos (ignorado, se usa service.duration)
+ * @returns Array de mesas disponibles ordenadas por mejor ajuste
  */
 export async function getAvailableTables(
   restaurantId: string,
   date: string,
   time: string,
   partySize: number,
-  duration: number = 90 // minutos
+  duration?: number // Ignorado - se usa service.defaultDurationMinutes
 ) {
-  // 1. Obtener todas las mesas activas del restaurante
-  const allTables = await db.query.tables.findMany({
-    where: and(
-      eq(tables.restaurantId, restaurantId),
-      isNull(tables.deletedAt)
-    ),
+  const result = await servicesAvailability.checkAvailabilityWithServices({
+    restaurantId,
+    date,
+    time,
+    partySize,
   })
 
-  // 2. Filtrar por capacidad
-  const suitableTables = allTables.filter((t) => t.capacity >= partySize)
-
-  // 3. Obtener reservas confirmadas para esa fecha
-  const dayReservations = await db.query.reservations.findMany({
-    where: and(
-      eq(reservations.restaurantId, restaurantId),
-      eq(reservations.reservationDate, date),
-      inArray(reservations.status, ["CONFIRMADO", "PENDIENTE"])
-    ),
-  })
-
-  // 4. Calcular mesas ocupadas en el horario
-  const reservedTableIds = new Set<string>()
-
-  for (const reservation of dayReservations) {
-    const resTime = reservation.reservationTime // HH:MM
-    const resDuration = reservation.estimatedDurationMinutes || 90
-
-    // Convertir a minutos desde las 00:00
-    const [hours, minutes] = resTime.split(":").map(Number)
-    const reservationStart = hours * 60 + minutes
-    const reservationEnd = reservationStart + resDuration
-
-    // Convertir la hora solicitada a minutos
-    const [reqHours, reqMinutes] = time.split(":").map(Number)
-    const requestStart = reqHours * 60 + reqMinutes
-    const requestEnd = requestStart + duration
-
-    // Verificar si hay solapamiento
-    const overlaps = (
-      reservationStart < requestEnd && reservationEnd > requestStart
-    )
-
-    if (overlaps && reservation.tableIds) {
-      reservation.tableIds.forEach((id) => reservedTableIds.add(id))
-    }
+  if (!result.available) {
+    return []
   }
 
-  // 5. Retornar mesas disponibles
-  return suitableTables.filter((t) => !reservedTableIds.has(t.id))
+  return result.availableTables
 }
 
 /**
- * Obtener disponibilidad detallada con estado actual
+ * Obtener disponibilidad detallada con estado actual.
+ *
+ * Combina la lista completa de mesas con su estado de disponibilidad
+ * calculado por services-availability.ts
  */
 export async function getTablesWithAvailability(
   restaurantId: string,
@@ -123,9 +108,16 @@ export async function getTablesWithAvailability(
   time: string
 ): Promise<TableAvailability[]> {
   const allTables = await getTables(restaurantId)
-  const availableTables = await getAvailableTables(restaurantId, date, time, 1)
 
-  const availableIds = new Set(availableTables.map((t) => t.id))
+  // Obtener mesas disponibles usando el algoritmo unificado
+  const availabilityResult = await servicesAvailability.checkAvailabilityWithServices({
+    restaurantId,
+    date,
+    time,
+    partySize: 1, // Usamos 1 para ver todas las mesas que podrían estar disponibles
+  })
+
+  const availableIds = new Set(availabilityResult.availableTableIds || [])
 
   // Obtener reservas actuales en este horario
   const currentReservations = await db.query.reservations.findMany({
@@ -229,7 +221,41 @@ export async function createBulkTables(
     location?: string
   }>
 ) {
-  // Drizzle ORM bulk insert
   const result = await db.insert(tables).values(tableList).returning()
   return result
 }
+
+/**
+ * Encuentra la mejor mesa para un grupo.
+ *
+ * DELEGADO a services-availability.ts que implementa
+ * el algoritmo de scoring (perfect fit, overcapacity).
+ *
+ * @returns La mejor mesa o null si no hay disponibilidad
+ */
+export async function findBestTable(
+  restaurantId: string,
+  date: string,
+  time: string,
+  partySize: number
+) {
+  const result = await servicesAvailability.checkAvailabilityWithServices({
+    restaurantId,
+    date,
+    time,
+    partySize,
+  })
+
+  if (!result.available || result.suggestedTables.length === 0) {
+    return null
+  }
+
+  // suggestedTables ya contiene los IDs de las mejores mesas
+  // según el algoritmo de scoring de services-availability
+  const bestTableId = result.suggestedTables[0]
+
+  return result.availableTables.find((t) => t.id === bestTableId) || null
+}
+
+// Re-export types from services-availability for convenience
+export type { Service, ServiceAvailabilityResult } from "@/lib/availability/services-availability"

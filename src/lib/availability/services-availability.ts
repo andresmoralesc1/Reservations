@@ -1,5 +1,6 @@
 import { db } from "@/lib/db"
 import { services, tables, reservations } from "@/drizzle/schema"
+import type { Table as SchemaTable } from "@/drizzle/schema"
 import { eq, and, sql, or } from "drizzle-orm"
 import { parse, format, addMinutes, isWeekend, isValid, parseISO } from "date-fns"
 import { getCurrentSeason } from "@/lib/seasons"
@@ -40,15 +41,8 @@ export interface Service {
   updatedAt: Date | null
 }
 
-export interface Table {
-  id: string
-  restaurantId: string
-  tableNumber: string
-  tableCode: string
-  capacity: number
-  location: string | null
-  isAccessible: boolean | null
-}
+// Re-export Table type from schema for convenience
+export type Table = Pick<SchemaTable, | "id" | "restaurantId" | "tableNumber" | "tableCode" | "capacity" | "location" | "isAccessible">
 
 export class ServicesAvailability {
   /**

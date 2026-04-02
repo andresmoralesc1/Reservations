@@ -1,7 +1,15 @@
+/**
+ * Table Service (Legacy Layer)
+ *
+ * Este archivo proporciona una capa de compatibilidad con el código existente.
+ * La lógica de disponibilidad está centralizada en @/lib/availability/services-availability.ts
+ */
+
 import { db } from "@/lib/db"
-import { tables, tableBlocks, reservations, services } from "@/drizzle/schema"
-import { eq, and, gte, lte, or, inArray, isNull, sql } from "drizzle-orm"
+import { tables, tableBlocks, services, reservations } from "@/drizzle/schema"
+import { eq, and, isNull, sql, inArray } from "drizzle-orm"
 import type { Table, NewTable, TableBlock } from "@/drizzle/schema"
+import { servicesAvailability } from "@/lib/availability/services-availability"
 
 // ==================== DTOs ====================
 
@@ -85,62 +93,84 @@ export const tableService = {
   },
 
   /**
-   * Obtiene mesas disponibles para una fecha/hora y tamaño de grupo
+   * Obtiene mesas disponibles para una fecha/hora y tamaño de grupo.
+   *
+   * DELEGADO a services-availability.ts para mantener un único
+   * algoritmo de disponibilidad que considera:
+   * - Servicios activos (comida/cena)
+   * - Temporadas y días
+   * - Scoring de mesas (perfect fit, overcapacity)
    */
   async getAvailable(dto: GetAvailableTablesDto): Promise<Table[]> {
-    // 1. Obtener todas las mesas del restaurante con capacidad suficiente
-    let allTables = await db.query.tables.findMany({
+    const result = await servicesAvailability.checkAvailabilityWithServices({
+      restaurantId: dto.restaurantId,
+      date: dto.date,
+      time: dto.time,
+      partySize: dto.partySize,
+    })
+
+    if (!result.available) {
+      return []
+    }
+
+    // Filtrar por ubicación si se especifica
+    let availableTables = result.availableTables
+    if (dto.location) {
+      availableTables = availableTables.filter((t) => t.location === dto.location)
+    }
+
+    // Obtener las mesas completas del schema para retornar todos los campos
+    const tableIds = availableTables.map((t) => t.id)
+    if (tableIds.length === 0) {
+      return []
+    }
+
+    const fullTables = await db.query.tables.findMany({
       where: and(
-        eq(tables.restaurantId, dto.restaurantId),
-        gte(tables.capacity, dto.partySize),
+        inArray(tables.id, tableIds),
         isNull(tables.deletedAt)
       ),
     })
 
-    // 2. Filtrar por ubicación si se especifica
-    if (dto.location) {
-      allTables = allTables.filter((t) => t.location === dto.location)
-    }
-
-    // 3. Filtrar por mesas bloqueadas en la fecha/hora
-    const blockedTableIds = await this.getBlockedTableIds({
-      restaurantId: dto.restaurantId,
-      date: dto.date,
-      time: dto.time,
-    })
-
-    const availableTables = allTables.filter((t) => !blockedTableIds.has(t.id))
-
-    // 4. Filtrar por mesas ya reservadas en ese slot
-    const reservedTableIds = await this.getReservedTableIds({
-      restaurantId: dto.restaurantId,
-      date: dto.date,
-      time: dto.time,
-    })
-
-    const finalTables = availableTables.filter((t) => !reservedTableIds.has(t.id))
-
-    return finalTables
+    return fullTables
   },
 
   /**
-   * Busca la mejor mesa para un grupo (algoritmo de asignación)
+   * Busca la mejor mesa para un grupo (algoritmo de asignación).
+   *
+   * DELEGADO a services-availability.ts que implementa
+   * el algoritmo de scoring (perfect fit, overcapacity).
    */
   async findBestTable(dto: GetAvailableTablesDto): Promise<Table | null> {
-    const available = await this.getAvailable(dto)
+    const result = await servicesAvailability.checkAvailabilityWithServices({
+      restaurantId: dto.restaurantId,
+      date: dto.date,
+      time: dto.time,
+      partySize: dto.partySize,
+    })
 
-    if (available.length === 0) {
+    if (!result.available || result.suggestedTables.length === 0) {
       return null
     }
 
-    // Algoritmo: asignar la mesa más pequeña que quepa el grupo
-    // (optimizar ocupación del restaurante)
-    const sorted = [...available].sort((a, b) => a.capacity - b.capacity)
+    // Filtrar por ubicación si se especifica
+    let availableTables = result.availableTables
+    if (dto.location) {
+      availableTables = availableTables.filter((t) => t.location === dto.location)
+    }
 
-    // Priorizar mesas sin exceso de capacidad
-    const bestFit = sorted.find((t) => t.capacity <= dto.partySize + 2)
+    // suggestedTables contiene los IDs ordenados por mejor ajuste
+    const bestTableId = result.suggestedTables[0]
 
-    return bestFit || sorted[0]
+    // Obtener la mesa completa del schema
+    const bestTable = await db.query.tables.findFirst({
+      where: and(
+        inArray(tables.id, [bestTableId]),
+        isNull(tables.deletedAt)
+      ),
+    })
+
+    return bestTable || null
   },
 
   /**
@@ -167,21 +197,22 @@ export const tableService = {
   },
 
   /**
-   * Obtiene IDs de mesas reservadas en una fecha/hora
+   * Obtiene IDs de mesas reservadas en una fecha/hora.
+   *
+   * NOTA: Este método ya no se usa para calcular disponibilidad.
+   * La lógica de solapamiento está en services-availability.ts
    */
   async getReservedTableIds(opts: {
     restaurantId: string
     date: string
     time: string
   }): Promise<Set<string>> {
-    // Obtener servicio para calcular duración
     const service = await db.query.services.findFirst({
       where: eq(services.id, opts.restaurantId),
     })
 
     const duration = service?.defaultDurationMinutes || 90
 
-    // Buscar reservas confirmadas que se solapan
     const reserved = await db
       .select({ tableIds: reservations.tableIds })
       .from(reservations)
@@ -194,12 +225,9 @@ export const tableService = {
         )
       )
 
-    // Calcular solapamiento de tiempo
     const reservedIds = new Set<string>()
     for (const r of reserved) {
       if (r.tableIds && Array.isArray(r.tableIds)) {
-        // Aquí deberíamos verificar solapamiento de tiempo real
-        // Por ahora, añadimos todos los IDs
         r.tableIds.forEach((id) => reservedIds.add(id))
       }
     }
@@ -263,41 +291,74 @@ export const tableService = {
   },
 
   /**
-   * Combina mesas para grupos grandes
+   * Combina mesas para grupos grandes.
+   *
+   * DELEGADO a services-availability.ts que implementa
+   * la lógica de combinación de mesas.
    */
   async findCombinedTables(
     dto: GetAvailableTablesDto
   ): Promise<Table[] | null> {
-    const available = await this.getAvailable(dto)
+    const result = await servicesAvailability.checkAvailabilityWithServices({
+      restaurantId: dto.restaurantId,
+      date: dto.date,
+      time: dto.time,
+      partySize: dto.partySize,
+    })
+
+    if (!result.available) {
+      return null
+    }
+
+    // Filtrar por ubicación si se especifica
+    let availableTableIds = result.availableTableIds || []
+    if (dto.location) {
+      // Filtrar por ubicación
+      const filteredTables = result.availableTables.filter((t) => t.location === dto.location)
+      availableTableIds = filteredTables.map((t) => t.id)
+    }
+
+    if (availableTableIds.length === 0) {
+      return null
+    }
 
     // Buscar mesa individual que quepa
-    const singleTable = available.find((t) => t.capacity >= dto.partySize)
+    const fullTables = await db.query.tables.findMany({
+      where: and(
+        inArray(tables.id, availableTableIds),
+        isNull(tables.deletedAt)
+      ),
+    })
+
+    const singleTable = fullTables.find((t) => t.capacity >= dto.partySize)
     if (singleTable) {
       return [singleTable]
     }
 
-    // Si no hay mesa individual, buscar combinación
-    // Algoritmo greedy: tomar las más pequeñas hasta completar capacidad
-    const sorted = [...available].sort((a, b) => a.capacity - b.capacity)
+    // Si no hay mesa individual, usar suggestedTables que ya contiene
+    // la combinación óptima calculada por services-availability
+    const suggestedIds = result.suggestedTables.filter((id) => availableTableIds.includes(id))
 
     const selected: Table[] = []
     let totalCapacity = 0
 
-    for (const table of sorted) {
-      selected.push(table)
-      totalCapacity += table.capacity
+    for (const tableId of suggestedIds) {
+      const table = fullTables.find((t) => t.id === tableId)
+      if (table) {
+        selected.push(table)
+        totalCapacity += table.capacity
 
-      if (totalCapacity >= dto.partySize) {
-        return selected
-      }
+        if (totalCapacity >= dto.partySize) {
+          return selected
+        }
 
-      // Limitar a 3 mesas combinadas máximo
-      if (selected.length >= 3) {
-        break
+        // Limitar a 3 mesas combinadas máximo
+        if (selected.length >= 3) {
+          break
+        }
       }
     }
 
-    // Si no alcanzamos la capacidad, retornar null
     return totalCapacity >= dto.partySize ? selected : null
   },
 
