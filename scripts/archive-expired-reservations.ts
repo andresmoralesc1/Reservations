@@ -1,10 +1,31 @@
-// Cargar variables de entorno ANTES de importar db
+// Cargar variables de entorno ANTES de cualquier import
 import * as dotenv from "dotenv"
 dotenv.config({ path: ".env.local" })
 
-import { db } from "../src/lib/db"
-import { reservations, reservationHistory } from "../drizzle/schema"
+// Verificar que DATABASE_URL esté definido
+if (!process.env.DATABASE_URL) {
+  console.error("[ERROR] DATABASE_URL no está definido en .env.local")
+  process.exit(1)
+}
+
+import { drizzle } from "drizzle-orm/postgres-js"
+import postgres from "postgres"
+import * as schema from "../drizzle/schema"
 import { eq, and, sql } from "drizzle-orm"
+
+// Crear conexión directa a la base de datos
+const connectionString = process.env.DATABASE_URL!
+
+const client = postgres(connectionString, {
+  max: 10,
+  idle_timeout: 20,
+  connect_timeout: 10,
+  onnotice: () => {}, // Ignore notices
+})
+
+const db = drizzle(client, { schema })
+
+const { reservations, reservationHistory } = schema
 
 // Configuración
 const HOURS_OLD = 48
@@ -37,6 +58,7 @@ function log(message: string, data?: unknown) {
 async function archiveExpiredReservations() {
   const startTime = Date.now()
   log("=== Iniciando archivado de reservas expiradas ===")
+  log(`DATABASE_URL está definido: ${!!process.env.DATABASE_URL}`)
   log(`Buscando reservas con status "${STATUS_PENDING}" anteriores a ${getExpiredDate()}`)
 
   try {
@@ -127,6 +149,9 @@ async function archiveExpiredReservations() {
     const errorMsg = error instanceof Error ? error.message : String(error)
     log(`❌ Error fatal en el proceso: ${errorMsg}`)
     throw error
+  } finally {
+    // Cerrar conexión
+    await client.end()
   }
 }
 
