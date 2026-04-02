@@ -4,6 +4,7 @@ import { createLegacyReservation, getLegacyReservation, cancelLegacyReservation,
 import { validateRequestBody, formatZodError, CreateReservationSchema, spanishPhoneSchema } from "@/lib/schemas/reservation-schemas"
 import { z } from "zod"
 import { invalidateReservationCache } from "@/lib/cache"
+import { checkRateLimitOrThrow, getRateLimitIdentifier, RateLimitConfig, RateLimitError } from "@/lib/rate-limit"
 
 /**
  * Schema híbrido que acepta campos en español o inglés
@@ -84,6 +85,17 @@ export async function GET(request: NextRequest) {
 // POST /api/reservations - Crear reserva
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: 10 reservas por minuto por IP
+    const identifier = getRateLimitIdentifier(request)
+    try {
+      await checkRateLimitOrThrow(identifier, RateLimitConfig.reservations, "reservations")
+    } catch (error) {
+      if (error instanceof RateLimitError) {
+        return error.toResponse()
+      }
+      throw error
+    }
+
     const body = await request.json()
 
     // Validar datos con schema mejorado
