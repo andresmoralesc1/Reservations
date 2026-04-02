@@ -48,8 +48,12 @@ function createMiddlewareClient(request: NextRequest) {
       getAll() {
         return request.cookies.getAll()
       },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) =>
+      setAll(cookiesToSet: {
+        name: string
+        value: string
+        options: Record<string, unknown>
+      }[]) {
+        cookiesToSet.forEach(({ name, value }) =>
           request.cookies.set(name, value)
         )
         const response = NextResponse.next({
