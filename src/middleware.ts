@@ -2,12 +2,11 @@
  * Middleware de Next.js
  *
  * - Logging de requests
- * - Autenticación con Supabase para rutas /admin/*
+ * - Autenticación con Supabase para rutas /admin/* (DESACTIVADO TEMPORALMENTE)
  * - Rate limiting para APIs sensibles
  */
 
 import { NextResponse, type NextRequest } from "next/server"
-import { createServerClient } from "@supabase/ssr"
 
 // Configuración: matcher que excluye estáticos y archivos internos
 export const config = {
@@ -43,29 +42,39 @@ function createMiddlewareClient(request: NextRequest) {
   const supabaseUrl = process.env.SUPABASE_URL || ""
   const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || ""
 
-  return createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll()
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return null
+  }
+
+  // Importar dinámicamente para evitar errores si Supabase no está configurado
+  try {
+    const { createServerClient } = require("@supabase/ssr")
+    return createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet: {
+          name: string
+          value: string
+          options: Record<string, unknown>
+        }[]) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          )
+          const response = NextResponse.next({
+            request: { headers: request.headers },
+          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          )
+          return response
+        },
       },
-      setAll(cookiesToSet: {
-        name: string
-        value: string
-        options: Record<string, unknown>
-      }[]) {
-        cookiesToSet.forEach(({ name, value }) =>
-          request.cookies.set(name, value)
-        )
-        const response = NextResponse.next({
-          request: { headers: request.headers },
-        })
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options)
-        )
-        return response
-      },
-    },
-  })
+    })
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -74,6 +83,11 @@ function createMiddlewareClient(request: NextRequest) {
 async function isAuthenticated(request: NextRequest): Promise<boolean> {
   try {
     const supabase = createMiddlewareClient(request)
+    if (!supabase) {
+      // Si Supabase no está configurado, permitir acceso (modo desarrollo)
+      return true
+    }
+
     const { data, error } = await supabase.auth.getSession()
 
     if (error || !data.session) {
@@ -82,9 +96,16 @@ async function isAuthenticated(request: NextRequest): Promise<boolean> {
 
     return true
   } catch {
-    return false
+    // En caso de error, permitir acceso (fail-open)
+    return true
   }
 }
+
+/**
+ * AUTENTICACIÓN DESACTIVADA TEMPORALMENTE
+ * Cambia esto a true cuando tengas un sistema de login funcional
+ */
+const AUTH_ENABLED = false
 
 /**
  * Rutas que requieren autenticación
@@ -97,56 +118,37 @@ const protectedRoutes = {
 }
 
 /**
- * Rutas públicas (no requieren autenticación)
- */
-const publicRoutes = [
-  "/api/reservations",
-  "/api/reservations/check-availability",
-  "/api/ivr",
-  "/api/reservar",
-  "/api/init",
-  "/api/restaurants",
-  "/api/cron",
-  "/api/auth",
-  "/login",
-  "/reservar",
-  "/asistente",
-]
-
-/**
  * Middleware principal
  */
 export async function middleware(request: NextRequest) {
   const startTime = Date.now()
   const { pathname } = request.nextUrl
 
-  // Verificar si es una ruta pública
-  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
+  // Verificar autenticación SOLO si está habilitada
+  if (AUTH_ENABLED) {
+    const isAdminPage = protectedRoutes.pages.test(pathname)
+    const isAdminApi = protectedRoutes.api.test(pathname)
 
-  // Rutas protegidas de admin
-  const isAdminPage = protectedRoutes.pages.test(pathname)
-  const isAdminApi = protectedRoutes.api.test(pathname)
+    if (isAdminPage || isAdminApi) {
+      const authenticated = await isAuthenticated(request)
 
-  // Verificar autenticación para rutas protegidas
-  if ((isAdminPage || isAdminApi) && !isPublicRoute) {
-    const authenticated = await isAuthenticated(request)
+      if (!authenticated) {
+        const latency = Date.now() - startTime
+        logRequest(request, 401, latency)
 
-    if (!authenticated) {
-      const latency = Date.now() - startTime
-      logRequest(request, 401, latency)
+        // Para páginas de admin, redirigir a /login
+        if (isAdminPage) {
+          const loginUrl = new URL("/login", request.url)
+          loginUrl.searchParams.set("redirect", pathname)
+          return NextResponse.redirect(loginUrl)
+        }
 
-      // Para páginas de admin, redirigir a /login
-      if (isAdminPage) {
-        const loginUrl = new URL("/login", request.url)
-        loginUrl.searchParams.set("redirect", pathname)
-        return NextResponse.redirect(loginUrl)
+        // Para APIs de admin, retornar 401
+        return NextResponse.json(
+          { error: "No autorizado", message: "Se requiere autenticación" },
+          { status: 401 }
+        )
       }
-
-      // Para APIs de admin, retornar 401
-      return NextResponse.json(
-        { error: "No autorizado", message: "Se requiere autenticación" },
-        { status: 401 }
-      )
     }
   }
 
