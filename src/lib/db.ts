@@ -2,9 +2,11 @@ import { drizzle } from "drizzle-orm/postgres-js"
 import postgres from "postgres"
 import * as schema from "../../drizzle/schema"
 
-// Next.js automatically loads .env.local from project root
-const connectionString =
-  process.env.DATABASE_URL || "postgresql://neuralflow@postgres:5432/reservations_db"
+// DATABASE_URL is required - no fallback to avoid exposing credentials
+const connectionString = process.env.DATABASE_URL
+if (!connectionString) {
+  throw new Error('DATABASE_URL environment variable is required')
+}
 
 const client = postgres(connectionString, {
   max: 10,
