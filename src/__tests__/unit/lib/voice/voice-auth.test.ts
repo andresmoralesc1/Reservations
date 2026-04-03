@@ -30,7 +30,8 @@ class MockNextRequest {
 }
 
 describe('voice-auth', () => {
-  const TEST_API_KEY = 'test-api-key-12345'
+  // API key de 64 caracteres (cumple con MIN_API_KEY_LENGTH = 32)
+  const TEST_API_KEY = 'a'.repeat(64) // 64 caracteres 'a' para testing
   let originalNodeEnv: string | undefined
   let originalApiKey: string | undefined
 

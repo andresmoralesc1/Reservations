@@ -7,6 +7,13 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+// Mock de services-availability ANTES de importar el servicio
+vi.mock('@/lib/availability/services-availability', () => ({
+  servicesAvailability: {
+    checkAvailabilityWithServices: vi.fn(),
+  },
+}))
+
 // Mock del módulo db ANTES de importar el servicio
 vi.mock('@/lib/db', () => {
   const mockTablesQuery = {
@@ -14,6 +21,9 @@ vi.mock('@/lib/db', () => {
     findMany: vi.fn(),
   }
   const mockReservationsQuery = {
+    findMany: vi.fn(),
+  }
+  const mockServicesQuery = {
     findMany: vi.fn(),
   }
   const mockInsert = vi.fn()
@@ -24,6 +34,7 @@ vi.mock('@/lib/db', () => {
       query: {
         tables: mockTablesQuery,
         reservations: mockReservationsQuery,
+        services: mockServicesQuery,
       },
       insert: mockInsert,
       update: mockUpdate,
@@ -41,11 +52,14 @@ import {
   deleteTable,
 } from '@/lib/services/table.service'
 import { db } from '@/lib/db'
+import { servicesAvailability } from '@/lib/availability/services-availability'
 
 const mockTablesQuery = (db as any).query.tables
 const mockReservationsQuery = (db as any).query.reservations
+const mockServicesQuery = (db as any).query.services
 const mockInsert = (db as any).insert
 const mockUpdate = (db as any).update
+const mockCheckAvailability = servicesAvailability.checkAvailabilityWithServices as any
 
 describe('Table Service', () => {
   beforeEach(() => {
@@ -118,6 +132,53 @@ describe('Table Service', () => {
   })
 
   describe('getAvailableTables', () => {
+    beforeEach(() => {
+      // Mock de checkAvailabilityWithServices para simular el filtrado por capacidad
+      // y excluir mesas con reservas confirmadas/pendientes que se solapan en tiempo
+      mockCheckAvailability.mockImplementation(async (params: any) => {
+        // Obtener todas las mesas y reservas del mock
+        const allTables = await mockTablesQuery.findMany() as any[]
+        const reservations = await mockReservationsQuery.findMany() as any[]
+
+        // Helper para convertir tiempo HH:MM a minutos
+        const timeToMinutes = (time: string) => {
+          const [hours, mins] = time.split(':').map(Number)
+          return hours * 60 + mins
+        }
+
+        const requestedTime = timeToMinutes(params.time)
+
+        // Obtener IDs de mesas ocupadas (reservas CONFIRMADO o PENDIENTE que se solapan)
+        const occupiedTableIds = new Set<string>()
+        for (const res of reservations) {
+          if (res.status === 'CONFIRMADO' || res.status === 'PENDIENTE') {
+            const resStart = timeToMinutes(res.reservationTime)
+            const resEnd = resStart + (res.estimatedDurationMinutes || 90)
+
+            // Verificar si hay solapamiento: la reserva ocupa la mesa si
+            // la hora solicitada está dentro del rango de la reserva
+            if (requestedTime >= resStart && requestedTime < resEnd) {
+              for (const tableId of (res.tableIds || [])) {
+                occupiedTableIds.add(tableId)
+              }
+            }
+          }
+        }
+
+        // Filtrar por capacidad Y que no estén ocupadas
+        const filteredTables = allTables.filter((t: any) =>
+          t.capacity >= params.partySize && !occupiedTableIds.has(t.id)
+        )
+
+        return {
+          available: filteredTables.length > 0,
+          availableTables: filteredTables,
+          suggestedTables: filteredTables.map((t: any) => t.id),
+          service: null,
+        }
+      })
+    })
+
     it('debería obtener mesas disponibles para fecha/hora y tamaño de grupo', async () => {
       // Arrange
       const restaurantId = 'rest-1'
