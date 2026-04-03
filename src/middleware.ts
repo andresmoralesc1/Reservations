@@ -105,10 +105,23 @@ async function isAuthenticated(request: NextRequest): Promise<boolean> {
 }
 
 /**
- * AUTENTICACIÓN DESACTIVADA TEMPORALMENTE
- * Cambia esto a true cuando tengas un sistema de login funcional
+ * Control de autenticación vía variable de entorno
+ *
+ * Comportamiento:
+ * - Sin variable (desarrollo): AUTH activado por defecto (secure by default)
+ * - AUTH_ENABLED=false: Desactiva explícitamente (solo para desarrollo local)
+ * - Producción: Siempre activado (no definir la variable)
  */
-const AUTH_ENABLED = false
+const AUTH_ENABLED = process.env.AUTH_ENABLED !== 'false'
+
+// Log warning cuando auth está desactivado (solo en desarrollo/local)
+if (!AUTH_ENABLED && process.env.NODE_ENV !== 'production') {
+  console.warn('⚠️  AUTH_ENABLED is false - admin routes are UNPROTECTED')
+  logger.warn({
+    msg: 'Auth desactivado - rutas admin sin protección',
+    env: process.env.NODE_ENV,
+  })
+}
 
 /**
  * Rutas que requieren autenticación
