@@ -6,25 +6,7 @@ import { Button } from "@/components/Button"
 import { toast } from "@/components/Toast"
 import { TableShape, TableShapeType } from "./TableShape"
 import { generateTableCode } from "@/lib/utils/tableUtils"
-
-export interface Table {
-  id: string
-  restaurantId: string
-  tableNumber: string
-  capacity: number
-  location: "patio" | "interior" | "terraza" | null
-  isAccessible: boolean
-  shape: string | null
-  positionX: number
-  positionY: number
-  rotation: number
-  width: number | null
-  height: number | null
-  diameter: number | null
-  stoolCount: number | null
-  stoolPositions: number[] | null
-  createdAt: string
-}
+import type { Table } from "@/drizzle/schema"
 
 interface TableCardProps {
   table: Table

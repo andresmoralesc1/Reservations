@@ -5,10 +5,15 @@
 
 import { useState, useCallback, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import type { Reservation, FilterValue } from "@/types/admin"
+import type { Reservation } from "@/drizzle/schema"
+import type { FilterValue } from "@/types/admin"
+
+type ReservationWithNoShow = Reservation & {
+  customerNoShowCount?: number
+}
 
 interface UseFiltersWithURLProps {
-  reservations: Reservation[]
+  reservations: ReservationWithNoShow[]
   itemsPerPage?: number
 }
 
@@ -17,8 +22,8 @@ interface UseFiltersWithURLReturn {
   setFilter: (filter: FilterValue) => void
   searchQuery: string
   setSearchQuery: (query: string) => void
-  filteredReservations: Reservation[]
-  paginatedReservations: Reservation[]
+  filteredReservations: ReservationWithNoShow[]
+  paginatedReservations: ReservationWithNoShow[]
   currentPage: number
   setCurrentPage: (page: number) => void
   totalPages: number
@@ -57,7 +62,7 @@ export function useFiltersWithURL({
   const [filter, setFilterState] = useState<FilterValue>(initialFilter)
   const [searchQuery, setSearchQueryState] = useState(initialSearch)
   const [currentPage, setCurrentPage] = useState(initialPage)
-  const [filteredReservations, setFilteredReservations] = useState<Reservation[]>([])
+  const [filteredReservations, setFilteredReservations] = useState<ReservationWithNoShow[]>([])
 
   // Función para actualizar URL
   const updateURL = useCallback((

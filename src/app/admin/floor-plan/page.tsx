@@ -6,22 +6,10 @@ import { FloorPlanView } from "@/components/admin/FloorPlanView"
 import { TableTimeline } from "@/components/admin/TableTimeline"
 import { FloorPlanHeader } from "./FloorPlanHeader"
 import { format, addDays } from "date-fns"
+import type { Table } from "@/drizzle/schema"
 
-// Tipo de tabla para el floor plan (mínimo requerido)
-interface FloorPlanTable {
-  id: string
-  tableCode: string
-  tableNumber: string
-  capacity: number
-  location: string
-  shape: string
-  positionX: number
-  positionY: number
-  width: number
-  height: number
-  diameter?: number
-  rotation?: number
-  status?: "available" | "occupied" | "reserved" | "blocked"
+type FloorPlanTable = Table & {
+  status: "available" | "occupied" | "reserved" | "blocked"
   reservations: Array<{
     id: string
     reservationCode: string

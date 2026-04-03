@@ -5,7 +5,11 @@
 import { FilterTabs } from "@/components/FilterTabs"
 import { SearchBar } from "@/components/SearchBar"
 import { filterOptions } from "@/types/admin"
-import type { Reservation } from "@/types/admin"
+import type { Reservation } from "@/drizzle/schema"
+
+type ReservationWithNoShowCount = Reservation & {
+  customerNoShowCount?: number
+}
 
 interface FilterBarProps {
   filter: string
@@ -14,7 +18,7 @@ interface FilterBarProps {
   onSearchChange: (query: string) => void
   timeFilter?: string // "all", "comida", "cena", or specific time like "20:00"
   onTimeFilterChange?: (time: string) => void
-  reservations?: Reservation[] // For no-show counter
+  reservations?: ReservationWithNoShowCount[] // For no-show counter
 }
 
 export function FilterBar({

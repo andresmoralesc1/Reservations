@@ -1,6 +1,6 @@
 export { TableGrid } from "./TableGrid"
 export { TableCard } from "./TableCard"
-export type { Table } from "./TableCard"
+export type { Table } from "@/drizzle/schema"
 export { TableLayoutEditor } from "./TableLayoutEditor"
 export { DraggableTable } from "./DraggableTable"
 export { TableConfigPanel } from "./TableConfigPanel"

@@ -1,9 +1,13 @@
 /**
  * Tipos centralizados para Reservas
  *
- * Single source of truth para todos los tipos relacionados con reservas.
- * Elimina duplicación de STATUS_MAP y proporciona type safety.
+ * El tipo base Reservation viene de drizzle/schema.ts.
+ * Este archivo exporta enums, constantes y tipos derivados.
  */
+
+import type { Reservation } from "@/drizzle/schema"
+
+export type { Reservation }
 
 /**
  * Estados de reserva (en español para BD, mapeo a inglés para APIs)
@@ -92,36 +96,6 @@ export const STATUS_LABELS: Record<ReservationStatusEnum, string> = {
 }
 
 /**
- * Interfaces de reserva
- */
-
-/**
- * Reserva completa (con todos los campos)
- */
-export interface Reservation {
-  id: string
-  reservationCode: string // RES-XXXXX
-  customerId: string
-  customerName: string
-  customerPhone: string
-  customerEmail?: string
-  restaurantId: string
-  reservationDate: string // YYYY-MM-DD
-  reservationTime: string // HH:MM
-  partySize: number
-  tableIds: string[]
-  status: ReservationStatusEnum
-  source: ReservationSource
-  specialRequests?: string
-  estimatedDurationMinutes: number
-  createdAt: Date
-  updatedAt: Date
-  cancelledAt?: Date
-  confirmedAt?: Date
-  remindersSent?: number
-}
-
-/**
  * Fuentes de reserva
  */
 export type ReservationSource =
@@ -161,15 +135,10 @@ export interface UpdateReservationDTO {
 /**
  * Reserva simplificada para listas
  */
-export interface ReservationListItem {
-  id: string
-  reservationCode: string
-  customerName: string
-  customerPhone: string
-  reservationDate: string
-  reservationTime: string
-  partySize: number
-  status: ReservationStatusEnum
+export type ReservationListItem = Pick<Reservation,
+  "id" | "reservationCode" | "customerName" | "customerPhone" |
+  "reservationDate" | "reservationTime" | "partySize" | "status"
+> & {
   tableCount: number
 }
 

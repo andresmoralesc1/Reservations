@@ -1,31 +1,23 @@
 /**
  * Tipos compartidos para el panel de administración
+ * Los tipos base Table, Reservation y Customer ahora vienen de @/drizzle/schema
  */
 
-export interface Table {
-  id: string
-  tableNumber: string
-  tableCode: string
-  capacity: number
-  location: string | null
-}
+import type { Table, Reservation } from "@/drizzle/schema"
 
-export interface Reservation {
-  id: string
-  reservationCode: string
-  customerName: string
-  customerPhone: string
-  reservationDate: string
-  reservationTime: string
-  partySize: number
-  status: string
-  source: string
+export type { Table, Reservation }
+
+// Re-export tipos extendidos con campos adicionales para el admin
+// Drizzle usa null para campos opcionales, pero la UI prefiere undefined
+export type AdminReservation = Omit<Reservation, 'specialRequests' | 'confirmedAt' | 'cancelledAt' | 'sessionId' | 'serviceId' | 'actualEndTime' | 'deletedAt' | 'customerId' | 'tableIds'> & {
   specialRequests?: string
-  isComplexCase?: boolean
   confirmedAt?: string
   cancelledAt?: string
-  createdAt: string
-  updatedAt: string
+  sessionId?: string
+  serviceId?: string
+  actualEndTime?: string
+  deletedAt?: string
+  customerId?: string
   tableIds?: string[]
   tables?: Table[]
   restaurant?: {
@@ -33,7 +25,6 @@ export interface Reservation {
     phone: string
     address: string
   }
-  // Customer risk info
   customerNoShowCount?: number
   customerTags?: string[]
 }

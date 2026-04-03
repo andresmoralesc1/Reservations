@@ -6,16 +6,7 @@ import { Button } from "@/components/Button"
 import { Input } from "@/components/Input"
 import { toast } from "@/components/Toast"
 import { TableShapePreview, TableShapeType } from "./TableShape"
-
-export interface Table {
-  id: string
-  tableNumber: string
-  capacity: number
-  location: "patio" | "interior" | "terraza" | null
-  isAccessible: boolean
-  createdAt: string
-  shape?: string | null
-}
+import type { Table } from "@/drizzle/schema"
 
 type WizardStep = 1 | 2 | 3 | 4 | 5
 
@@ -77,11 +68,11 @@ export function TableWizardModal({
     if (isOpen) {
       if (editTable) {
         setFormData({
-          location: editTable.location,
+          location: editTable.location as "patio" | "interior" | "terraza" | null,
           capacity: editTable.capacity,
           shape: (editTable.shape as TableShapeType) || "rectangular",
           tableNumber: editTable.tableNumber,
-          isAccessible: editTable.isAccessible,
+          isAccessible: editTable.isAccessible ?? false,
           notes: "",
         })
         setStep(3) // Skip location and capacity when editing

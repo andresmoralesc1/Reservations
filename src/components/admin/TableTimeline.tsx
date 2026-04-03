@@ -2,8 +2,9 @@
 
 import { useState } from "react"
 import { XIcon, ClockIcon, UsersIcon } from "@/components/admin/Icons"
+import type { Table } from "@/drizzle/schema"
 
-interface Reservation {
+type TimelineReservation = {
   id: string
   reservationCode: string
   customerName: string
@@ -14,17 +15,12 @@ interface Reservation {
   estimatedDurationMinutes: number
 }
 
-interface Table {
-  id: string
-  tableCode: string
-  tableNumber: string
-  capacity: number
-  location: string
-  reservations: Reservation[]
+type TableWithReservations = Table & {
+  reservations: TimelineReservation[]
 }
 
 interface TableTimelineProps {
-  table: Table | null
+  table: TableWithReservations | null
   date: string
   onClose: () => void
 }
@@ -41,7 +37,7 @@ export function TableTimeline({ table, date, onClose }: TableTimelineProps) {
   if (!table) return null
 
   // Calculate position and width for each reservation bar
-  const getReservationStyle = (reservation: Reservation) => {
+  const getReservationStyle = (reservation: TimelineReservation) => {
     const startTime = reservation.reservationTime
     const duration = reservation.estimatedDurationMinutes || 90
 
@@ -72,7 +68,7 @@ export function TableTimeline({ table, date, onClose }: TableTimelineProps) {
   }
 
   // Format time for display
-  const formatTimeRange = (reservation: Reservation) => {
+  const formatTimeRange = (reservation: TimelineReservation) => {
     const start = reservation.reservationTime
     const duration = reservation.estimatedDurationMinutes || 90
     const endTime = addMinutes(start, duration)

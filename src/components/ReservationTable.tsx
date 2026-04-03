@@ -4,31 +4,15 @@ import { cn } from "@/lib/utils"
 import { Button } from "./Button"
 import { StatusBadge } from "./StatusBadge"
 import { CustomerRiskBadge } from "./admin/CustomerRiskBadge"
+import type { Table, Reservation } from "@/drizzle/schema"
 
-interface Table {
-  id: string
-  tableNumber: string
-  tableCode: string
-  capacity: number
-  location: string | null
-}
-
-interface Reservation {
-  id: string
-  reservationCode: string
-  customerName: string
-  customerPhone: string
-  reservationDate: string
-  reservationTime: string
-  partySize: number
-  status: string
-  source: string
+type ReservationWithTables = Reservation & {
   tables?: Table[]
   customerNoShowCount?: number
 }
 
 interface ReservationTableProps {
-  reservations: Reservation[]
+  reservations: ReservationWithTables[]
   onApprove?: (id: string) => void
   onReject?: (id: string) => void
   onNoShow?: (id: string) => void

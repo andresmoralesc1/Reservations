@@ -12,26 +12,7 @@ import { LocationTabs } from "@/components/admin/tables/LocationTabs"
 import { TableWizardModal } from "@/components/admin/tables/TableWizardModal"
 import { BulkTableModal } from "@/components/admin/tables/BulkTableModal"
 import { TableLayoutEditor } from "@/components/admin/tables/TableLayoutEditor"
-import { Table as TableType } from "@/drizzle/schema"
-
-export interface Table {
-  id: string
-  restaurantId: string
-  tableNumber: string
-  capacity: number
-  location: "patio" | "interior" | "terraza" | null
-  isAccessible: boolean
-  shape: string | null
-  positionX: number
-  positionY: number
-  rotation: number
-  width: number | null
-  height: number | null
-  diameter: number | null
-  stoolCount: number | null
-  stoolPositions: number[] | null
-  createdAt: string
-}
+import type { Table } from "@/drizzle/schema"
 
 type ViewMode = "list" | "layout"
 type Location = "all" | "patio" | "interior" | "terraza"
@@ -127,7 +108,7 @@ export default function TablesPage() {
     setTables((prev) => prev.filter((t) => t.id !== tableId))
   }
 
-  async function handleUpdateTable(id: string, updates: Partial<TableType>) {
+  async function handleUpdateTable(id: string, updates: Partial<Table>) {
     try {
       const response = await fetch(`/api/admin/tables/${id}`, {
         method: "PUT",

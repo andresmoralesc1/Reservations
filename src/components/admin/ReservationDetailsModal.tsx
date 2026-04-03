@@ -4,13 +4,7 @@ import { Modal } from "@/components/Modal"
 import { StatusBadge } from "@/components/StatusBadge"
 import { Button } from "@/components/Button"
 
-interface Table {
-  id: string
-  tableNumber: string
-  tableCode: string
-  capacity: number
-  location: string | null
-}
+import type { Table } from "@/drizzle/schema"
 
 interface ReservationDetailsModalProps {
   isOpen: boolean
@@ -25,13 +19,13 @@ interface ReservationDetailsModalProps {
     partySize: number
     status: string
     source: string
-    specialRequests?: string
-    isComplexCase?: boolean
-    confirmedAt?: string
-    cancelledAt?: string
-    createdAt: string
-    updatedAt: string
-    tableIds?: string[]
+    specialRequests?: string | null
+    isComplexCase?: boolean | null
+    confirmedAt?: Date | null
+    cancelledAt?: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    tableIds?: string[] | null
     tables?: Table[]
     restaurant?: {
       name: string
@@ -70,9 +64,9 @@ export function ReservationDetailsModal({
     return `${hours}:${minutes}`
   }
 
-  const formatDateTime = (dateStr: string | undefined) => {
-    if (!dateStr) return "-"
-    const date = new Date(dateStr)
+  const formatDateTime = (dateValue: string | Date | null | undefined) => {
+    if (!dateValue) return "-"
+    const date = typeof dateValue === "string" ? new Date(dateValue) : dateValue
     return date.toLocaleString("es-ES", {
       day: "2-digit",
       month: "2-digit",

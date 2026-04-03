@@ -1,6 +1,7 @@
 "use client"
 
-import { TableCard, Table } from "./TableCard"
+import { TableCard } from "./TableCard"
+import type { Table } from "@/drizzle/schema"
 
 interface TableGridProps {
   tables: Table[]

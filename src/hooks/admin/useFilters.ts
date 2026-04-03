@@ -3,10 +3,15 @@
  */
 
 import { useState, useCallback, useEffect } from "react"
-import type { Reservation, FilterValue } from "@/types/admin"
+import type { Reservation } from "@/drizzle/schema"
+import type { FilterValue } from "@/types/admin"
+
+type ReservationWithNoShow = Reservation & {
+  customerNoShowCount?: number
+}
 
 interface UseFiltersProps {
-  reservations: Reservation[]
+  reservations: ReservationWithNoShow[]
   itemsPerPage?: number
 }
 
@@ -15,8 +20,8 @@ interface UseFiltersReturn {
   setFilter: (filter: FilterValue) => void
   searchQuery: string
   setSearchQuery: (query: string) => void
-  filteredReservations: Reservation[]
-  paginatedReservations: Reservation[]
+  filteredReservations: ReservationWithNoShow[]
+  paginatedReservations: ReservationWithNoShow[]
   currentPage: number
   setCurrentPage: (page: number) => void
   totalPages: number
@@ -29,7 +34,7 @@ export function useFilters({
 }: UseFiltersProps): UseFiltersReturn {
   const [filter, setFilter] = useState<FilterValue>("all")
   const [searchQuery, setSearchQuery] = useState("")
-  const [filteredReservations, setFilteredReservations] = useState<Reservation[]>(reservations)
+  const [filteredReservations, setFilteredReservations] = useState<ReservationWithNoShow[]>(reservations)
   const [currentPage, setCurrentPage] = useState(1)
 
   // Calculate total pages

@@ -2,37 +2,30 @@
 
 import { useState, useEffect } from "react"
 import { differenceInMinutes, addMinutes } from "date-fns"
+import type { Table } from "@/drizzle/schema"
 
-interface Table {
+type TableStatus = "available" | "occupied" | "reserved" | "blocked"
+
+interface TableReservation {
   id: string
-  tableCode: string
-  tableNumber: string
-  capacity: number
-  location: string
-  shape: string
-  positionX: number
-  positionY: number
-  width: number
-  height: number
-  diameter: number
-  rotation: number
-  status: "available" | "occupied" | "reserved" | "blocked"
-  reservations: Array<{
-    id: string
-    reservationCode: string
-    customerName: string
-    customerPhone: string
-    reservationTime: string
-    partySize: number
-    status: string
-    estimatedDurationMinutes: number
-  }>
+  reservationCode: string
+  customerName: string
+  customerPhone: string
+  reservationTime: string
+  partySize: number
+  status: string
+  estimatedDurationMinutes: number
+}
+
+type TableWithStatus = Table & {
+  status: TableStatus
+  reservations: TableReservation[]
 }
 
 interface FloorPlanViewProps {
   date: string
   restaurantId: string
-  onTableClick?: (table: Table) => void
+  onTableClick?: (table: TableWithStatus) => void
   selectedTableId?: string
 }
 
@@ -88,7 +81,7 @@ function calculateTimeRemaining(
 }
 
 export function FloorPlanView({ date, restaurantId, onTableClick, selectedTableId }: FloorPlanViewProps) {
-  const [tables, setTables] = useState<Table[]>([])
+  const [tables, setTables] = useState<TableWithStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [summary, setSummary] = useState({
     total: 0,
@@ -301,8 +294,8 @@ export function FloorPlanView({ date, restaurantId, onTableClick, selectedTableI
                       position: "absolute",
                       width: table.diameter || 60,
                       height: table.diameter || 60,
-                      left: table.positionX,
-                      top: table.positionY,
+                      left: table.positionX ?? 0,
+                      top: table.positionY ?? 0,
                       transform: table.rotation ? `rotate(${table.rotation}deg)` : undefined,
                     }}
                     onClick={() => onTableClick?.(table)}
@@ -363,10 +356,10 @@ export function FloorPlanView({ date, restaurantId, onTableClick, selectedTableI
                     `}
                     style={{
                       position: "absolute",
-                      width: table.width || 80,
-                      height: (table.height || 30) / 2,
-                      left: table.positionX,
-                      top: table.positionY,
+                      width: table.width ?? 80,
+                      height: (table.height ?? 30) / 2,
+                      left: table.positionX ?? 0,
+                      top: table.positionY ?? 0,
                       transform: table.rotation ? `rotate(${table.rotation}deg)` : undefined,
                     }}
                     onClick={() => onTableClick?.(table)}
@@ -410,10 +403,10 @@ export function FloorPlanView({ date, restaurantId, onTableClick, selectedTableI
                   `}
                   style={{
                     position: "absolute",
-                    width: table.width || 70,
-                    height: table.height || 80,
-                    left: table.positionX,
-                    top: table.positionY,
+                    width: table.width ?? 70,
+                    height: table.height ?? 80,
+                    left: table.positionX ?? 0,
+                    top: table.positionY ?? 0,
                     transform: table.rotation ? `rotate(${table.rotation}deg)` : undefined,
                   }}
                   onClick={() => onTableClick?.(table)}
