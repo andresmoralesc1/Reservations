@@ -3,13 +3,23 @@
  *
  * Valida que las requests al voice-bridge vienen de Pipecat.
  * Previene accesos no autorizados al endpoint de voz.
+ *
+ * Seguridad:
+ * - Usa timing-safe comparison para prevenir timing attacks
+ * - Valida longitud mínima de la key
+ * - Log de intentos fallidos sin revelar información sensible
  */
 
 import type { NextRequest } from "next/server"
+import { timingSafeEqual } from "crypto"
+import { createLogger } from "@/lib/logger"
+
+const logger = createLogger({ module: "voice-auth" })
 
 // ============ Configuración ============
 const API_KEY_HEADER = "x-voice-bridge-key"
 const API_KEY_ALT_HEADER = "authorization" // "Bearer <key>"
+const MIN_API_KEY_LENGTH = 32 // Longitud mínima de seguridad
 
 // ============ Tipos ============
 export interface AuthResult {
@@ -18,6 +28,41 @@ export interface AuthResult {
 }
 
 // ============ Función principal ============
+
+/**
+ * Valida una API key de forma segura usando timing-safe comparison
+ *
+ * @param provided - Key proporcionada en la request
+ * @param expected - Key esperada (de env var)
+ * @returns true si la key es válida
+ */
+function validateApiKey(provided: string, expected: string): boolean {
+  // 1. Validación de longitud primero (timing-safe no es necesario aquí)
+  if (provided.length !== expected.length) {
+    return false
+  }
+
+  // 2. Validación de longitud mínima
+  if (expected.length < MIN_API_KEY_LENGTH) {
+    logger.error({
+      msg: "VOICE_BRIDGE_API_KEY too short",
+      expectedLength: expected.length,
+      minLength: MIN_API_KEY_LENGTH,
+    })
+    return false
+  }
+
+  // 3. Comparación timing-safe para prevenir timing attacks
+  // timingSafeEqual solo funciona con Buffers de igual longitud
+  try {
+    return timingSafeEqual(
+      Buffer.from(provided, "utf-8"),
+      Buffer.from(expected, "utf-8")
+    )
+  } catch {
+    return false
+  }
+}
 
 /**
  * Valida que una request al voice-bridge esté autenticada
@@ -40,7 +85,9 @@ export function validateVoiceBridgeRequest(request: NextRequest): AuthResult {
                    request.headers.has(API_KEY_ALT_HEADER)
 
     if (!hasKey) {
-      console.warn("[Voice Auth] Development mode: allowing unauthenticated request")
+      logger.debug({
+        msg: "Development mode: allowing unauthenticated request",
+      })
       return { valid: true }
     }
   }
@@ -49,7 +96,9 @@ export function validateVoiceBridgeRequest(request: NextRequest): AuthResult {
   const expectedKey = process.env.VOICE_BRIDGE_API_KEY
 
   if (!expectedKey) {
-    console.error("[Voice Auth] VOICE_BRIDGE_API_KEY not configured")
+    logger.error({
+      msg: "VOICE_BRIDGE_API_KEY not configured",
+    })
     return {
       valid: false,
       error: "Voice bridge not configured properly",
@@ -61,15 +110,26 @@ export function validateVoiceBridgeRequest(request: NextRequest): AuthResult {
                       extractBearerToken(request.headers.get(API_KEY_ALT_HEADER))
 
   if (!providedKey) {
+    logger.warn({
+      msg: "Voice bridge authentication failed: missing credentials",
+      ip: getClientIp(request),
+    })
     return {
       valid: false,
       error: "Missing authentication credentials",
     }
   }
 
-  // Validar key
-  if (providedKey !== expectedKey) {
-    console.warn("[Voice Auth] Invalid API key provided")
+  // Validar key con timing-safe comparison
+  const isValid = validateApiKey(providedKey, expectedKey)
+
+  if (!isValid) {
+    logger.warn({
+      msg: "Voice bridge authentication failed: invalid API key",
+      ip: getClientIp(request),
+      providedKeyLength: providedKey.length,
+      // NO loggear la key proporcionada ni la esperada por seguridad
+    })
     return {
       valid: false,
       error: "Invalid authentication credentials",
@@ -77,6 +137,17 @@ export function validateVoiceBridgeRequest(request: NextRequest): AuthResult {
   }
 
   return { valid: true }
+}
+
+/**
+ * Obtiene la IP del cliente de forma segura
+ */
+function getClientIp(request: NextRequest): string {
+  return (
+    request.headers.get("x-forwarded-for")?.split(",")[0] ||
+    request.headers.get("x-real-ip") ||
+    "unknown"
+  )
 }
 
 /**
