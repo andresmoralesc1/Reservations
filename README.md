@@ -3,7 +3,7 @@
 # 🍽️ El Posit - Sistema de Reservas
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15.1.6-black?logo=next.js)](https://nextjs.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)](https://www.postgresql.org/)
 [![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis)](https://redis.io/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -259,6 +259,14 @@ curl "https://elposit.co/api/admin/reservations?export=true" \
 - **Historial de clientes** - Seguimiento de no-shows
 - **Auditoría completa** - Registro de todos los cambios
 
+### 🔧 Infraestructura
+
+- **Structured Logging** - Pino con niveles (debug, info, warn, error)
+- **Rate Limiting** - Sliding window con Redis para APIs sensibles
+- **Cache Inteligente** - TTLs configurados por tipo de dato
+- **Health Check** - Endpoint `/api/health` para monitoreo
+- **Soft Delete** - Datos recuperables con auditoría
+
 ---
 
 ## 🚀 Quick Start
@@ -334,7 +342,7 @@ run-setup.bat    # Configuración inicial + inicio
 ┌─────────────────────────────────────────────────────────────┐
 │                        FRONTEND                             │
 ├─────────────────────────────────────────────────────────────┤
-│  Next.js 16  │  React 19  │  TypeScript  │  Tailwind CSS   │
+│  Next.js 15.1.6  │  React 19  │  TypeScript  │  Tailwind CSS   │
 └─────────────────────────────────────────────────────────────┘
                               ▲
                               │
@@ -366,27 +374,37 @@ run-setup.bat    # Configuración inicial + inicio
 ```
 reservations/
 ├── 📂 drizzle/              # Schema y migraciones de BD
-│   ├── schema.ts
+│   ├── schema/             # Schema modular por dominio
+│   │   ├── restaurants.ts
+│   │   ├── customers.ts
+│   │   ├── services.ts
+│   │   ├── tables.ts
+│   │   ├── reservations.ts
+│   │   ├── voice.ts
+│   │   └── analytics.ts
 │   └── migrations/
 ├── 📂 src/
 │   ├── 📂 app/              # Next.js App Router
 │   │   ├── api/             # API Routes
 │   │   │   ├── reservations/   # CRUD de reservas
-│   │   │   ├── ivr/            # Sistema IVR
 │   │   │   ├── admin/          # API Admin
-│   │   │   └── whatsapp/       # Integración WhatsApp
+│   │   │   ├── health/         # Health check endpoint
+│   │   │   └── voice-bridge/   # Voice bot API
 │   │   ├── admin/           # Dashboard Admin
-│   │   ├── reservar/        # Página de reservas
-│   │   └── layout.tsx       # Layout principal
+│   │   └── reservar/        # Página de reservas
 │   ├── 📂 components/       # Componentes React
 │   │   ├── admin/          # Componentes admin
 │   │   └── Core/           # UI reutilizables
-│   ├── 📂 lib/              # Utilidades
+│   ├── 📂 lib/              # Utilidades y servicios
 │   │   ├── db.ts           # Cliente Drizzle
 │   │   ├── redis.ts        # Cliente Redis
-│   │   └── utils.ts        # Helpers
-│   └── 📂 services/         # Lógica de negocio
-│       └── availability.ts  # Algoritmo disponibilidad
+│   │   ├── cache.ts        # Cache con TTLs
+│   │   ├── rate-limit.ts   # Rate limiting
+│   │   ├── logger.ts       # Pino structured logging
+│   │   ├── services/       # Lógica de negocio (única carpeta)
+│   │   ├── availability/   # Algoritmo disponibilidad
+│   │   └── voice/          # Voice bot services
+│   └── 📂 hooks/           # Custom React hooks
 ├── 📄 docker-compose.yml
 ├── 📄 drizzle.config.ts
 └── 📄 package.json
@@ -422,6 +440,26 @@ reservations/
 | GET | `/api/admin/reservations/pending` | Cola de pendientes |
 | POST | `/api/admin/reservations/[id]` | Aprobar/rechazar |
 | GET | `/api/admin/stats` | Estadísticas del dashboard |
+
+### Health Check
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/health` | Estado del sistema (DB, Redis, Voice) |
+
+**Respuesta ejemplo:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2026-04-03T20:00:00Z",
+  "services": {
+    "database": "connected",
+    "redis": "connected",
+    "voice": "configured"
+  },
+  "version": "1.0.0"
+}
+```
 
 ---
 
@@ -484,15 +522,22 @@ IVR_PHONE_NUMBER=+573001234567
 
 ### Tablas Principales
 
-| Tabla | Descripción |
-|-------|-------------|
-| `restaurants` | Ubicaciones del restaurante |
-| `tables` | Mesas con capacidad y ubicación |
-| `customers` | Clientes con historial de no-shows |
-| `reservations` | Reservas con estados y códigos |
-| `reservation_history` | Auditoría de cambios |
-| `ivr_sessions` | Sesiones de conversación IVR |
-| `whatsapp_messages` | Registro de mensajes |
+| Tabla | Índices | Descripción |
+|-------|---------|-------------|
+| `restaurants` | - | Ubicaciones del restaurante |
+| `tables` | 2 | Mesas con capacidad y ubicación |
+| `table_blocks` | 2 | Bloqueos de mesas por fecha/hora |
+| `customers` | - | Clientes con historial de no-shows |
+| `services` | 4 | Servicios (turnos: comida/cena) |
+| `reservations` | 9 | Reservas con estados y códigos |
+| `reservations_archive` | 4 | Archivo histórico |
+| `reservation_history` | - | Auditoría de cambios |
+| `reservation_sessions` | 2 | Sesiones de conversación IVR |
+| `whatsapp_messages` | - | Registro de mensajes |
+| `call_logs` | 3 | Logs de llamadas del voice bot |
+| `daily_analytics` | 2 | Analíticas pre-calculadas |
+
+**Total: 26 índices optimizados para consultas frecuentes**
 
 ---
 
@@ -505,9 +550,20 @@ IVR_PHONE_NUMBER=+573001234567
 | 30 mesas configuradas (124 pax) | ✅ Operativo |
 | Base de datos PostgreSQL (Supabase) | ✅ Conectada |
 | Autenticación Admin | ✅ Funcional |
+| Tests (Vitest + Playwright) | ✅ 276/276 pasando |
 | Integración Telnyx telefónica | 🔄 En desarrollo |
 | Integración WhatsApp (Telnyx) | 🔄 En desarrollo |
 | Endpoint check-availability | ✅ Operativo |
+
+### Calidad del Código
+
+| Métrica | Valor |
+|---------|-------|
+| Tests unitarios | 276 tests ✅ |
+| Tests E2E | Playwright configurado |
+| Coverage | Vitest v8 |
+| TypeScript | Estricto |
+| Linting | ESLint + Next.js |
 
 ---
 
