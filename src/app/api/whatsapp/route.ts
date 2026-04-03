@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { whatsappService } from "@/services/whatsapp"
+import { whatsappService } from "@/lib/services/whatsapp"
 
 // POST /api/whatsapp/send-confirmation - Send confirmation message
 export async function POST(request: NextRequest) {

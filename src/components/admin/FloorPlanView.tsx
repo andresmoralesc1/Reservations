@@ -4,8 +4,6 @@ import { useState, useEffect } from "react"
 import { differenceInMinutes, addMinutes } from "date-fns"
 import type { Table } from "@/drizzle/schema"
 
-type TableStatus = "available" | "occupied" | "reserved" | "blocked"
-
 interface TableReservation {
   id: string
   reservationCode: string
@@ -18,7 +16,7 @@ interface TableReservation {
 }
 
 type TableWithStatus = Table & {
-  status: TableStatus
+  status: "available" | "occupied" | "reserved" | "blocked"
   reservations: TableReservation[]
 }
 

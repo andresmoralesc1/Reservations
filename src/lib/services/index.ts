@@ -79,3 +79,4 @@ export {
   type CustomerInput,
   type CustomerStats,
 } from "./customer.service"
+export * from './whatsapp'

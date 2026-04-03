@@ -104,6 +104,7 @@ export type ReservationSource =
   | "IVR"
   | "ADMIN"
   | "API"
+  | "MANUAL"
 
 /**
  * DTO para crear reserva (sin campos autogenerados)
@@ -161,7 +162,7 @@ export interface ReservationWithRelations extends Reservation {
     tableNumber: string
     tableCode: string
     capacity: number
-    location: string
+    location: string | null
   }>
 }
 

@@ -25,11 +25,16 @@ export type TableShape =
   | "round"
   | "square"
   | "oval"
+  | "circular"
+  | "cuadrada"
+  | "barra"
 
 /**
  * Mesa simplificada para listas
  */
-export type TableListItem = Pick<Table, "id" | "tableNumber" | "tableCode" | "capacity" | "location" | "deletedAt">
+export type TableListItem = Pick<Table, "id" | "tableNumber" | "tableCode" | "capacity" | "location" | "deletedAt"> & {
+  isAccessible: boolean
+}
 
 /**
  * DTO para crear mesa
@@ -37,34 +42,32 @@ export type TableListItem = Pick<Table, "id" | "tableNumber" | "tableCode" | "ca
 export interface CreateTableDTO {
   restaurantId: string
   tableNumber: string
-  tableCode: string
   capacity: number
-  location: TableLocation
+  location: TableLocation | null
   isAccessible?: boolean
   shape?: TableShape
   positionX?: number
   positionY?: number
   width?: number
   height?: number
+  diameter?: number
 }
 
 /**
  * DTO para actualizar mesa
- * Nota: location usa string | null para compatibilidad con Drizzle ORM
  */
 export interface UpdateTableDTO {
   tableNumber?: string
-  tableCode?: string
   capacity?: number
-  location?: string | null // Drizzle usa string, no TableLocation enum
+  location?: string | null
   isAccessible?: boolean
-  shape?: TableShape
+  shape?: string | null
   positionX?: number
   positionY?: number
-  width?: number
-  height?: number
+  width?: number | null
+  height?: number | null
   rotation?: number
-  diameter?: number
+  diameter?: number | null
   stoolCount?: number
   stoolPositions?: number[] | null
   deletedAt?: Date | null
@@ -84,14 +87,30 @@ export type TableWithStatus = Table & {
 }
 
 /**
+ * Mesa con estado para floor plan
+ */
+export interface TableWithFloorPlanStatus extends Table {
+  status: "available" | "occupied" | "reserved" | "blocked"
+  reservations?: Array<{
+    id: string
+    reservationCode: string
+    customerName: string
+    customerPhone: string
+    reservationTime: string
+    partySize: number
+    status: string
+    estimatedDurationMinutes: number
+  }>
+}
+
+/**
  * Filtros para búsqueda de mesas
  */
 export interface TableFilters {
-  location?: TableLocation
+  location?: TableLocation | string | null
   minCapacity?: number
   maxCapacity?: number
   isAccessible?: boolean
-  isActive?: boolean
   searchQuery?: string
 }
 
@@ -102,7 +121,7 @@ export interface TableStats {
   total: number
   active: number
   inactive: number
-  byLocation: Record<TableLocation, number>
+  byLocation: Record<string, number>
   totalCapacity: number
   accessible: number
 }

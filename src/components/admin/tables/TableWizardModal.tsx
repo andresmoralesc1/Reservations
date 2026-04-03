@@ -19,7 +19,7 @@ interface TableWizardModalProps {
 }
 
 interface FormData {
-  location: "patio" | "interior" | "terraza" | null
+  location: "patio" | "interior" | "terraza" | string | null
   capacity: number | null
   shape: TableShapeType
   tableNumber: string

@@ -14,7 +14,7 @@ import { TableBlockModal } from "@/components/admin/TableBlockModal"
 import { toast } from "@/components/Toast"
 import { PageHeader, AdminStats, AdminCharts, FilterBar, ActionBar, ReservationsList } from "@/components/admin"
 import { useAdminStats, useFilters, useReservations, useReservationActions, useReservationSelection, useRestaurantFilter } from "@/hooks/admin"
-import type { Reservation, FilterValue } from "@/types/admin"
+import type { Reservation, ReservationWithExtras, FilterValue } from "@/types/admin"
 
 export default function AdminPage() {
   // Restaurant filter from context
@@ -57,7 +57,7 @@ export default function AdminPage() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [dateFilter])
-  const [detailsReservation, setDetailsReservation] = useState<Reservation | null>(null)
+  const [detailsReservation, setDetailsReservation] = useState<ReservationWithExtras | null>(null)
   const [createReservationModalOpen, setCreateReservationModalOpen] = useState(false)
   const [tableBlockModalOpen, setTableBlockModalOpen] = useState(false)
 
@@ -93,7 +93,7 @@ export default function AdminPage() {
   // Handlers
   const handleApproveById = useCallback(
     (id: string) => {
-      const reservation = reservations.find((r: Reservation) => r.id === id)
+      const reservation = reservations.find((r) => r.id === id)
       if (reservation) {
         handleApprove(reservation)
       }
@@ -103,7 +103,7 @@ export default function AdminPage() {
 
   const handleRejectById = useCallback(
     (id: string) => {
-      const reservation = reservations.find((r: Reservation) => r.id === id)
+      const reservation = reservations.find((r) => r.id === id)
       if (reservation) {
         handleReject(reservation)
       }
@@ -113,7 +113,7 @@ export default function AdminPage() {
 
   const handleNoShowById = useCallback(
     async (id: string) => {
-      const reservation = reservations.find((r: Reservation) => r.id === id)
+      const reservation = reservations.find((r) => r.id === id)
       if (!reservation) return
 
       if (!confirm(`¿Marcar la reserva de ${reservation.customerName} como NO SHOW?\n\nEsto incrementará su contador de no-shows.`)) {
@@ -144,7 +144,7 @@ export default function AdminPage() {
 
   const handleViewDetails = useCallback(
     (id: string) => {
-      const res = reservations.find((r: Reservation) => r.id === id)
+      const res = reservations.find((r) => r.id === id)
       if (res) setDetailsReservation(res)
     },
     [reservations]
@@ -173,7 +173,7 @@ export default function AdminPage() {
 
   const handleExportCSV = useCallback(() => {
     const headers = ["Código", "Cliente", "Teléfono", "Fecha", "Hora", "Personas", "Estado", "Origen"]
-    const rows = filteredReservations.map((r: Reservation) => [
+    const rows = filteredReservations.map((r) => [
       r.reservationCode,
       r.customerName,
       r.customerPhone,

@@ -1,387 +1,92 @@
-import { pgTable, uuid, text, integer, boolean, timestamp, jsonb, index, unique } from "drizzle-orm/pg-core"
+/**
+ * Drizzle Schema - Main Entry Point
+ *
+ * This file re-exports everything from the modular schema structure
+ * located in ./schema/ for backward compatibility.
+ *
+ * Schema structure:
+ * - schema/restaurants.ts  - Restaurants table
+ * - schema/customers.ts     - Customers table
+ * - schema/services.ts      - Services configuration
+ * - schema/tables.ts        - Tables and table blocks
+ * - schema/reservations.ts  - Reservations, archive, history, sessions, WhatsApp
+ * - schema/voice.ts         - Call logs for voice bot
+ * - schema/analytics.ts     - Daily analytics pre-calculated
+ */
+
 import { relations } from "drizzle-orm"
 
-export const restaurants = pgTable("restaurants", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull(),
-  phone: text("phone"),
-  address: text("address"),
-  timezone: text("timezone").default("Europe/Madrid"),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-})
+// Tables
+export {
+  restaurants,
+  type Restaurant,
+  type NewRestaurant,
+} from "./schema/restaurants"
 
-export const tables = pgTable("tables", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  restaurantId: uuid("restaurant_id")
-    .notNull()
-    .references(() => restaurants.id, { onDelete: "cascade" }),
-  tableNumber: text("table_number").notNull(),
-  tableCode: text("table_code").notNull(), // I-1, I-2, T-1, T-2, P-1, P-2
-  capacity: integer("capacity").notNull(),
-  location: text("location"), // 'patio', 'interior', 'terraza'
-  isAccessible: boolean("is_accessible").default(false),
+export {
+  customers,
+  type Customer,
+  type NewCustomer,
+} from "./schema/customers"
 
-  // Visual layout fields
-  shape: text("shape").notNull().default("rectangular"), // 'circular', 'cuadrada', 'rectangular', 'barra'
-  positionX: integer("position_x").default(0), // Posición X en el canvas (px)
-  positionY: integer("position_y").default(0), // Posición Y en el canvas (px)
-  rotation: integer("rotation").default(0), // Rotación en grados (0-360)
-  width: integer("width").default(100), // Ancho en px (para rectangular/cuadrada/barra)
-  height: integer("height").default(80), // Alto en px (para rectangular/cuadrada)
-  diameter: integer("diameter").default(80), // Diámetro en px (para circular)
-  stoolCount: integer("stool_count").default(0), // Número de sillas (para barra)
-  stoolPositions: jsonb("stool_positions").$type<number[]>(), // Posiciones de sillas en barra
+export {
+  services,
+  type Service,
+  type NewService,
+} from "./schema/services"
 
-  createdAt: timestamp("created_at").defaultNow(),
+export {
+  tables,
+  tableBlocks,
+  type Table,
+  type NewTable,
+  type TableBlock,
+  type NewTableBlock,
+} from "./schema/tables"
 
-  // Soft Delete
-  deletedAt: timestamp("deleted_at"),
-  deletedBy: text("deleted_by"), // Email o username de quien eliminó el registro
-}, (table) => ({
-  // Índice único para código de mesa por restaurante
-  tableCodeIdx: index("tables_table_code_idx").on(table.tableCode, table.restaurantId),
-  deletedAtIdx: index("tables_deleted_at_idx").on(table.deletedAt),
-}))
+export {
+  reservations,
+  reservationsArchive,
+  reservationHistory,
+  reservationSessions,
+  whatsappMessages,
+  type Reservation,
+  type NewReservation,
+  type ReservationHistory,
+  type NewReservationHistory,
+  type ReservationSession,
+  type NewReservationSession,
+  type WhatsappMessage,
+  type NewWhatsappMessage,
+} from "./schema/reservations"
 
-export const services = pgTable("services", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  restaurantId: uuid("restaurant_id")
-    .notNull()
-    .references(() => restaurants.id, { onDelete: "cascade" }),
+export {
+  callLogs,
+  type CallLog,
+  type NewCallLog,
+} from "./schema/voice"
 
-  // Configuración básica
-  name: text("name").notNull(), // "Comida Invierno - Semana"
-  description: text("description"),
-  isActive: boolean("is_active").default(true),
+export {
+  dailyAnalytics,
+  type DailyAnalytics,
+  type NewDailyAnalytics,
+} from "./schema/analytics"
 
-  // Tipo de servicio (comida o cena)
-  serviceType: text("service_type").notNull(), // 'comida', 'cena'
+// Relations (defined here to avoid circular dependencies)
+import { restaurants } from "./schema/restaurants"
+import { customers } from "./schema/customers"
+import { services } from "./schema/services"
+import { tables, tableBlocks } from "./schema/tables"
+import {
+  reservations,
+  reservationsArchive,
+  reservationHistory,
+  reservationSessions,
+  whatsappMessages,
+} from "./schema/reservations"
+import { callLogs } from "./schema/voice"
+import { dailyAnalytics } from "./schema/analytics"
 
-  // Temporada y días
-  season: text("season").notNull().default("todos"), // 'invierno', 'primavera', 'verano', 'otoño', 'todos'
-  dayType: text("day_type").notNull().default("all"), // 'weekday', 'weekend', 'all'
-
-  // Horario del servicio
-  startTime: text("start_time").notNull(), // '13:00' (comida) o '20:00' (cena)
-  endTime: text("end_time").notNull(),   // '16:00' (comida) o '23:00' (cena)
-
-  // Configuración de turnos
-  defaultDurationMinutes: integer("default_duration_minutes").notNull().default(90),
-  bufferMinutes: integer("buffer_minutes").notNull().default(15),
-  slotGenerationMode: text("slot_generation_mode").notNull().default("auto"), // 'auto', 'manual'
-
-  // Rango de fechas (opcional, para temporadas específicas)
-  dateRange: jsonb("date_range").$type<{
-    start: string // YYYY-MM-DD
-    end: string // YYYY-MM-DD
-  }>(),
-
-  // Turnos manuales (si slotGenerationMode = 'manual')
-  manualSlots: jsonb("manual_slots").$type<string[]>(), // ['13:00', '14:30', '15:00']
-
-  // Mesas disponibles en este service (null = todas las mesas del restaurant)
-  availableTableIds: jsonb("available_table_ids").$type<string[]>(),
-
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-
-  // Soft Delete
-  deletedAt: timestamp("deleted_at"),
-  deletedBy: text("deleted_by"), // Email o username de quien eliminó el registro
-}, (table) => ({
-  // Índices para rendimiento
-  restaurantIdx: index("services_restaurant_idx").on(table.restaurantId),
-  activeIdx: index("services_active_idx").on(table.isActive),
-  serviceTypeIdx: index("services_service_type_idx").on(table.serviceType),
-  // Prevenir services solapados para mismo restaurant, día y hora
-  uniqueService: unique().on(table.restaurantId, table.dayType, table.startTime),
-  deletedAtIdx: index("services_deleted_at_idx").on(table.deletedAt),
-}))
-
-export const customers = pgTable("customers", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  phoneNumber: text("phone_number").notNull().unique(),
-  name: text("name"),
-  noShowCount: integer("no_show_count").default(0),
-  tags: text("tags").array(),
-  gdprConsentedAt: timestamp("gdpr_consented_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-})
-
-export const reservations = pgTable("reservations", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  reservationCode: text("reservation_code").notNull().unique(),
-
-  // Cliente
-  customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
-  customerName: text("customer_name").notNull(),
-  customerPhone: text("customer_phone").notNull(),
-
-  // Reserva
-  restaurantId: uuid("restaurant_id")
-    .notNull()
-    .references(() => restaurants.id, { onDelete: "restrict" }),
-  reservationDate: text("reservation_date").notNull(), // DATE as text for timezone handling
-  reservationTime: text("reservation_time").notNull(), // TIME as text
-  partySize: integer("party_size").notNull(),
-  tableIds: uuid("table_ids").array(),
-
-  // Estado
-  status: text("status").notNull().default("PENDIENTE"), // PENDIENTE, CONFIRMADO, CANCELADO, NO_SHOW
-  source: text("source").notNull().default("IVR"), // IVR, WHATSAPP, MANUAL, WEB
-
-  // Service info
-  serviceId: uuid("service_id").references(() => services.id, { onDelete: "set null" }),
-  estimatedDurationMinutes: integer("estimated_duration_minutes").default(90),
-  actualEndTime: text("actual_end_time"), // HH:MM cuando realmente se liberó la mesa
-
-  // Bloqueo de sesión
-  sessionId: text("session_id").unique(),
-  sessionExpiresAt: timestamp("session_expires_at"),
-
-  // Especial
-  specialRequests: text("special_requests"),
-  isComplexCase: boolean("is_complex_case").default(false),
-
-  // Audit
-  createdAt: timestamp("created_at").defaultNow(),
-  confirmedAt: timestamp("confirmed_at"),
-  cancelledAt: timestamp("cancelled_at"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-
-  // Soft Delete
-  deletedAt: timestamp("deleted_at"),
-  deletedBy: text("deleted_by"), // Email o username de quien eliminó el registro
-}, (table) => ({
-  // Índices para rendimiento de búsquedas comunes
-  dateRestaurantIdx: index("reservations_date_restaurant_idx").on(table.reservationDate, table.restaurantId),
-  dateServiceIdx: index("reservations_date_service_idx").on(table.reservationDate, table.serviceId),
-  statusIdx: index("reservations_status_idx").on(table.status),
-  deletedAtIdx: index("reservations_deleted_at_idx").on(table.deletedAt),
-
-  // Índices optimizados para Analíticas y Dashboard
-  statusDateIdx: index("reservations_status_date_idx").on(table.status, table.reservationDate),
-  codeIdx: index("reservations_code_idx").on(table.reservationCode),
-  customerStatusIdx: index("reservations_customer_status_idx").on(table.customerId, table.status),
-  sourceDateIdx: index("reservations_source_date_idx").on(table.source, table.reservationDate),
-}))
-
-// Tabla de archivo para reservas históricas
-// Las reservas se mueven aquí cuando se archivan (más de 48h en PENDIENTE, o reservas muy antiguas)
-export const reservationsArchive = pgTable("reservations_archive", {
-  id: uuid("id").primaryKey(),
-  reservationCode: text("reservation_code").notNull(),
-
-  // Cliente
-  customerId: uuid("customer_id"),
-  customerName: text("customer_name").notNull(),
-  customerPhone: text("customer_phone").notNull(),
-
-  // Reserva
-  restaurantId: uuid("restaurant_id").notNull(),
-  reservationDate: text("reservation_date").notNull(),
-  reservationTime: text("reservation_time").notNull(),
-  partySize: integer("party_size").notNull(),
-  tableIds: uuid("table_ids").array(),
-
-  // Estado final
-  status: text("status").notNull(),
-  source: text("source").notNull(),
-
-  // Service info
-  serviceId: uuid("service_id"),
-  estimatedDurationMinutes: integer("estimated_duration_minutes"),
-  actualEndTime: text("actual_end_time"),
-
-  // Especial
-  specialRequests: text("special_requests"),
-  isComplexCase: boolean("is_complex_case").default(false),
-
-  // Timestamps originales
-  createdAt: timestamp("created_at").notNull(),
-  confirmedAt: timestamp("confirmed_at"),
-  cancelledAt: timestamp("cancelled_at"),
-  updatedAt: timestamp("updated_at").notNull(),
-
-  // Metadatos de archivo
-  archivedAt: timestamp("archived_at").notNull().defaultNow(),
-  archiveReason: text("archive_reason").notNull(), // 'expired_pending', 'old_reservation', 'manual'
-  daysSinceCreation: integer("days_since_creation").notNull(),
-}, (table) => ({
-  // Índices para búsquedas en archivo
-  dateRestaurantIdx: index("reservations_archive_date_restaurant_idx").on(table.reservationDate, table.restaurantId),
-  statusIdx: index("reservations_archive_status_idx").on(table.status),
-  archivedAtIdx: index("reservations_archive_archived_at_idx").on(table.archivedAt),
-  customerPhoneIdx: index("reservations_archive_customer_phone_idx").on(table.customerPhone),
-}))
-
-export const reservationHistory = pgTable("reservation_history", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  reservationId: uuid("reservation_id")
-    .notNull()
-    .references(() => reservations.id, { onDelete: "cascade" }),
-  oldStatus: text("old_status"),
-  newStatus: text("new_status").notNull(),
-  changedBy: text("changed_by").notNull(),
-  metadata: jsonb("metadata"),
-  createdAt: timestamp("created_at").defaultNow(),
-})
-
-export const reservationSessions = pgTable("reservation_sessions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  sessionId: text("session_id").notNull().unique(),
-  phoneNumber: text("phone_number").notNull(),
-  restaurantId: uuid("restaurant_id").references(() => restaurants.id),
-  conversationState: jsonb("conversation_state").notNull().$type<{
-    step: string
-    data: Record<string, unknown>
-  }>(),
-  collectedData: jsonb("collected_data").notNull().$type<Record<string, unknown>>(),
-  expiresAt: timestamp("expires_at").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-}, (table) => ({
-  // Índice para búsquedas de sesiones activas (sin WHERE en Drizzle, se filtra a nivel de app)
-  expiresAtIdx: index("reservation_sessions_expires_at_idx").on(table.expiresAt),
-  phoneNumberIdx: index("reservation_sessions_phone_number_idx").on(table.phoneNumber),
-}))
-
-export const whatsappMessages = pgTable("whatsapp_messages", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  reservationId: uuid("reservation_id")
-    .notNull()
-    .references(() => reservations.id, { onDelete: "cascade" }),
-  messageId: text("message_id").notNull(),
-  direction: text("direction").notNull(), // 'outbound', 'inbound'
-  status: text("status").default("sent"), // 'sent', 'delivered', 'read', 'failed'
-  sentAt: timestamp("sent_at").defaultNow(),
-  readAt: timestamp("read_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-})
-
-export const tableBlocks = pgTable("table_blocks", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  tableId: uuid("table_id")
-    .notNull()
-    .references(() => tables.id, { onDelete: "cascade" }),
-  restaurantId: uuid("restaurant_id")
-    .notNull()
-    .references(() => restaurants.id, { onDelete: "cascade" }),
-  blockDate: text("block_date").notNull(), // YYYY-MM-DD
-  startTime: text("start_time").notNull(), // HH:MM
-  endTime: text("end_time").notNull(), // HH:MM
-  reason: text("reason").notNull(), // 'mantenimiento', 'evento_privado', 'reservado', 'otro'
-  notes: text("notes"), // Notas adicionales
-  createdBy: text("created_by").notNull(), // 'admin', 'system'
-  createdAt: timestamp("created_at").defaultNow(),
-}, (table) => ({
-  // Índices para búsquedas eficientes
-  tableIdx: index("table_blocks_table_idx").on(table.tableId),
-  restaurantDateIdx: index("table_blocks_restaurant_date_idx").on(table.restaurantId, table.blockDate),
-}))
-
-// Voice call logs - Registra llamadas del bot de voz (Pipecat)
-// Reemplaza la tabla "info_llamadas" que n8n usaba en Supabase
-export const callLogs = pgTable("call_logs", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  reservationId: uuid("reservation_id").references(() => reservations.id, { onDelete: "set null" }),
-  restaurantId: uuid("restaurant_id")
-    .notNull()
-    .references(() => restaurants.id, { onDelete: "cascade" }),
-  callerPhone: text("caller_phone").notNull(), // +34 6XX XXX XXX
-  callStartedAt: timestamp("call_started_at").notNull().defaultNow(),
-  callDurationSecs: integer("call_duration_secs"), // Duración en segundos
-  callEndReason: text("call_end_reason"), // 'completed', 'hangup', 'error', 'timeout', 'no_show'
-  callCost: text("call_cost"), // Coste estimado (Cartesia + GPT)
-  callSummary: text("call_summary"), // Resumen generado por GPT al final
-  actionsTaken: jsonb("actions_taken").$type<Array<{
-    action: string
-    success: boolean
-    timestamp: string
-    params?: Record<string, unknown>
-    error?: string
-  }>>().notNull().default([]),
-  createdAt: timestamp("created_at").defaultNow(),
-}, (table) => ({
-  // Índices para búsquedas eficientes
-  callerPhoneIdx: index("call_logs_caller_phone_idx").on(table.callerPhone),
-  restaurantDateIdx: index("call_logs_restaurant_date_idx").on(table.restaurantId, table.callStartedAt),
-  reservationIdx: index("call_logs_reservation_idx").on(table.reservationId),
-}))
-
-export type Restaurant = typeof restaurants.$inferSelect
-export type NewRestaurant = typeof restaurants.$inferInsert
-export type Table = typeof tables.$inferSelect
-export type NewTable = typeof tables.$inferInsert
-export type Service = typeof services.$inferSelect
-export type NewService = typeof services.$inferInsert
-export type Customer = typeof customers.$inferSelect
-export type NewCustomer = typeof customers.$inferInsert
-export type Reservation = typeof reservations.$inferSelect
-export type NewReservation = typeof reservations.$inferInsert
-export type ReservationHistory = typeof reservationHistory.$inferSelect
-export type NewReservationHistory = typeof reservationHistory.$inferInsert
-export type ReservationSession = typeof reservationSessions.$inferSelect
-export type NewReservationSession = typeof reservationSessions.$inferInsert
-export type WhatsappMessage = typeof whatsappMessages.$inferSelect
-export type NewWhatsappMessage = typeof whatsappMessages.$inferInsert
-export type TableBlock = typeof tableBlocks.$inferSelect
-export type NewTableBlock = typeof tableBlocks.$inferInsert
-export type CallLog = typeof callLogs.$inferSelect
-export type NewCallLog = typeof callLogs.$inferInsert
-
-// Tabla de analíticas diarias pre-calculadas
-// Se pobla cada noche via cron job para optimizar consultas de 7+ días
-export const dailyAnalytics = pgTable("daily_analytics", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  restaurantId: uuid("restaurant_id")
-    .notNull()
-    .references(() => restaurants.id, { onDelete: "cascade" }),
-  date: text("date").notNull(), // YYYY-MM-DD
-
-  // Conteos por estado
-  totalReservations: integer("total_reservations").notNull().default(0),
-  confirmedCount: integer("confirmed_count").notNull().default(0),
-  pendingCount: integer("pending_count").notNull().default(0),
-  cancelledCount: integer("cancelled_count").notNull().default(0),
-  noShowCount: integer("no_show_count").notNull().default(0),
-
-  // Métricas de covers
-  totalCovers: integer("total_covers").notNull().default(0),
-  avgPartySize: integer("avg_party_size"), // Stored as integer * 10 (e.g., 2.5 = 25)
-
-  // Desglose por origen
-  sourceBreakdown: jsonb("source_breakdown").$type<Record<string, number>>().notNull().default({}),
-
-  // Desglose por hora (13-23)
-  hourlyBreakdown: jsonb("hourly_breakdown").$type<Array<{
-    hour: number
-    count: number
-    covers: number
-  }>>().notNull().default([]),
-
-  // Métricas derivadas
-  confirmationRate: integer("confirmation_rate").notNull().default(0), // 0-100
-  noShowRate: integer("no_show_rate").notNull().default(0), // 0-100
-
-  // Metadatos
-  calculatedAt: timestamp("calculated_at").notNull().defaultNow(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => ({
-  // Índice único para prevenir duplicados
-  uniqueRestaurantDate: unique().on(table.restaurantId, table.date),
-  // Índices para consultas de rango
-  restaurantDateIdx: index("daily_analytics_restaurant_date_idx").on(table.restaurantId, table.date),
-  dateIdx: index("daily_analytics_date_idx").on(table.date),
-}))
-
-export type DailyAnalytics = typeof dailyAnalytics.$inferSelect
-export type NewDailyAnalytics = typeof dailyAnalytics.$inferInsert
-
-// Drizzle Relations
 export const restaurantsRelations = relations(restaurants, ({ many }) => ({
   tables: many(tables),
   services: many(services),
@@ -389,6 +94,10 @@ export const restaurantsRelations = relations(restaurants, ({ many }) => ({
   reservationSessions: many(reservationSessions),
   tableBlocks: many(tableBlocks),
   callLogs: many(callLogs),
+}))
+
+export const customersRelations = relations(customers, ({ many }) => ({
+  reservations: many(reservations),
 }))
 
 export const servicesRelations = relations(services, ({ one, many }) => ({
@@ -407,8 +116,15 @@ export const tablesRelations = relations(tables, ({ one, many }) => ({
   blocks: many(tableBlocks),
 }))
 
-export const customersRelations = relations(customers, ({ many }) => ({
-  reservations: many(reservations),
+export const tableBlocksRelations = relations(tableBlocks, ({ one }) => ({
+  table: one(tables, {
+    fields: [tableBlocks.tableId],
+    references: [tables.id],
+  }),
+  restaurant: one(restaurants, {
+    fields: [tableBlocks.restaurantId],
+    references: [restaurants.id],
+  }),
 }))
 
 export const reservationsRelations = relations(reservations, ({ one, many }) => ({
@@ -446,17 +162,6 @@ export const whatsappMessagesRelations = relations(whatsappMessages, ({ one }) =
 export const reservationSessionsRelations = relations(reservationSessions, ({ one }) => ({
   restaurant: one(restaurants, {
     fields: [reservationSessions.restaurantId],
-    references: [restaurants.id],
-  }),
-}))
-
-export const tableBlocksRelations = relations(tableBlocks, ({ one }) => ({
-  table: one(tables, {
-    fields: [tableBlocks.tableId],
-    references: [tables.id],
-  }),
-  restaurant: one(restaurants, {
-    fields: [tableBlocks.restaurantId],
     references: [restaurants.id],
   }),
 }))
