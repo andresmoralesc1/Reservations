@@ -7,6 +7,9 @@
  */
 
 import { NextResponse, type NextRequest } from "next/server"
+import { createLogger } from "@/lib/logger"
+
+const logger = createLogger({ module: "middleware" })
 
 // Configuración: matcher que excluye estáticos y archivos internos
 export const config = {
@@ -135,6 +138,16 @@ export async function middleware(request: NextRequest) {
       if (!authenticated) {
         const latency = Date.now() - startTime
         logRequest(request, 401, latency)
+
+        logger.warn({
+          msg: "Acceso denegado",
+          pathname,
+          isAdminPage,
+          isAdminApi,
+          ip: request.headers.get("x-forwarded-for")?.split(",")[0] ||
+              request.headers.get("x-real-ip") ||
+              "unknown",
+        })
 
         // Para páginas de admin, redirigir a /login
         if (isAdminPage) {

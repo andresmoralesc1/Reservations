@@ -9,6 +9,9 @@ import { db } from "@/lib/db"
 import { reservations, customers } from "@/drizzle/schema"
 import { eq, and, gte, lte, sql, desc, inArray } from "drizzle-orm"
 import { nanoid } from "nanoid"
+import { createLogger, logError } from "@/lib/logger"
+
+const logger = createLogger({ module: "reservation-service" })
 
 // Types
 export interface CreateReservationInput {
@@ -59,47 +62,68 @@ export class ReservationNotFoundError extends ReservationError {
  * Crear una nueva reserva
  */
 export async function createReservation(input: CreateReservationInput) {
-  // 1. Buscar o crear cliente
-  let customer = await db.query.customers.findFirst({
-    where: eq(customers.phoneNumber, input.customerPhone),
-  })
+  try {
+    // 1. Buscar o crear cliente
+    let customer = await db.query.customers.findFirst({
+      where: eq(customers.phoneNumber, input.customerPhone),
+    })
 
-  if (!customer) {
-    const [newCustomer] = await db
-      .insert(customers)
+    if (!customer) {
+      const [newCustomer] = await db
+        .insert(customers)
+        .values({
+          phoneNumber: input.customerPhone,
+          name: input.customerName,
+          gdprConsentedAt: new Date(),
+        })
+        .returning()
+      customer = newCustomer
+    }
+
+    // 2. Generar código único
+    const reservationCode = `RES-${nanoid(5).toUpperCase()}`
+
+    // 3. Crear reserva
+    const [reservation] = await db
+      .insert(reservations)
       .values({
-        phoneNumber: input.customerPhone,
-        name: input.customerName,
-        gdprConsentedAt: new Date(),
+        reservationCode,
+        customerId: customer.id,
+        customerName: input.customerName,
+        customerPhone: input.customerPhone,
+        restaurantId: input.restaurantId,
+        reservationDate: input.reservationDate,
+        reservationTime: input.reservationTime,
+        partySize: input.partySize,
+        status: "PENDIENTE",
+        source: input.source || "MANUAL",
+        specialRequests: input.specialRequests,
+        tableIds: input.tableIds,
+        serviceId: input.serviceId,
       })
       .returning()
-    customer = newCustomer
-  }
 
-  // 2. Generar código único
-  const reservationCode = `RES-${nanoid(5).toUpperCase()}`
-
-  // 3. Crear reserva
-  const [reservation] = await db
-    .insert(reservations)
-    .values({
+    logger.info({
+      msg: "Reserva creada",
       reservationCode,
-      customerId: customer.id,
       customerName: input.customerName,
       customerPhone: input.customerPhone,
-      restaurantId: input.restaurantId,
-      reservationDate: input.reservationDate,
-      reservationTime: input.reservationTime,
+      date: input.reservationDate,
+      time: input.reservationTime,
       partySize: input.partySize,
-      status: "PENDIENTE",
       source: input.source || "MANUAL",
-      specialRequests: input.specialRequests,
-      tableIds: input.tableIds,
-      serviceId: input.serviceId,
     })
-    .returning()
 
-  return reservation
+    return reservation
+  } catch (error) {
+    logError("Error al crear reserva", error, {
+      customerName: input.customerName,
+      customerPhone: input.customerPhone,
+      date: input.reservationDate,
+      time: input.reservationTime,
+    })
+    throw error
+  }
 }
 
 /**
@@ -173,23 +197,35 @@ export async function listReservations(filters: ReservationFilters) {
  * Aprobar reserva
  */
 export async function approveReservation(id: string) {
-  const existing = await getReservationById(id)
+  try {
+    const existing = await getReservationById(id)
 
-  if (existing.status === "CONFIRMADO") {
-    return existing // Ya está aprobada
-  }
+    if (existing.status === "CONFIRMADO") {
+      return existing // Ya está aprobada
+    }
 
-  const [updated] = await db
-    .update(reservations)
-    .set({
-      status: "CONFIRMADO",
-      confirmedAt: new Date(),
-      updatedAt: new Date(),
+    const [updated] = await db
+      .update(reservations)
+      .set({
+        status: "CONFIRMADO",
+        confirmedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(reservations.id, id))
+      .returning()
+
+    logger.info({
+      msg: "Reserva confirmada",
+      reservationId: id,
+      reservationCode: updated.reservationCode,
+      customerName: updated.customerName,
     })
-    .where(eq(reservations.id, id))
-    .returning()
 
-  return updated
+    return updated
+  } catch (error) {
+    logError("Error al confirmar reserva", error, { reservationId: id })
+    throw error
+  }
 }
 
 /**
@@ -218,26 +254,39 @@ export async function rejectReservation(id: string, reason?: string) {
  * Cancelar reserva
  */
 export async function cancelReservation(id: string, reason?: string) {
-  const existing = await getReservationById(id)
+  try {
+    const existing = await getReservationById(id)
 
-  if (existing.status === "CANCELADO") {
-    return existing
-  }
+    if (existing.status === "CANCELADO") {
+      return existing
+    }
 
-  const [updated] = await db
-    .update(reservations)
-    .set({
-      status: "CANCELADO",
-      cancelledAt: new Date(),
-      updatedAt: new Date(),
-      specialRequests: reason
-        ? `${existing.specialRequests || ""}\n\nCancelado: ${reason}`
-        : existing.specialRequests,
+    const [updated] = await db
+      .update(reservations)
+      .set({
+        status: "CANCELADO",
+        cancelledAt: new Date(),
+        updatedAt: new Date(),
+        specialRequests: reason
+          ? `${existing.specialRequests || ""}\n\nCancelado: ${reason}`
+          : existing.specialRequests,
+      })
+      .where(eq(reservations.id, id))
+      .returning()
+
+    logger.info({
+      msg: "Reserva cancelada",
+      reservationId: id,
+      reservationCode: updated.reservationCode,
+      customerName: updated.customerName,
+      reason,
     })
-    .where(eq(reservations.id, id))
-    .returning()
 
-  return updated
+    return updated
+  } catch (error) {
+    logError("Error al cancelar reserva", error, { reservationId: id, reason })
+    throw error
+  }
 }
 
 /**

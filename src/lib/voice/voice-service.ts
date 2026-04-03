@@ -27,6 +27,9 @@ import {
   VoiceCancelReservationSchema,
   VoiceModifyReservationSchema,
 } from "@/lib/schemas/reservation-schemas"
+import { createLogger, logError } from "@/lib/logger"
+
+const logger = createLogger({ module: "voice-service" })
 
 // ============ Type Guards ============
 
@@ -145,6 +148,16 @@ export async function createReservation(params: CreateReservationInput): Promise
       }
     }
 
+    logger.info({
+      msg: "Reserva creada por voz",
+      reservationCode: result.reservationCode,
+      customerName: params.customerName,
+      customerPhone: params.customerPhone,
+      date: params.date,
+      time: params.time,
+      partySize: params.partySize,
+    })
+
     return {
       success: true,
       message: `Reserva creada exitosamente. Tu código es ${result.reservationCode}. Te esperamos el ${formatDate(params.date)} a las ${params.time} para ${params.partySize} personas.`,
@@ -160,7 +173,12 @@ export async function createReservation(params: CreateReservationInput): Promise
       },
     }
   } catch (error) {
-    console.error("[Voice Service] Error in createReservation:", error)
+    logError("Error en createReservation (voz)", error, {
+      customerName: params.customerName,
+      customerPhone: params.customerPhone,
+      date: params.date,
+      time: params.time,
+    })
     return {
       success: false,
       message: "Error al crear la reserva. Por favor intenta nuevamente.",
@@ -286,6 +304,13 @@ export async function processVoiceAction(
   action: string,
   params: unknown
 ): Promise<VoiceActionResult> {
+  // Log intent detectado
+  logger.info({
+    msg: "Intent detectado",
+    action,
+    hasParams: params !== undefined && params !== null,
+  })
+
   switch (action) {
     case "checkAvailability":
       if (!isCheckAvailabilityInput(params)) {
@@ -351,6 +376,7 @@ export async function processVoiceAction(
       return { success: true, message: "Llamada finalizada" }
 
     default:
+      logger.warn({ msg: "Acción no reconocida", action })
       return {
         success: false,
         message: `Acción no reconocida: ${action}`,

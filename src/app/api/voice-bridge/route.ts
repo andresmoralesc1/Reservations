@@ -25,6 +25,9 @@ import { processVoiceAction } from "@/lib/voice/voice-service"
 import { logCallStart, logCallAction, logCallEnd } from "@/lib/voice/call-logger"
 import { isValidVoiceAction } from "@/lib/voice/voice-types"
 import type { VoiceAction, CallEndReason } from "@/lib/voice/voice-types"
+import { createLogger, logError } from "@/lib/logger"
+
+const logger = createLogger({ module: "voice-bridge" })
 
 // ============ POST Handler ============
 
@@ -32,6 +35,10 @@ export async function POST(request: NextRequest) {
   // 1. Validar autenticación
   const auth = validateVoiceBridgeRequest(request)
   if (!auth.valid) {
+    logger.warn({
+      msg: "Voice bridge: acceso denegado",
+      error: auth.error,
+    })
     return NextResponse.json(
       { error: auth.error || "Unauthorized", message: "Acceso no autorizado" },
       { status: 401 }
@@ -41,6 +48,16 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { action, params, callId, callLogId } = body
+
+    // Log de llamada entrante o acción
+    if (action === "logCallStart") {
+      logger.info({
+        msg: "Llamada entrante",
+        callerPhone: params?.callerPhone,
+        restaurantId: params?.restaurantId,
+        callId,
+      })
+    }
 
     // 2. Manejar acciones especiales de logging
     if (action === "logCallStart") {
@@ -94,7 +111,7 @@ export async function POST(request: NextRequest) {
       suggestedTables: result.suggestedTables,
     })
   } catch (error) {
-    console.error("[Voice Bridge] Error:", error)
+    logError("Error en voice bridge", error)
     return NextResponse.json(
       {
         success: false,

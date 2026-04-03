@@ -5,6 +5,9 @@ import { validateRequestBody, formatZodError, CreateReservationSchema, spanishPh
 import { z } from "zod"
 import { invalidateReservationCache } from "@/lib/cache"
 import { checkRateLimitOrThrow, getRateLimitIdentifier, RateLimitConfig, RateLimitError } from "@/lib/rate-limit"
+import { createLogger } from "@/lib/logger"
+
+const logger = createLogger({ module: "api-reservations" })
 
 /**
  * Schema híbrido que acepta campos en español o inglés
@@ -51,6 +54,15 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("estatus")
     const limit = parseInt(searchParams.get("limit") || "50")
 
+    logger.debug({
+      msg: "GET /api/reservations",
+      code,
+      restaurant,
+      date,
+      status,
+      limit,
+    })
+
     // Buscar por código
     if (code) {
       const result = await getLegacyReservation(code)
@@ -77,7 +89,7 @@ export async function GET(request: NextRequest) {
       meta: { count: result.data?.length || 0 }
     })
   } catch (error) {
-    console.error("[API Reservations] Error:", error)
+    logger.error({ msg: "Error en GET /api/reservations", error })
     return NextResponse.json({ error: "Error al obtener reservas" }, { status: 500 })
   }
 }
@@ -91,12 +103,28 @@ export async function POST(request: NextRequest) {
       await checkRateLimitOrThrow(identifier, RateLimitConfig.reservations, "reservations")
     } catch (error) {
       if (error instanceof RateLimitError) {
+        logger.warn({
+          msg: "Rate limit hit",
+          identifier,
+          limit: RateLimitConfig.reservations.limit,
+          windowSeconds: RateLimitConfig.reservations.windowSeconds,
+        })
         return error.toResponse()
       }
       throw error
     }
 
     const body = await request.json()
+
+    logger.debug({
+      msg: "POST /api/reservations - Request entrante",
+      customerName: body.nombre || body.customerName,
+      customerPhone: body.numero || body.customerPhone,
+      date: body.fecha || body.reservationDate,
+      time: body.hora || body.reservationTime,
+      partySize: body.invitados || body.partySize,
+      source: body.fuente || body.source,
+    })
 
     // Validar datos con schema mejorado
     const validated = validateRequestBody(body, HybridCreateReservationSchema)
