@@ -3,30 +3,18 @@
  */
 
 import type { CreateReservationParams, CheckAvailabilityParams } from './types'
+// Import phone utilities from the centralized module
+import {
+  normalizeSpanishPhone,
+  isValidSpanishPhone,
+  comparePhones,
+} from '@/lib/voice/phone-utils'
 
-/**
- * Normaliza un número de teléfono español
- * - Elimina todos los caracteres no numéricos
- * - Elimina el prefijo +34 si está presente
- */
-export function normalizeSpanishPhone(phone: string): string {
-  const normalized = phone.replace(/\D/g, "")
-  // Eliminar prefijo 34 si está presente y el número tiene 11 dígitos
-  return normalized.startsWith("34") && normalized.length === 11
-    ? normalized.slice(2)
-    : normalized
-}
+// Re-export for backward compatibility within legacy module
+export { normalizeSpanishPhone, isValidSpanishPhone }
 
-/**
- * Valida que un número de teléfono español tenga el formato correcto
- * - Debe tener 9 dígitos (sin contar el prefijo internacional)
- * - Debe comenzar con 6 o 7 (móviles) o 8/9 (fijos)
- */
-export function validateSpanishPhone(phone: string): boolean {
-  const normalized = normalizeSpanishPhone(phone)
-  const phoneRegex = /^[67]\d{8}$|^[89]\d{8}$/
-  return phoneRegex.test(normalized)
-}
+// Alias for backward compatibility
+export const validateSpanishPhone = isValidSpanishPhone
 
 /**
  * Valida los datos de creación de reserva
@@ -116,13 +104,6 @@ export function validateAvailabilityData(data: CheckAvailabilityParams): {
 
 /**
  * Valida que dos números de teléfono coincidan (flexible)
- * Permite coincidencias parciales para manejar diferentes formatos
+ * NOTA: Ahora usa comparePhones de phone-utils para consistencia
  */
-export function phonesMatch(phone1: string, phone2: string): boolean {
-  const normalized1 = normalizeSpanishPhone(phone1)
-  const normalized2 = normalizeSpanishPhone(phone2)
-
-  return normalized1 === normalized2 ||
-    normalized1.includes(normalized2) ||
-    normalized2.includes(normalized1)
-}
+export const phonesMatch = comparePhones
