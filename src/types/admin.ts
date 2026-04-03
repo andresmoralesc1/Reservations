@@ -7,20 +7,8 @@ import type { Table, Reservation } from "@/drizzle/schema"
 
 export type { Table, Reservation }
 
-// Re-export tipos extendidos con campos adicionales para el admin
-// Drizzle usa null para campos opcionales, pero la UI prefiere undefined
-export type AdminReservation = Omit<Reservation, 'specialRequests' | 'confirmedAt' | 'cancelledAt' | 'sessionId' | 'serviceId' | 'actualEndTime' | 'deletedAt' | 'customerId' | 'tableIds' | 'customerName' | 'customerPhone'> & {
-  specialRequests?: string
-  confirmedAt?: string
-  cancelledAt?: string
-  sessionId?: string
-  serviceId?: string
-  actualEndTime?: string
-  deletedAt?: string
-  customerId?: string
-  tableIds?: string[]
-  customerName: string
-  customerPhone: string
+// Admin-specific reservation type with extra fields
+export type AdminReservation = Reservation & {
   tables?: Table[]
   restaurant?: {
     name: string

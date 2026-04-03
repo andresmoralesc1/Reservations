@@ -14,7 +14,7 @@ import { TableBlockModal } from "@/components/admin/TableBlockModal"
 import { toast } from "@/components/Toast"
 import { PageHeader, AdminStats, AdminCharts, FilterBar, ActionBar, ReservationsList } from "@/components/admin"
 import { useAdminStats, useFilters, useReservations, useReservationActions, useReservationSelection, useRestaurantFilter } from "@/hooks/admin"
-import type { Reservation, ReservationWithExtras, FilterValue } from "@/types/admin"
+import type { Reservation, AdminReservation, FilterValue } from "@/types/admin"
 
 export default function AdminPage() {
   // Restaurant filter from context
@@ -57,7 +57,7 @@ export default function AdminPage() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [dateFilter])
-  const [detailsReservation, setDetailsReservation] = useState<ReservationWithExtras | null>(null)
+  const [detailsReservation, setDetailsReservation] = useState<AdminReservation | null>(null)
   const [createReservationModalOpen, setCreateReservationModalOpen] = useState(false)
   const [tableBlockModalOpen, setTableBlockModalOpen] = useState(false)
 

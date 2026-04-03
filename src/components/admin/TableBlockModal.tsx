@@ -11,8 +11,6 @@ import type { Table } from "@/drizzle/schema"
 
 const RESTAURANT_ID = process.env.NEXT_PUBLIC_RESTAURANT_ID || "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 
-import type { Table } from "@/drizzle/schema"
-
 const BLOCK_REASONS = [
   { value: "mantenimiento", label: "Mantenimiento" },
   { value: "evento_privado", label: "Evento Privado" },
