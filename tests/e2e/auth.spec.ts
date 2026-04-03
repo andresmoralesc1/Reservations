@@ -119,7 +119,7 @@ test.describe("Autenticación - Protección de Rutas", () => {
 
   test("debería proteger /api/admin/*", async ({ request }) => {
     // Hacer request sin autenticación
-    const response = await request.get(`${process.env.BASE_URL || "http://localhost:3004"}/api/admin/dashboard/stats`)
+    const response = await request.get(`${process.env.BASE_URL || "http://localhost:3005"}/api/admin/dashboard/stats`)
 
     // Debería devolver 401 o 403
     if (response.status() === 401 || response.status() === 403) {
