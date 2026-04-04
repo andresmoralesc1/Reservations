@@ -365,8 +365,7 @@ export async function processVoiceAction(
       const [callLog] = await db.insert(callLogs).values({
         callerPhone: params.callerPhone,
         restaurantId: params.restaurantId || DEFAULT_RESTAURANT_ID,
-        startTime: new Date(),
-        status: "IN_PROGRESS"
+        callStartedAt: new Date(),
       }).returning()
       return { success: true, message: "Llamada registrada", callLogId: callLog.id } as VoiceActionResult
 

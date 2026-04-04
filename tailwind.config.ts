@@ -17,7 +17,7 @@ const config: Config = {
           200: "#EAEAE3",
           300: "#D5D5CC",
         },
-        accent: {
+        brand: {
           black: "#000000",
           white: "#FFFFFF",
           red: "#C41E3A",
