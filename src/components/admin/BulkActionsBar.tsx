@@ -78,14 +78,14 @@ export function BulkActionsBar({
 
   return (
     <>
-      <div className="bg-[#1a1a1a] border border-[#D4A84B] border-opacity-30 px-6 py-4 flex items-center justify-between rounded-lg">
+      <div className="bg-[#D4A84B]/10 border border-[#D4A84B] px-6 py-4 flex items-center justify-between rounded-lg">
         <div className="flex items-center gap-4">
-          <span className="font-display text-xs uppercase tracking-[0.15em] text-[#D4A84B]">
+          <span className="font-display text-xs uppercase tracking-[0.15em] text-black">
             {selectedCount} {selectedCount === 1 ? "seleccionada" : "seleccionadas"}
           </span>
           <button
             onClick={onClearSelection}
-            className="text-[#666666] hover:text-white transition-colors text-sm"
+            className="text-neutral-600 hover:text-black transition-colors text-sm"
           >
             Limpiar selección
           </button>
@@ -93,14 +93,14 @@ export function BulkActionsBar({
         <div className="flex items-center gap-3">
           <button
             onClick={onExportCSV}
-            className="px-4 py-2 bg-[#2a2a2a] border border-[#333333] text-white rounded-lg text-sm font-medium hover:bg-[#333333] transition-colors"
+            className="px-4 py-2 bg-white border border-neutral-300 text-black rounded-lg text-sm font-medium hover:bg-neutral-50 transition-colors"
           >
             Exportar CSV
           </button>
           <button
             onClick={() => setConfirmDialog({ isOpen: true, action: "reject" })}
             disabled={isProcessing}
-            className="px-4 py-2 bg-transparent border border-red-900 border-opacity-50 text-red-400 rounded-lg text-sm font-medium hover:bg-red-900 hover:bg-opacity-10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-transparent border border-red-300 text-red-700 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Rechazar
           </button>

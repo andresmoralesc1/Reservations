@@ -83,7 +83,7 @@ export default function AdminLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#121212] flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="h-8 w-8 animate-spin border-2 border-[#D4A84B] border-t-transparent rounded-full" />
       </div>
     )
@@ -94,9 +94,9 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#121212] text-white">
+    <div className="min-h-screen bg-white text-neutral-900">
       {/* Admin Header - Premium Dark */}
-      <header className="border-b border-[#333333] bg-[#0a0a0a] sticky top-0 z-40 backdrop-blur-sm bg-opacity-95">
+      <header className="border-b border-neutral-200 bg-black sticky top-0 z-40">
         <Container size="xl">
           {/* Top row: Logo + User */}
           <div className="flex items-center justify-between py-4">
@@ -109,8 +109,8 @@ export default function AdminLayout({
 
             {/* User info + actions */}
             <div className="flex items-center gap-4">
-              <span className="hidden sm:block font-sans text-sm text-[#A0A0A0]">
-                {user.name} <span className="text-[#666666]">({user.role})</span>
+              <span className="hidden sm:block font-sans text-sm text-neutral-300">
+                {user.name} <span className="text-neutral-500">({user.role})</span>
               </span>
               <button
                 onClick={() => {
@@ -122,7 +122,7 @@ export default function AdminLayout({
                     window.location.href = "/"
                   }
                 }}
-                className="flex items-center gap-2 font-sans text-sm text-[#A0A0A0] hover:text-[#D4A84B] transition-colors cursor-pointer"
+                className="flex items-center gap-2 font-sans text-sm text-neutral-300 hover:text-[#D4A84B] transition-colors cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
                 <span className="hidden sm:inline">Salir</span>
@@ -130,7 +130,7 @@ export default function AdminLayout({
               {/* Mobile menu button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 rounded-lg hover:bg-[#2a2a2a] active:scale-95 transition-all text-[#A0A0A0]"
+                className="md:hidden p-2 rounded-lg hover:bg-neutral-800 active:scale-95 transition-all text-neutral-300"
                 aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
                 aria-expanded={mobileMenuOpen}
               >
@@ -140,7 +140,7 @@ export default function AdminLayout({
           </div>
 
           {/* Bottom row: Navigation */}
-          <div className="flex items-center justify-between py-3 border-t border-[#333333]">
+          <div className="flex items-center justify-between py-3 border-t border-neutral-800">
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-1">
               {visibleNavItems.map((item) => (
@@ -151,7 +151,7 @@ export default function AdminLayout({
                     font-display text-xs uppercase tracking-[0.15em] px-4 py-2 rounded-lg transition-all duration-200 relative
                     ${pathname === item.href
                       ? "bg-[#D4A84B] text-black"
-                      : "text-[#A0A0A0] hover:text-white hover:bg-[#2a2a2a]"
+                      : "text-neutral-400 hover:text-white hover:bg-neutral-800"
                     }
                   `}
                 >
@@ -165,7 +165,7 @@ export default function AdminLayout({
         {/* Mobile Menu Overlay */}
         {mobileMenuOpen && (
           <div
-            className="md:hidden border-t border-[#333333] bg-[#0a0a0a] py-4"
+            className="md:hidden border-t border-neutral-800 bg-black py-4"
             role="navigation"
             aria-label="Navegación móvil"
           >
@@ -180,7 +180,7 @@ export default function AdminLayout({
                       font-display text-xs uppercase tracking-[0.15em] px-4 py-3 rounded-lg transition-all duration-200
                       ${pathname === item.href
                         ? "bg-[#D4A84B] text-black"
-                        : "text-[#A0A0A0] hover:text-white hover:bg-[#2a2a2a]"
+                        : "text-neutral-400 hover:text-white hover:bg-neutral-800"
                       }
                     `}
                   >
@@ -201,15 +201,15 @@ export default function AdminLayout({
       </main>
 
       {/* Admin Footer */}
-      <footer className="border-t border-[#333333] bg-[#0a0a0a] py-6 mt-auto">
+      <footer className="border-t border-neutral-200 bg-white py-6 mt-auto">
         <Container size="xl">
           <div className="flex items-center justify-between">
-            <p className="font-sans text-xs text-[#666666] uppercase tracking-wider">
+            <p className="font-sans text-xs text-neutral-500 uppercase tracking-wider">
               Panel de Administración — Anfitrión
             </p>
             <button
               onClick={() => setShowHelp(true)}
-              className="flex items-center gap-2 font-sans text-xs text-[#666666] hover:text-[#D4A84B] transition-colors"
+              className="flex items-center gap-2 font-sans text-xs text-neutral-500 hover:text-black transition-colors"
             >
               <Keyboard className="w-3 h-3" />
               Atajos de teclado
@@ -221,14 +221,14 @@ export default function AdminLayout({
       {/* Keyboard Shortcuts Help Modal */}
       {showHelp && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
           onClick={() => setShowHelp(false)}
         >
           <div
-            className="bg-[#1a1a1a] border border-[#333333] rounded-lg p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto shadow-2xl"
+            className="bg-white border border-neutral-200 rounded-lg p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="font-display text-lg uppercase tracking-[0.15em] text-white mb-6">
+            <h2 className="font-display text-lg uppercase tracking-[0.15em] text-black mb-6">
               Atajos de Teclado
             </h2>
             <div className="space-y-3">
@@ -238,7 +238,7 @@ export default function AdminLayout({
               <ShortcutItem label="Rechazar" keybind="R" />
               <ShortcutItem label="Exportar" keybind="E" />
               <ShortcutItem label="Recargar" keybind="F5" />
-              <div className="border-t border-[#333333] my-3 pt-3" />
+              <div className="border-t border-neutral-200 my-3 pt-3" />
               <ShortcutItem label="Ir a Dashboard" keybind="1" />
               <ShortcutItem label="Ir a Floor Plan" keybind="2" />
               <ShortcutItem label="Ir a Disponibilidad" keybind="3" />
@@ -249,7 +249,7 @@ export default function AdminLayout({
             <div className="mt-6 text-center">
               <button
                 onClick={() => setShowHelp(false)}
-                className="px-6 py-2 bg-[#D4A84B] text-black font-display text-xs uppercase tracking-[0.15em] rounded-lg hover:bg-[#E5B95C] transition-colors"
+                className="px-6 py-2 bg-black text-white font-display text-xs uppercase tracking-[0.15em] rounded-lg hover:bg-neutral-800 transition-colors"
               >
                 Cerrar
               </button>
@@ -264,8 +264,8 @@ export default function AdminLayout({
 function ShortcutItem({ label, keybind }: { label: string; keybind: string }) {
   return (
     <div className="flex justify-between items-center">
-      <span className="text-[#A0A0A0] text-sm">{label}</span>
-      <kbd className="px-2 py-1 bg-[#2a2a2a] border border-[#333333] rounded text-xs text-[#D4A84B] font-mono">
+      <span className="text-neutral-600 text-sm">{label}</span>
+      <kbd className="px-2 py-1 bg-neutral-100 border border-neutral-300 rounded text-xs text-black font-mono">
         {keybind}
       </kbd>
     </div>

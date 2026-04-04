@@ -44,29 +44,29 @@ export function PageHeader({ dateFilter, onDateChange, onTodayClick }: PageHeade
       {/* Title row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl sm:text-3xl uppercase tracking-[0.15em] text-white">
+          <h1 className="font-display text-2xl sm:text-3xl uppercase tracking-[0.15em] text-black">
             Dashboard
           </h1>
-          <p className="font-sans text-[#A0A0A0] mt-1 text-sm">
+          <p className="font-sans text-neutral-500 mt-1 text-sm">
             Resumen de reservas y estadísticas
           </p>
         </div>
       </div>
 
       {/* Date navigation row */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 bg-[#1a1a1a] rounded-lg border border-[#333333]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 bg-white rounded-lg border border-neutral-200 shadow-sm">
         {/* Navigation arrows */}
         <div className="flex items-center gap-1">
           <button
             onClick={() => navigateDay(-1)}
-            className="p-2 rounded-lg hover:bg-[#2a2a2a] text-[#A0A0A0] hover:text-white transition-all"
+            className="p-2 rounded-lg hover:bg-neutral-100 text-neutral-600 hover:text-black transition-all"
             title="Día anterior (←)"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={() => navigateDay(1)}
-            className="p-2 rounded-lg hover:bg-[#2a2a2a] text-[#A0A0A0] hover:text-white transition-all"
+            className="p-2 rounded-lg hover:bg-neutral-100 text-neutral-600 hover:text-black transition-all"
             title="Día siguiente (→)"
           >
             <ChevronRight className="w-4 h-4" />
@@ -76,16 +76,16 @@ export function PageHeader({ dateFilter, onDateChange, onTodayClick }: PageHeade
         {/* Clickable date display - opens native calendar */}
         <button
           onClick={handleDateDisplayClick}
-          className="flex items-center gap-2 px-4 py-2 bg-[#2a2a2a] rounded-lg hover:bg-[#333333] transition-colors cursor-pointer min-w-[220px] border border-[#333333]"
+          className="flex items-center gap-2 px-4 py-2 bg-neutral-50 rounded-lg hover:bg-neutral-100 transition-colors cursor-pointer min-w-[220px] border border-neutral-300"
           title="Click para abrir calendario"
         >
           <Calendar className="w-4 h-4 text-[#D4A84B]" />
-          <span className="font-medium text-white">
+          <span className="font-medium text-black">
             {isToday(currentDate)
               ? "Hoy"
               : format(currentDate, "EEEE, d 'de' MMMM", { locale: es })}
           </span>
-          <span className="text-[#666666] text-sm">
+          <span className="text-neutral-400 text-sm">
             ({format(currentDate, "dd/MM/yy")})
           </span>
         </button>
@@ -111,7 +111,7 @@ export function PageHeader({ dateFilter, onDateChange, onTodayClick }: PageHeade
                 px-3 py-2 rounded-lg text-sm font-medium transition-all border
                 ${date === dateFilter
                   ? "bg-[#D4A84B] text-black border-[#D4A84B]"
-                  : "bg-transparent text-[#A0A0A0] border-[#333333] hover:border-[#D4A84B] hover:text-white"
+                  : "bg-transparent text-neutral-600 border-neutral-300 hover:border-[#D4A84B] hover:text-black"
                 }
               `}
             >
@@ -130,18 +130,18 @@ export function PageHeader({ dateFilter, onDateChange, onTodayClick }: PageHeade
       </div>
 
       {/* Keyboard shortcuts hint */}
-      <div className="flex items-center gap-4 text-xs text-[#666666] px-2">
+      <div className="flex items-center gap-4 text-xs text-neutral-400 px-2">
         <span className="flex items-center gap-1">
-          <kbd className="px-1.5 py-0.5 bg-[#2a2a2a] border border-[#333333] rounded text-[#D4A84B]">←</kbd>
-          <kbd className="px-1.5 py-0.5 bg-[#2a2a2a] border border-[#333333] rounded text-[#D4A84B]">→</kbd>
+          <kbd className="px-1.5 py-0.5 bg-neutral-100 border border-neutral-300 rounded text-black">←</kbd>
+          <kbd className="px-1.5 py-0.5 bg-neutral-100 border border-neutral-300 rounded text-black">→</kbd>
           <span>Navegar días</span>
         </span>
         <span className="flex items-center gap-1">
-          <kbd className="px-1.5 py-0.5 bg-[#2a2a2a] border border-[#333333] rounded text-[#D4A84B]">H</kbd>
+          <kbd className="px-1.5 py-0.5 bg-neutral-100 border border-neutral-300 rounded text-black">H</kbd>
           <span>Hoy</span>
         </span>
         <span className="flex items-center gap-1">
-          <kbd className="px-1.5 py-0.5 bg-[#2a2a2a] border border-[#333333] rounded text-[#D4A84B]">Click</kbd>
+          <kbd className="px-1.5 py-0.5 bg-neutral-100 border border-neutral-300 rounded text-black">Click</kbd>
           <span>en fecha para calendario</span>
         </span>
       </div>

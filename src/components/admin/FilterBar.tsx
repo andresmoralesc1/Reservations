@@ -49,17 +49,17 @@ export function FilterBar({
                   px-4 py-2 rounded-lg text-sm font-medium transition-all relative border
                   ${isActive
                     ? option.value === "noShows"
-                      ? "bg-red-900 bg-opacity-30 text-red-400 border-red-900 border-opacity-50"
+                      ? "bg-red-50 text-red-700 border-red-200"
                       : "bg-[#D4A84B] text-black border-[#D4A84B]"
                     : option.value === "noShows"
-                      ? "bg-transparent text-red-400 border-red-900 border-opacity-30 hover:bg-red-900 hover:bg-opacity-10"
-                      : "bg-transparent text-[#A0A0A0] border-[#333333] hover:border-[#D4A84B] hover:text-white"
+                      ? "bg-transparent text-red-600 border-red-200 hover:bg-red-50"
+                      : "bg-transparent text-neutral-600 border-neutral-300 hover:border-[#D4A84B] hover:text-black"
                   }
                 `}
               >
                 {option.label}
                 {showCount && (
-                  <span className="ml-2 px-2 py-0.5 bg-red-400 text-black rounded-full text-xs font-bold">
+                  <span className="ml-2 px-2 py-0.5 bg-red-600 text-white rounded-full text-xs font-bold">
                     {noShowCount}
                   </span>
                 )}
@@ -70,14 +70,14 @@ export function FilterBar({
 
         {onTimeFilterChange && (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-[#A0A0A0]">Servicio:</span>
+            <span className="text-sm text-neutral-500">Servicio:</span>
             <div className="flex gap-1">
               <button
                 onClick={() => onTimeFilterChange("all")}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
                   timeFilter === "all"
                     ? "bg-[#D4A84B] text-black border-[#D4A84B]"
-                    : "bg-transparent text-[#A0A0A0] border-[#333333] hover:border-[#D4A84B] hover:text-white"
+                    : "bg-transparent text-neutral-600 border-neutral-300 hover:border-[#D4A84B] hover:text-black"
                 }`}
               >
                 Todos
@@ -86,8 +86,8 @@ export function FilterBar({
                 onClick={() => onTimeFilterChange("comida")}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
                   timeFilter === "comida"
-                    ? "bg-amber-600 bg-opacity-30 text-amber-400 border-amber-600 border-opacity-50"
-                    : "bg-transparent text-[#A0A0A0] border-[#333333] hover:border-amber-600 hover:border-opacity-50 hover:text-white"
+                    ? "bg-amber-50 text-amber-700 border-amber-200"
+                    : "bg-transparent text-neutral-600 border-neutral-300 hover:border-amber-300 hover:text-amber-700"
                 }`}
               >
                 Comida
@@ -96,8 +96,8 @@ export function FilterBar({
                 onClick={() => onTimeFilterChange("cena")}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
                   timeFilter === "cena"
-                    ? "bg-indigo-600 bg-opacity-30 text-indigo-400 border-indigo-600 border-opacity-50"
-                    : "bg-transparent text-[#A0A0A0] border-[#333333] hover:border-indigo-600 hover:border-opacity-50 hover:text-white"
+                    ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                    : "bg-transparent text-neutral-600 border-neutral-300 hover:border-indigo-300 hover:text-indigo-700"
                 }`}
               >
                 Cena
@@ -109,7 +109,7 @@ export function FilterBar({
         <div className="w-full sm:w-80">
           <div className="relative">
             <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#666666]"
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -121,7 +121,7 @@ export function FilterBar({
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Buscar por nombre, código o teléfono..."
-              className="w-full pl-10 pr-4 py-2 bg-[#2a2a2a] border border-[#333333] rounded-lg text-white placeholder-[#666666] text-sm focus:outline-none focus:border-[#D4A84B] transition-colors"
+              className="w-full pl-10 pr-4 py-2 bg-white border border-neutral-300 rounded-lg text-black placeholder-neutral-400 text-sm focus:outline-none focus:border-[#D4A84B] transition-colors"
             />
           </div>
         </div>
@@ -130,14 +130,14 @@ export function FilterBar({
       {/* Second row: Specific time slots when service is selected */}
       {onTimeFilterChange && (timeFilter === "comida" || timeFilter === "cena") && (
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-[#A0A0A0]">Hora específica:</span>
+          <span className="text-neutral-500">Hora específica:</span>
           <div className="flex flex-wrap gap-1">
             <button
               onClick={() => onTimeFilterChange(timeFilter === "comida" ? "comida" : "cena")}
               className={`px-2 py-1 rounded text-xs border transition-all ${
                 (timeFilter === "comida" || timeFilter === "cena")
                   ? "bg-[#D4A84B] text-black border-[#D4A84B]"
-                  : "bg-transparent text-[#A0A0A0] border-[#333333] hover:border-[#D4A84B] hover:text-white"
+                  : "bg-transparent text-neutral-600 border-neutral-300 hover:border-[#D4A84B] hover:text-black"
               }`}
             >
               Todas
@@ -150,8 +150,8 @@ export function FilterBar({
                     onClick={() => onTimeFilterChange(time)}
                     className={`px-2 py-1 rounded text-xs border transition-all ${
                       timeFilter === time
-                        ? "bg-amber-600 bg-opacity-30 text-amber-400 border-amber-600 border-opacity-50"
-                        : "bg-transparent text-[#A0A0A0] border-[#333333] hover:border-amber-600 hover:border-opacity-50 hover:text-white"
+                        ? "bg-amber-100 text-amber-700 border-amber-300"
+                        : "bg-transparent text-neutral-600 border-neutral-300 hover:border-amber-200 hover:text-amber-700"
                     }`}
                   >
                     {time}
@@ -167,8 +167,8 @@ export function FilterBar({
                     onClick={() => onTimeFilterChange(time)}
                     className={`px-2 py-1 rounded text-xs border transition-all ${
                       timeFilter === time
-                        ? "bg-indigo-600 bg-opacity-30 text-indigo-400 border-indigo-600 border-opacity-50"
-                        : "bg-transparent text-[#A0A0A0] border-[#333333] hover:border-indigo-600 hover:border-opacity-50 hover:text-white"
+                        ? "bg-indigo-100 text-indigo-700 border-indigo-300"
+                        : "bg-transparent text-neutral-600 border-neutral-300 hover:border-indigo-200 hover:text-indigo-700"
                     }`}
                   >
                     {time}

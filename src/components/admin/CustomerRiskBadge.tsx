@@ -19,25 +19,25 @@ export function CustomerRiskBadge({ noShowCount, compact = false }: CustomerRisk
 
   const config = {
     high: {
-      bgColor: "bg-red-900",
-      textColor: "text-red-400",
-      borderColor: "border-red-900",
+      bgColor: "bg-red-100",
+      textColor: "text-red-800",
+      borderColor: "border-red-300",
       icon: "🔴",
       label: "Reiterativo",
       description: `${noShowCount} no-shows`,
     },
     medium: {
-      bgColor: "bg-amber-900",
-      textColor: "text-amber-400",
-      borderColor: "border-amber-900",
+      bgColor: "bg-amber-100",
+      textColor: "text-amber-800",
+      borderColor: "border-amber-300",
       icon: "🟡",
       label: "Precaución",
       description: `${noShowCount} no-show${noShowCount === 1 ? "" : "s"}`,
     },
     low: {
-      bgColor: "bg-neutral-700",
-      textColor: "text-neutral-300",
-      borderColor: "border-neutral-600",
+      bgColor: "bg-neutral-100",
+      textColor: "text-neutral-700",
+      borderColor: "border-neutral-300",
       icon: "⚠️",
       label: "Verificar",
       description: `${noShowCount} no-show`,
@@ -51,8 +51,7 @@ export function CustomerRiskBadge({ noShowCount, compact = false }: CustomerRisk
       <span
         className={cn(
           "inline-flex items-center justify-center w-5 h-5 rounded-full text-xs",
-          style.bgColor,
-          style.textColor
+          style.bgColor
         )}
         title={`${noShowCount} no-show${noShowCount === 1 ? "" : "s"} previos`}
       >
@@ -64,7 +63,7 @@ export function CustomerRiskBadge({ noShowCount, compact = false }: CustomerRisk
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs font-medium bg-opacity-20 border-opacity-30",
+        "inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs font-medium",
         style.bgColor,
         style.textColor,
         style.borderColor

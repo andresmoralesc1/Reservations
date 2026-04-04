@@ -33,7 +33,7 @@ export function ReservationTable({
 }: ReservationTableProps) {
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 bg-[#1a1a1a] border border-[#333333] rounded-lg">
+      <div className="flex items-center justify-center py-20 bg-white border border-neutral-200 rounded-lg shadow-sm">
         <div className="h-8 w-8 animate-spin border-2 border-[#D4A84B] border-t-transparent rounded-full" />
       </div>
     )
@@ -41,16 +41,16 @@ export function ReservationTable({
 
   if (reservations.length === 0) {
     return (
-      <div className="bg-[#1a1a1a] p-12 text-center border border-[#333333] rounded-lg">
-        <p className="font-serif text-[#A0A0A0]">No hay reservas para mostrar</p>
+      <div className="bg-white p-12 text-center border border-neutral-200 rounded-lg shadow-sm">
+        <p className="font-serif text-neutral-500">No hay reservas para mostrar</p>
       </div>
     )
   }
 
   return (
-    <div className="overflow-x-auto bg-[#1a1a1a] border border-[#333333] rounded-lg">
+    <div className="overflow-x-auto bg-white border border-neutral-200 rounded-lg shadow-sm">
       <table className="min-w-full">
-        <thead className="border-b border-[#333333] bg-[#2a2a2a]">
+        <thead className="border-b border-neutral-200 bg-neutral-50">
           <tr>
             {onToggleSelection && (
               <th className="px-4 py-4 w-10">
@@ -69,42 +69,42 @@ export function ReservationTable({
                       onToggleSelection(reservations[0].id)
                     }
                   }}
-                  className="h-4 w-4 rounded border-[#333333] bg-[#2a2a2a] text-[#D4A84B] focus:ring-[#D4A84B] focus:ring-offset-0"
+                  className="h-4 w-4 rounded border-neutral-300 text-[#D4A84B] focus:ring-[#D4A84B] focus:ring-offset-0"
                 />
               </th>
             )}
-            <th className="px-6 py-4 text-left font-display text-xs uppercase tracking-[0.1em] text-[#D4A84B]">
+            <th className="px-6 py-4 text-left font-display text-xs uppercase tracking-[0.1em] text-neutral-500">
               Código
             </th>
-            <th className="px-6 py-4 text-left font-display text-xs uppercase tracking-[0.1em] text-[#D4A84B]">
+            <th className="px-6 py-4 text-left font-display text-xs uppercase tracking-[0.1em] text-neutral-500">
               Cliente
             </th>
-            <th className="px-6 py-4 text-left font-display text-xs uppercase tracking-[0.1em] text-[#D4A84B]">
+            <th className="px-6 py-4 text-left font-display text-xs uppercase tracking-[0.1em] text-neutral-500">
               Fecha/Hora
             </th>
-            <th className="px-6 py-4 text-left font-display text-xs uppercase tracking-[0.1em] text-[#D4A84B]">
+            <th className="px-6 py-4 text-left font-display text-xs uppercase tracking-[0.1em] text-neutral-500">
               Personas
             </th>
-            <th className="px-6 py-4 text-left font-display text-xs uppercase tracking-[0.1em] text-[#D4A84B]">
+            <th className="px-6 py-4 text-left font-display text-xs uppercase tracking-[0.1em] text-neutral-500">
               Mesas
             </th>
-            <th className="px-6 py-4 text-left font-display text-xs uppercase tracking-[0.1em] text-[#D4A84B]">
+            <th className="px-6 py-4 text-left font-display text-xs uppercase tracking-[0.1em] text-neutral-500">
               Estado
             </th>
-            <th className="px-6 py-4 text-left font-display text-xs uppercase tracking-[0.1em] text-[#D4A84B]">
+            <th className="px-6 py-4 text-left font-display text-xs uppercase tracking-[0.1em] text-neutral-500">
               Origen
             </th>
-            <th className="px-6 py-4 text-right font-display text-xs uppercase tracking-[0.1em] text-[#D4A84B]">
+            <th className="px-6 py-4 text-right font-display text-xs uppercase tracking-[0.1em] text-neutral-500">
               Acciones
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#333333]">
+        <tbody className="divide-y divide-neutral-200">
           {reservations.map((reservation) => (
             <tr
               key={reservation.id}
               className={cn(
-                "hover:bg-[#2a2a2a] transition-colors",
+                "hover:bg-neutral-50 transition-colors",
                 selectedIds.has(reservation.id) && "bg-[#D4A84B] bg-opacity-10"
               )}
             >
@@ -114,28 +114,28 @@ export function ReservationTable({
                     type="checkbox"
                     checked={selectedIds.has(reservation.id)}
                     onChange={() => onToggleSelection(reservation.id)}
-                    className="h-4 w-4 rounded border-[#333333] bg-[#2a2a2a] text-[#D4A84B] focus:ring-[#D4A84B] focus:ring-offset-0"
+                    className="h-4 w-4 rounded border-neutral-300 text-[#D4A84B] focus:ring-[#D4A84B] focus:ring-offset-0"
                   />
                 </td>
               )}
               <td className="whitespace-nowrap px-6 py-4">
-                <span className="font-display text-sm text-white">{reservation.reservationCode}</span>
+                <span className="font-display text-sm text-black">{reservation.reservationCode}</span>
               </td>
               <td className="px-6 py-4">
                 <div className="flex items-center gap-2">
                   <div>
-                    <div className="font-sans text-sm font-medium text-white">{reservation.customerName}</div>
-                    <div className="font-sans text-xs text-[#666666]">{reservation.customerPhone}</div>
+                    <div className="font-sans text-sm font-medium text-black">{reservation.customerName}</div>
+                    <div className="font-sans text-xs text-neutral-500">{reservation.customerPhone}</div>
                   </div>
                   {reservation.customerNoShowCount && reservation.customerNoShowCount > 0 && (
                     <CustomerRiskBadge noShowCount={reservation.customerNoShowCount} />
                   )}
                 </div>
               </td>
-              <td className="whitespace-nowrap px-6 py-4 font-sans text-sm text-[#A0A0A0]">
+              <td className="whitespace-nowrap px-6 py-4 font-sans text-sm text-neutral-600">
                 {reservation.reservationDate} - {reservation.reservationTime}
               </td>
-              <td className="whitespace-nowrap px-6 py-4 font-sans text-sm text-white text-center">
+              <td className="whitespace-nowrap px-6 py-4 font-sans text-sm text-black text-center">
                 {reservation.partySize}
               </td>
               <td className="px-6 py-4">
@@ -144,7 +144,7 @@ export function ReservationTable({
                     {reservation.tables.map((table) => (
                       <span
                         key={table.id}
-                        className="inline-flex items-center px-2 py-1 rounded-md bg-[#2a2a2a] border border-[#333333] text-xs font-medium text-[#D4A84B]"
+                        className="inline-flex items-center px-2 py-1 rounded-md bg-neutral-100 border border-neutral-200 text-xs font-medium text-neutral-700"
                         title={`${table.location || ''} - ${table.capacity} pax`}
                       >
                         {table.tableCode}
@@ -152,13 +152,13 @@ export function ReservationTable({
                     ))}
                   </div>
                 ) : (
-                  <span className="font-sans text-xs text-[#666666]">Sin asignar</span>
+                  <span className="font-sans text-xs text-neutral-400">Sin asignar</span>
                 )}
               </td>
               <td className="whitespace-nowrap px-6 py-4">
                 <StatusBadge status={reservation.status} />
               </td>
-              <td className="whitespace-nowrap px-6 py-4 font-sans text-xs text-[#666666] uppercase">
+              <td className="whitespace-nowrap px-6 py-4 font-sans text-xs text-neutral-500 uppercase">
                 {reservation.source}
               </td>
               <td className="whitespace-nowrap px-6 py-4 text-right">
@@ -166,7 +166,7 @@ export function ReservationTable({
                   {onViewDetails && (
                     <button
                       onClick={() => onViewDetails(reservation.id)}
-                      className="p-1.5 rounded-lg hover:bg-[#2a2a2a] text-[#A0A0A0] hover:text-white transition-colors"
+                      className="p-1.5 rounded-lg hover:bg-neutral-100 text-neutral-500 hover:text-black transition-colors"
                       title="Ver detalles"
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -185,16 +185,16 @@ export function ReservationTable({
                       </button>
                       <button
                         onClick={() => onReject?.(reservation.id)}
-                        className="px-3 py-1.5 bg-transparent border border-red-900 border-opacity-50 text-red-400 text-xs font-medium rounded-lg hover:bg-red-900 hover:bg-opacity-10 transition-colors"
+                        className="px-3 py-1.5 bg-transparent border border-red-300 text-red-700 text-xs font-medium rounded-lg hover:bg-red-50 transition-colors"
                       >
                         Rechazar
                       </button>
                     </>
                   )}
-                  {reservation.status === "CONFIRMADO" && onNoShow && (
+                  {reservation.status === "CONFIRMED" && onNoShow && (
                     <button
                       onClick={() => onNoShow(reservation.id)}
-                      className="px-3 py-1.5 bg-transparent border border-orange-900 border-opacity-50 text-orange-400 text-xs font-medium rounded-lg hover:bg-orange-900 hover:bg-opacity-10 transition-colors"
+                      className="px-3 py-1.5 bg-transparent border border-orange-300 text-orange-700 text-xs font-medium rounded-lg hover:bg-orange-50 transition-colors"
                     >
                       No Show
                     </button>

@@ -48,7 +48,7 @@ export function ActionBar({
         </button>
         <button
           onClick={onBlockTables}
-          className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-red-900 border-opacity-50 text-red-400 font-medium rounded-lg hover:bg-red-900 hover:bg-opacity-10 transition-colors"
+          className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-red-300 text-red-700 font-medium rounded-lg hover:bg-red-50 transition-colors"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
