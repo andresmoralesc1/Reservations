@@ -3,9 +3,8 @@
  * Incluye selector de fecha con navegación rápida y atajos
  */
 
-import { Button } from "@/components/Button"
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react"
-import { format, addDays, isToday, isTomorrow } from "date-fns"
+import { format, addDays, isToday } from "date-fns"
 import { es } from "date-fns/locale"
 import { useRef } from "react"
 
@@ -45,52 +44,48 @@ export function PageHeader({ dateFilter, onDateChange, onTodayClick }: PageHeade
       {/* Title row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl uppercase tracking-wider text-black">
+          <h1 className="font-display text-2xl sm:text-3xl uppercase tracking-[0.15em] text-white">
             Dashboard
           </h1>
-          <p className="font-sans text-neutral-500 mt-1">
+          <p className="font-sans text-[#A0A0A0] mt-1 text-sm">
             Resumen de reservas y estadísticas
           </p>
         </div>
       </div>
 
       {/* Date navigation row */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 bg-white rounded-lg border border-neutral-200">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 bg-[#1a1a1a] rounded-lg border border-[#333333]">
         {/* Navigation arrows */}
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             onClick={() => navigateDay(-1)}
-            className="p-2"
+            className="p-2 rounded-lg hover:bg-[#2a2a2a] text-[#A0A0A0] hover:text-white transition-all"
             title="Día anterior (←)"
           >
             <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
+          </button>
+          <button
             onClick={() => navigateDay(1)}
-            className="p-2"
+            className="p-2 rounded-lg hover:bg-[#2a2a2a] text-[#A0A0A0] hover:text-white transition-all"
             title="Día siguiente (→)"
           >
             <ChevronRight className="w-4 h-4" />
-          </Button>
+          </button>
         </div>
 
         {/* Clickable date display - opens native calendar */}
         <button
           onClick={handleDateDisplayClick}
-          className="flex items-center gap-2 px-4 py-2 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer min-w-[220px]"
+          className="flex items-center gap-2 px-4 py-2 bg-[#2a2a2a] rounded-lg hover:bg-[#333333] transition-colors cursor-pointer min-w-[220px] border border-[#333333]"
           title="Click para abrir calendario"
         >
-          <Calendar className="w-4 h-4 text-neutral-500" />
-          <span className="font-medium text-black">
+          <Calendar className="w-4 h-4 text-[#D4A84B]" />
+          <span className="font-medium text-white">
             {isToday(currentDate)
               ? "Hoy"
               : format(currentDate, "EEEE, d 'de' MMMM", { locale: es })}
           </span>
-          <span className="text-neutral-500 text-sm">
+          <span className="text-[#666666] text-sm">
             ({format(currentDate, "dd/MM/yy")})
           </span>
         </button>
@@ -108,15 +103,15 @@ export function PageHeader({ dateFilter, onDateChange, onTodayClick }: PageHeade
 
         {/* Quick date buttons */}
         <div className="flex items-center gap-2">
-          {quickDates.map(({ label, date, isToday: isTodayDate }) => (
+          {quickDates.map(({ label, date }) => (
             <button
               key={date}
               onClick={() => onDateChange(date)}
               className={`
-                px-3 py-2 rounded-lg text-sm font-medium transition-all
+                px-3 py-2 rounded-lg text-sm font-medium transition-all border
                 ${date === dateFilter
-                  ? "bg-black text-white"
-                  : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                  ? "bg-[#D4A84B] text-black border-[#D4A84B]"
+                  : "bg-transparent text-[#A0A0A0] border-[#333333] hover:border-[#D4A84B] hover:text-white"
                 }
               `}
             >
@@ -128,25 +123,25 @@ export function PageHeader({ dateFilter, onDateChange, onTodayClick }: PageHeade
         {/* Today button */}
         <button
           onClick={goToToday}
-          className="ml-auto px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-neutral-800 transition-colors"
+          className="ml-auto px-4 py-2 bg-[#D4A84B] text-black rounded-lg text-sm font-medium hover:bg-[#E5B95C] transition-colors"
         >
           Hoy
         </button>
       </div>
 
       {/* Keyboard shortcuts hint */}
-      <div className="flex items-center gap-4 text-xs text-neutral-500 px-2">
+      <div className="flex items-center gap-4 text-xs text-[#666666] px-2">
         <span className="flex items-center gap-1">
-          <kbd className="px-1.5 py-0.5 bg-neutral-100 rounded border">←</kbd>
-          <kbd className="px-1.5 py-0.5 bg-neutral-100 rounded border">→</kbd>
+          <kbd className="px-1.5 py-0.5 bg-[#2a2a2a] border border-[#333333] rounded text-[#D4A84B]">←</kbd>
+          <kbd className="px-1.5 py-0.5 bg-[#2a2a2a] border border-[#333333] rounded text-[#D4A84B]">→</kbd>
           <span>Navegar días</span>
         </span>
         <span className="flex items-center gap-1">
-          <kbd className="px-1.5 py-0.5 bg-neutral-100 rounded border">H</kbd>
+          <kbd className="px-1.5 py-0.5 bg-[#2a2a2a] border border-[#333333] rounded text-[#D4A84B]">H</kbd>
           <span>Hoy</span>
         </span>
         <span className="flex items-center gap-1">
-          <kbd className="px-1.5 py-0.5 bg-neutral-100 rounded border">Click</kbd>
+          <kbd className="px-1.5 py-0.5 bg-[#2a2a2a] border border-[#333333] rounded text-[#D4A84B]">Click</kbd>
           <span>en fecha para calendario</span>
         </span>
       </div>

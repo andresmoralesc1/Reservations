@@ -1,4 +1,4 @@
-# Auditoría Móvil UX/UI - El Posit Reservations
+# Auditoría Móvil UX/UI - Anfitrión Reservations
 
 **Fecha:** 2026-02-11
 **Auditor:** Claude Code
@@ -28,7 +28,7 @@
 ```typescript
 // ❌ PROBLEMA: No hay viewport meta tag
 export const metadata: Metadata = {
-  title: "El Posit - Reservas",
+  title: "Anfitrión - Reservas",
   description: "Sistema de reservas...",
   manifest: "/manifest.json",
   themeColor: "#000000",
@@ -81,7 +81,7 @@ export const metadata: Metadata = {
 **Comportamiento actual en móvil (<768px):**
 ```
 ┌─────────────────────────────┐
-│ El Posit  [Salir]       │
+│ Anfitrión  [Salir]       │
 │ Dashboard Mesas Analíticas│ ← Se amontona, difícil de tocar
 └─────────────────────────────┘
 ```
@@ -299,7 +299,7 @@ className="bg-white shadow-xl rounded-lg p-6 max-w-md w-full
 ### Iteración 3 (Futuro)
 
 7. **[P3]** Implementar gestures (swipe, pinch)
-8. **[P3]* Agregar service worker
+8. **[P3]** Agregar service worker
 9. **[P3]** Testing en dispositivos reales
 
 ---

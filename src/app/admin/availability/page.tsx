@@ -295,10 +295,10 @@ export default function AvailabilityPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl uppercase tracking-wider text-black">
+          <h1 className="font-display text-2xl sm:text-3xl uppercase tracking-[0.1em] text-white">
             Disponibilidad
           </h1>
-          <p className="font-sans text-neutral-500 mt-1">
+          <p className="font-sans text-[#A0A0A0] mt-1 text-sm">
             Consulta rápida y reservas existentes
           </p>
         </div>
@@ -307,7 +307,7 @@ export default function AvailabilityPage() {
       {/* Controls */}
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Date Navigation */}
-        <div className="flex-1 bg-white rounded-xl border border-neutral-200 p-4">
+        <div className="flex-1 bg-[#1a1a1a] rounded-xl border border-[#333333] p-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="flex items-center gap-1">
               <button onClick={() => navigateDay(-1)} className="p-2 hover:bg-neutral-100 rounded-lg">
@@ -332,7 +332,7 @@ export default function AvailabilityPage() {
                   key={date}
                   onClick={() => handleDateChange(date)}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                    selectedDate === date ? "bg-black text-white" : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                    selectedDate === date ? "bg-[#D4A84B] text-black" : "bg-transparent text-[#A0A0A0] border border-[#333333] hover:border-[#D4A84B] hover:text-white"
                   }`}
                 >
                   {label}
@@ -350,7 +350,7 @@ export default function AvailabilityPage() {
         </div>
 
         {/* Party Size */}
-        <div className="bg-white rounded-xl border border-neutral-200 p-4">
+        <div className="bg-[#1a1a1a] rounded-xl border border-[#333333] p-4">
           <div className="flex items-center gap-3">
             <Users className="w-5 h-5 text-neutral-500" />
             <span className="text-sm font-medium">Personas:</span>
@@ -360,7 +360,7 @@ export default function AvailabilityPage() {
                   key={size}
                   onClick={() => setPartySize(size)}
                   className={`px-3 py-1 rounded-lg text-sm font-medium ${
-                    partySize === size ? "bg-black text-white" : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                    partySize === size ? "bg-[#D4A84B] text-black" : "bg-transparent text-[#A0A0A0] border border-[#333333] hover:border-[#D4A84B] hover:text-white"
                   }`}
                 >
                   {size}
@@ -497,7 +497,7 @@ export default function AvailabilityPage() {
 
                 {/* Availability View */}
                 {!showReservations ? (
-                  <div className="bg-white rounded-xl border border-neutral-200 p-4">
+                  <div className="bg-[#1a1a1a] rounded-xl border border-[#333333] p-4">
                     <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                       <Clock className="w-5 h-5" />
                       {selectedSlot}
@@ -577,7 +577,7 @@ export default function AvailabilityPage() {
                   </div>
                 ) : (
                   /* Reservations View */
-                  <div className="bg-white rounded-xl border border-neutral-200 p-4">
+                  <div className="bg-[#1a1a1a] rounded-xl border border-[#333333] p-4">
                     <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                       <Clock className="w-5 h-5" />
                       Reservas a las {selectedSlot}
@@ -640,7 +640,7 @@ export default function AvailabilityPage() {
                 )}
 
                 {/* Quick Summary */}
-                <div className="bg-white rounded-xl border border-neutral-200 p-4">
+                <div className="bg-[#1a1a1a] rounded-xl border border-[#333333] p-4">
                   <h3 className="font-semibold text-sm mb-3">Resumen del Día</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">

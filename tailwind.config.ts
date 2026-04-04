@@ -9,7 +9,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // El Posit Brand Colors
+        // Anfitrión Brand Colors
         cream: {
           DEFAULT: "#F5F5F0",
           50: "#FAFAF8",
@@ -17,7 +17,7 @@ const config: Config = {
           200: "#EAEAE3",
           300: "#D5D5CC",
         },
-        posit: {
+        accent: {
           black: "#000000",
           white: "#FFFFFF",
           red: "#C41E3A",

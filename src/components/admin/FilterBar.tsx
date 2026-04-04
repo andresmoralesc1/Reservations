@@ -2,8 +2,6 @@
  * Barra de filtros y búsqueda para reservas
  */
 
-import { FilterTabs } from "@/components/FilterTabs"
-import { SearchBar } from "@/components/SearchBar"
 import { filterOptions } from "@/types/admin"
 import type { Reservation } from "@/drizzle/schema"
 
@@ -32,6 +30,7 @@ export function FilterBar({
 }: FilterBarProps) {
   // Count customers with no-show history
   const noShowCount = reservations.filter((r) => (r.customerNoShowCount || 0) > 0).length
+
   return (
     <div className="flex flex-col gap-4">
       {/* First row: Status filters + Service/Time filters */}
@@ -47,20 +46,20 @@ export function FilterBar({
                 key={option.value}
                 onClick={() => onFilterChange(option.value)}
                 className={`
-                  px-4 py-2 rounded-lg text-sm font-medium transition-all relative
+                  px-4 py-2 rounded-lg text-sm font-medium transition-all relative border
                   ${isActive
                     ? option.value === "noShows"
-                      ? "bg-red-500 text-white"
-                      : "bg-black text-white"
+                      ? "bg-red-900 bg-opacity-30 text-red-400 border-red-900 border-opacity-50"
+                      : "bg-[#D4A84B] text-black border-[#D4A84B]"
                     : option.value === "noShows"
-                      ? "bg-red-50 text-red-700 hover:bg-red-100"
-                      : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                      ? "bg-transparent text-red-400 border-red-900 border-opacity-30 hover:bg-red-900 hover:bg-opacity-10"
+                      : "bg-transparent text-[#A0A0A0] border-[#333333] hover:border-[#D4A84B] hover:text-white"
                   }
                 `}
               >
                 {option.label}
                 {showCount && (
-                  <span className="ml-2 px-2 py-0.5 bg-white text-red-600 rounded-full text-xs font-bold">
+                  <span className="ml-2 px-2 py-0.5 bg-red-400 text-black rounded-full text-xs font-bold">
                     {noShowCount}
                   </span>
                 )}
@@ -71,34 +70,34 @@ export function FilterBar({
 
         {onTimeFilterChange && (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-neutral-600">Servicio:</span>
+            <span className="text-sm text-[#A0A0A0]">Servicio:</span>
             <div className="flex gap-1">
               <button
                 onClick={() => onTimeFilterChange("all")}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
                   timeFilter === "all"
-                    ? "bg-black text-white"
-                    : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                    ? "bg-[#D4A84B] text-black border-[#D4A84B]"
+                    : "bg-transparent text-[#A0A0A0] border-[#333333] hover:border-[#D4A84B] hover:text-white"
                 }`}
               >
                 Todos
               </button>
               <button
                 onClick={() => onTimeFilterChange("comida")}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
                   timeFilter === "comida"
-                    ? "bg-amber-100 text-amber-800 border border-amber-200"
-                    : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                    ? "bg-amber-600 bg-opacity-30 text-amber-400 border-amber-600 border-opacity-50"
+                    : "bg-transparent text-[#A0A0A0] border-[#333333] hover:border-amber-600 hover:border-opacity-50 hover:text-white"
                 }`}
               >
                 Comida
               </button>
               <button
                 onClick={() => onTimeFilterChange("cena")}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
                   timeFilter === "cena"
-                    ? "bg-indigo-100 text-indigo-800 border border-indigo-200"
-                    : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                    ? "bg-indigo-600 bg-opacity-30 text-indigo-400 border-indigo-600 border-opacity-50"
+                    : "bg-transparent text-[#A0A0A0] border-[#333333] hover:border-indigo-600 hover:border-opacity-50 hover:text-white"
                 }`}
               >
                 Cena
@@ -108,24 +107,37 @@ export function FilterBar({
         )}
 
         <div className="w-full sm:w-80">
-          <SearchBar
-            onSearch={onSearchChange}
-            placeholder="Buscar por nombre, código o teléfono..."
-          />
+          <div className="relative">
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#666666]"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Buscar por nombre, código o teléfono..."
+              className="w-full pl-10 pr-4 py-2 bg-[#2a2a2a] border border-[#333333] rounded-lg text-white placeholder-[#666666] text-sm focus:outline-none focus:border-[#D4A84B] transition-colors"
+            />
+          </div>
         </div>
       </div>
 
       {/* Second row: Specific time slots when service is selected */}
       {onTimeFilterChange && (timeFilter === "comida" || timeFilter === "cena") && (
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-neutral-600">Hora específica:</span>
+          <span className="text-[#A0A0A0]">Hora específica:</span>
           <div className="flex flex-wrap gap-1">
             <button
               onClick={() => onTimeFilterChange(timeFilter === "comida" ? "comida" : "cena")}
-              className={`px-2 py-1 rounded text-xs ${
+              className={`px-2 py-1 rounded text-xs border transition-all ${
                 (timeFilter === "comida" || timeFilter === "cena")
-                  ? "bg-black text-white"
-                  : "bg-neutral-200 text-neutral-700"
+                  ? "bg-[#D4A84B] text-black border-[#D4A84B]"
+                  : "bg-transparent text-[#A0A0A0] border-[#333333] hover:border-[#D4A84B] hover:text-white"
               }`}
             >
               Todas
@@ -136,10 +148,10 @@ export function FilterBar({
                   <button
                     key={time}
                     onClick={() => onTimeFilterChange(time)}
-                    className={`px-2 py-1 rounded text-xs ${
+                    className={`px-2 py-1 rounded text-xs border transition-all ${
                       timeFilter === time
-                        ? "bg-amber-600 text-white"
-                        : "bg-neutral-200 text-neutral-700 hover:bg-neutral-300"
+                        ? "bg-amber-600 bg-opacity-30 text-amber-400 border-amber-600 border-opacity-50"
+                        : "bg-transparent text-[#A0A0A0] border-[#333333] hover:border-amber-600 hover:border-opacity-50 hover:text-white"
                     }`}
                   >
                     {time}
@@ -153,10 +165,10 @@ export function FilterBar({
                   <button
                     key={time}
                     onClick={() => onTimeFilterChange(time)}
-                    className={`px-2 py-1 rounded text-xs ${
+                    className={`px-2 py-1 rounded text-xs border transition-all ${
                       timeFilter === time
-                        ? "bg-indigo-600 text-white"
-                        : "bg-neutral-200 text-neutral-700 hover:bg-neutral-300"
+                        ? "bg-indigo-600 bg-opacity-30 text-indigo-400 border-indigo-600 border-opacity-50"
+                        : "bg-transparent text-[#A0A0A0] border-[#333333] hover:border-indigo-600 hover:border-opacity-50 hover:text-white"
                     }`}
                   >
                     {time}

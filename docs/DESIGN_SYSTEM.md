@@ -1,7 +1,7 @@
-# El Posit - Design System Documentation
+# Anfitrión - Design System Documentation
 
 ## Overview
-A complete design system for El Posit reservation management platform. Built with Next.js, React, and Tailwind CSS.
+A complete design system for Anfitrión reservation management platform. Built with Next.js, React, and Tailwind CSS.
 
 ## Table of Contents
 1. [Colors](#colors)
@@ -17,13 +17,13 @@ A complete design system for El Posit reservation management platform. Built wit
 ```css
 /* Primary Colors */
 --cream: #F5F5F0        /* Main background */
---posit-red: #C41E3A    /* Accent/CTA */
---posit-black: #000000  /* Primary text/borders */
---posit-white: #FFFFFF  /* Cards/contrast */
+--accent-red: #C41E3A    /* Accent/CTA */
+--black: #000000        /* Primary text/borders */
+--white: #FFFFFF        /* Cards/contrast */
 
 /* Variants */
---posit-red-dark: #9B1830
---posit-red-light: #D94F65
+--accent-red-dark: #9B1830
+--accent-red-light: #D94F65
 --cream-50: #FAFAF8
 --cream-200: #EAEAE3
 --cream-300: #D5D5CC
@@ -40,7 +40,7 @@ A complete design system for El Posit reservation management platform. Built wit
 ### Usage Guidelines
 - Use **cream** as primary background for light sections
 - Use **black** sections for contrast and CTAs
-- Use **posit-red** sparingly for accents and important actions
+- Use **accent-red** sparingly for accents and important actions
 - Maintain high contrast for accessibility (WCAG AA)
 
 ---
@@ -126,8 +126,8 @@ import { Select } from "@/components/Select"
 <Select
   label="Restaurante"
   options={[
-    { value: "cambrils", label: "El Posit - Cambrils" },
-    { value: "tarragona", label: "El Posit - Tarragona" },
+    { value: "cambrils", label: "Cambrils" },
+    { value: "tarragona", label: "Tarragona" },
   ]}
   value={value}
   onChange={handleChange}

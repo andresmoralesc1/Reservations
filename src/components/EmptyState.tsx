@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils"
-import { Button } from "./Button"
 import { ReactNode } from "react"
 
 interface EmptyStateProps {
@@ -26,23 +25,26 @@ export function EmptyState({
       className
     )}>
       {icon && (
-        <div className="mb-6 text-neutral-300">
+        <div className="mb-6 text-[#666666]">
           {icon}
         </div>
       )}
-      <h3 className="font-display text-xl uppercase tracking-wider text-black">
+      <h3 className="font-display text-xl uppercase tracking-[0.1em] text-white">
         {title}
       </h3>
       {description && (
-        <p className="mt-3 max-w-sm font-serif text-neutral-500">
+        <p className="mt-3 max-w-sm font-serif text-[#A0A0A0]">
           {description}
         </p>
       )}
       {action && (
         <div className="mt-8">
-          <Button variant="primary" size="md" onClick={action.onClick}>
+          <button
+            onClick={action.onClick}
+            className="px-6 py-2 bg-[#D4A84B] text-black font-display text-sm uppercase tracking-[0.1em] rounded-lg hover:bg-[#E5B95C] transition-colors"
+          >
             {action.label}
-          </Button>
+          </button>
         </div>
       )}
     </div>

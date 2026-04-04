@@ -11,9 +11,9 @@ import { Select } from "@/components/Select"
 import { toast } from "@/components/Toast"
 
 const RESTAURANTS = [
-  { value: "cambrils", label: "El Posit - Cambrils" },
-  { value: "tarragona", label: "El Posit - Tarragona" },
-  { value: "vila-seca", label: "El Posit - Vila-Seca" },
+  { value: "cambrils", label: "Cambrils" },
+  { value: "tarragona", label: "Tarragona" },
+  { value: "vila-seca", label: "Vila-Seca" },
 ]
 
 const PARTY_SIZES = Array.from({ length: 12 }, (_, i) => ({

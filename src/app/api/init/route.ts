@@ -36,7 +36,7 @@ export async function GET() {
       .insert(restaurants)
       .values({
         id: DEMO_RESTAURANT_ID,
-        name: "El Posit",
+        name: "Anfitrión Demo",
         phone: "+34 977 123 456",
         address: "Cambrils, Tarragona, España",
         timezone: "Europe/Madrid",

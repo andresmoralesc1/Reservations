@@ -7,7 +7,7 @@ import { Container } from "@/components/Container"
 import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/Button"
 import { useKeyboardShortcuts, SHORTCUTS } from "@/hooks/useKeyboardShortcuts"
-import { Menu, X } from "lucide-react"
+import { Menu, X, LogOut, Keyboard } from "lucide-react"
 
 export default function AdminLayout({
   children,
@@ -83,8 +83,8 @@ export default function AdminLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-cream flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin border-2 border-black border-t-transparent" />
+      <div className="min-h-screen bg-[#121212] flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin border-2 border-[#D4A84B] border-t-transparent rounded-full" />
       </div>
     )
   }
@@ -94,23 +94,23 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-cream">
-      {/* Admin Header - Responsive */}
-      <header className="border-b border-neutral-200 bg-white sticky top-0 z-40">
+    <div className="min-h-screen bg-[#121212] text-white">
+      {/* Admin Header - Premium Dark */}
+      <header className="border-b border-[#333333] bg-[#0a0a0a] sticky top-0 z-40 backdrop-blur-sm bg-opacity-95">
         <Container size="xl">
           {/* Top row: Logo + User */}
-          <div className="flex items-center justify-between py-3">
+          <div className="flex items-center justify-between py-4">
             <div className="flex items-center gap-4">
               {/* Logo */}
-              <Link href="/" className="font-display text-xl uppercase tracking-widest text-black hover:text-neutral-600 transition-colors">
+              <Link href="/" className="font-display text-xl uppercase tracking-[0.2em] text-white hover:text-[#D4A84B] transition-colors duration-200">
                 ANFITRIÓN
               </Link>
             </div>
 
             {/* User info + actions */}
             <div className="flex items-center gap-4">
-              <span className="hidden sm:block font-sans text-sm text-neutral-600">
-                {user.name} ({user.role})
+              <span className="hidden sm:block font-sans text-sm text-[#A0A0A0]">
+                {user.name} <span className="text-[#666666]">({user.role})</span>
               </span>
               <button
                 onClick={() => {
@@ -119,28 +119,28 @@ export default function AdminLayout({
                     router.push("/")
                   } catch (error) {
                     console.error("Error logging out:", error)
-                    // Fallback to window.location
                     window.location.href = "/"
                   }
                 }}
-                className="font-sans text-sm text-neutral-500 hover:text-black transition-colors cursor-pointer"
+                className="flex items-center gap-2 font-sans text-sm text-[#A0A0A0] hover:text-[#D4A84B] transition-colors cursor-pointer"
               >
-                Salir
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Salir</span>
               </button>
               {/* Mobile menu button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 rounded-lg hover:bg-black/5 active:scale-95 transition-all"
+                className="md:hidden p-2 rounded-lg hover:bg-[#2a2a2a] active:scale-95 transition-all text-[#A0A0A0]"
                 aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
                 aria-expanded={mobileMenuOpen}
               >
-                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
             </div>
           </div>
 
           {/* Bottom row: Navigation */}
-          <div className="flex items-center justify-between py-2 border-t border-neutral-100">
+          <div className="flex items-center justify-between py-3 border-t border-[#333333]">
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-1">
               {visibleNavItems.map((item) => (
@@ -148,10 +148,10 @@ export default function AdminLayout({
                   key={item.href}
                   href={item.href}
                   className={`
-                    font-display text-sm uppercase tracking-wider px-4 py-2 rounded-lg transition-colors relative
+                    font-display text-xs uppercase tracking-[0.15em] px-4 py-2 rounded-lg transition-all duration-200 relative
                     ${pathname === item.href
-                      ? "bg-black text-white"
-                      : "text-black hover:bg-black/5"
+                      ? "bg-[#D4A84B] text-black"
+                      : "text-[#A0A0A0] hover:text-white hover:bg-[#2a2a2a]"
                     }
                   `}
                 >
@@ -165,7 +165,7 @@ export default function AdminLayout({
         {/* Mobile Menu Overlay */}
         {mobileMenuOpen && (
           <div
-            className="md:hidden border-t border-neutral-200 bg-white py-4"
+            className="md:hidden border-t border-[#333333] bg-[#0a0a0a] py-4"
             role="navigation"
             aria-label="Navegación móvil"
           >
@@ -177,10 +177,10 @@ export default function AdminLayout({
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
                     className={`
-                      font-display text-sm uppercase tracking-wider px-4 py-3 rounded-lg transition-colors
+                      font-display text-xs uppercase tracking-[0.15em] px-4 py-3 rounded-lg transition-all duration-200
                       ${pathname === item.href
-                        ? "bg-black text-white"
-                        : "text-black hover:bg-black/5"
+                        ? "bg-[#D4A84B] text-black"
+                        : "text-[#A0A0A0] hover:text-white hover:bg-[#2a2a2a]"
                       }
                     `}
                   >
@@ -201,17 +201,18 @@ export default function AdminLayout({
       </main>
 
       {/* Admin Footer */}
-      <footer className="border-t border-neutral-200 bg-white py-6 mt-auto">
+      <footer className="border-t border-[#333333] bg-[#0a0a0a] py-6 mt-auto">
         <Container size="xl">
           <div className="flex items-center justify-between">
-            <p className="font-sans text-xs text-neutral-500">
-              Panel de Administración - Anfitrión
+            <p className="font-sans text-xs text-[#666666] uppercase tracking-wider">
+              Panel de Administración — Anfitrión
             </p>
             <button
               onClick={() => setShowHelp(true)}
-              className="font-sans text-xs text-neutral-500 hover:text-black transition-colors"
+              className="flex items-center gap-2 font-sans text-xs text-[#666666] hover:text-[#D4A84B] transition-colors"
             >
-              Atajos de teclado (?)
+              <Keyboard className="w-3 h-3" />
+              Atajos de teclado
             </button>
           </div>
         </Container>
@@ -220,71 +221,35 @@ export default function AdminLayout({
       {/* Keyboard Shortcuts Help Modal */}
       {showHelp && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
           onClick={() => setShowHelp(false)}
         >
           <div
-            className="bg-white shadow-xl rounded-lg p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
+            className="bg-[#1a1a1a] border border-[#333333] rounded-lg p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="font-display text-xl uppercase tracking-wider text-black mb-4">
+            <h2 className="font-display text-lg uppercase tracking-[0.15em] text-white mb-6">
               Atajos de Teclado
             </h2>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Nueva reserva</span>
-                <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">N</kbd>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Buscar</span>
-                <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">F</kbd>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Aprobar</span>
-                <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">A</kbd>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Rechazar</span>
-                <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">R</kbd>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Exportar</span>
-                <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">E</kbd>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Recargar</span>
-                <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">F5</kbd>
-              </div>
-              <hr className="my-2" />
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Ir a Dashboard</span>
-                <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">1</kbd>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Ir a Floor Plan</span>
-                <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">2</kbd>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Ir a Disponibilidad</span>
-                <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">3</kbd>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Ir a Servicios</span>
-                <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">4</kbd>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Ir a Mesas</span>
-                <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">5</kbd>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-600">Ir a Analíticas</span>
-                <kbd className="px-2 py-1 bg-neutral-100 rounded text-sm">6</kbd>
-              </div>
+            <div className="space-y-3">
+              <ShortcutItem label="Nueva reserva" keybind="N" />
+              <ShortcutItem label="Buscar" keybind="F" />
+              <ShortcutItem label="Aprobar" keybind="A" />
+              <ShortcutItem label="Rechazar" keybind="R" />
+              <ShortcutItem label="Exportar" keybind="E" />
+              <ShortcutItem label="Recargar" keybind="F5" />
+              <div className="border-t border-[#333333] my-3 pt-3" />
+              <ShortcutItem label="Ir a Dashboard" keybind="1" />
+              <ShortcutItem label="Ir a Floor Plan" keybind="2" />
+              <ShortcutItem label="Ir a Disponibilidad" keybind="3" />
+              <ShortcutItem label="Ir a Servicios" keybind="4" />
+              <ShortcutItem label="Ir a Mesas" keybind="5" />
+              <ShortcutItem label="Ir a Analíticas" keybind="6" />
             </div>
-            <div className="mt-4 text-center">
+            <div className="mt-6 text-center">
               <button
                 onClick={() => setShowHelp(false)}
-                className="px-6 py-2 bg-black text-white font-display text-sm uppercase tracking-wider rounded-lg"
+                className="px-6 py-2 bg-[#D4A84B] text-black font-display text-xs uppercase tracking-[0.15em] rounded-lg hover:bg-[#E5B95C] transition-colors"
               >
                 Cerrar
               </button>
@@ -292,6 +257,17 @@ export default function AdminLayout({
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function ShortcutItem({ label, keybind }: { label: string; keybind: string }) {
+  return (
+    <div className="flex justify-between items-center">
+      <span className="text-[#A0A0A0] text-sm">{label}</span>
+      <kbd className="px-2 py-1 bg-[#2a2a2a] border border-[#333333] rounded text-xs text-[#D4A84B] font-mono">
+        {keybind}
+      </kbd>
     </div>
   )
 }
@@ -316,67 +292,67 @@ function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-cream flex items-center justify-center p-4">
-      <div className="bg-white border border-neutral-200 rounded-lg p-8 w-full max-w-md">
+    <div className="min-h-screen bg-[#121212] flex items-center justify-center p-4">
+      <div className="bg-[#1a1a1a] border border-[#333333] rounded-lg p-8 w-full max-w-md shadow-2xl">
         <div className="text-center mb-8">
-          <h1 className="font-display text-3xl uppercase tracking-widest text-black">
+          <h1 className="font-display text-2xl uppercase tracking-[0.2em] text-white">
             ANFITRIÓN
           </h1>
-          <p className="font-sans text-neutral-500 mt-2">Panel de Administración</p>
+          <p className="font-sans text-[#666666] mt-2 text-sm uppercase tracking-wider">
+            Panel de Administración
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label className="block text-sm font-medium text-[#A0A0A0] mb-2 uppercase tracking-wider">
               Email
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-3 bg-[#2a2a2a] border border-[#333333] rounded-lg text-white placeholder-[#666666] focus:outline-none focus:border-[#D4A84B] transition-colors"
               placeholder="admin@anfitrion.app"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label className="block text-sm font-medium text-[#A0A0A0] mb-2 uppercase tracking-wider">
               Contraseña
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-3 bg-[#2a2a2a] border border-[#333333] rounded-lg text-white placeholder-[#666666] focus:outline-none focus:border-[#D4A84B] transition-colors"
               placeholder="••••••••"
               required
             />
           </div>
 
           {error && (
-            <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm">
+            <div className="bg-red-900 bg-opacity-20 text-red-400 px-4 py-3 rounded-lg text-sm border border-red-900 border-opacity-30">
               {error}
             </div>
           )}
 
-          <Button
+          <button
             type="submit"
-            variant="primary"
-            size="md"
-            className="w-full"
             disabled={loading}
+            className="w-full px-6 py-3 bg-[#D4A84B] text-black font-display text-sm uppercase tracking-[0.15em] rounded-lg hover:bg-[#E5B95C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
-          </Button>
+          </button>
         </form>
 
-        <div className="mt-6 p-4 bg-neutral-50 rounded-lg text-sm text-neutral-600">
-          <p className="font-medium mb-2">Demo credentials:</p>
+        <div className="mt-6 p-4 bg-[#2a2a2a] rounded-lg text-sm text-[#A0A0A0] border border-[#333333]">
+          <p className="font-medium mb-2 text-[#D4A84B] uppercase tracking-wider text-xs">Demo credentials:</p>
           <ul className="space-y-1">
-            <li><strong>Admin:</strong> admin@posit.com / demo123</li>
-            <li><strong>Manager:</strong> manager@posit.com / demo123</li>
-            <li><strong>Staff:</strong> staff@posit.com / demo123</li>
+            <li><span className="text-white">Admin:</span> admin@posit.com / demo123</li>
+            <li><span className="text-white">Manager:</span> manager@posit.com / demo123</li>
+            <li><span className="text-white">Staff:</span> staff@posit.com / demo123</li>
           </ul>
         </div>
       </div>

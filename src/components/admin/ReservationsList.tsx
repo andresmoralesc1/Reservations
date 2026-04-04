@@ -49,7 +49,7 @@ export function ReservationsList({
 
   if (paginatedReservations.length === 0) {
     return (
-      <div className="bg-white border border-neutral-200">
+      <div className="bg-[#1a1a1a] border border-[#333333] rounded-lg">
         <EmptyReservations onRefresh={onRefresh} />
       </div>
     )

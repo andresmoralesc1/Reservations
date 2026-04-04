@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* El Posit Light Theme */
+    /* Anfitrión Light Theme */
     --background: 60 9% 96%; /* #F5F5F0 cream */
     --foreground: 0 0% 0%; /* Pure black */
     --card: 0 0% 100%; /* White */
@@ -28,7 +28,7 @@
   }
 
   .dark {
-    /* El Posit Dark Theme (for black sections) */
+    /* Anfitrión Dark Theme (for black sections) */
     --background: 0 0% 0%;
     --foreground: 0 0% 100%;
     --card: 0 0% 5%;
@@ -48,6 +48,41 @@
     --border: 0 0% 20%;
     --input: 0 0% 20%;
     --ring: 349 73% 44%;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     ADMIN THEME - Premium Dark & Gold
+     ═══════════════════════════════════════════════════════════════ */
+  .admin-theme {
+    /* Backgrounds */
+    --admin-bg-primary: 18 10% 7%; /* #121212 */
+    --admin-bg-secondary: 20 10% 10%; /* #1a1a1a */
+    --admin-bg-tertiary: 20 8% 16%; /* #2a2a2a */
+    --admin-bg-hover: 20 5% 20%; /* #333333 */
+
+    /* Gold Accent */
+    --admin-gold: 43 74% 57%; /* #D4A84B */
+    --admin-gold-hover: 43 70% 65%; /* #E5B95C */
+    --admin-gold-dim: 43 74% 57% 0.2;
+
+    /* Text */
+    --admin-text-primary: 0 0% 100%; /* #FFFFFF */
+    --admin-text-secondary: 0 0% 63%; /* #A0A0A0 */
+    --admin-text-tertiary: 0 0% 40%; /* #666666 */
+
+    /* Border */
+    --admin-border: 20 5% 20%; /* #333333 */
+    --admin-border-gold: 43 74% 57% 0.3;
+
+    /* Status Colors */
+    --admin-success: 122 39% 49%; /* #4CAF50 */
+    --admin-success-bg: 122 39% 49% 0.2;
+    --admin-warning: 36 92% 50%; /* #FF9800 */
+    --admin-warning-bg: 36 92% 50% 0.2;
+    --admin-error: 355 78% 60%; /* #E53935 */
+    --admin-error-bg: 355 78% 60% 0.2;
+    --admin-pending: 43 96% 56%; /* #FFC107 */
+    --admin-pending-bg: 43 96% 56% 0.2;
   }
 }
 
@@ -90,5 +125,116 @@
 @layer utilities {
   .text-accent-italic {
     @apply font-serif italic text-posit-red;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     ADMIN THEME UTILITIES
+     ═══════════════════════════════════════════════════════════════ */
+  .admin-theme {
+    @apply bg-[#121212] text-white;
+  }
+
+  /* Admin backgrounds */
+  .bg-admin-primary {
+    @apply bg-[#121212];
+  }
+  .bg-admin-secondary {
+    @apply bg-[#1a1a1a];
+  }
+  .bg-admin-tertiary {
+    @apply bg-[#2a2a2a];
+  }
+  .bg-admin-hover {
+    @apply bg-[#333333];
+  }
+
+  /* Admin text */
+  .text-admin-primary {
+    @apply text-white;
+  }
+  .text-admin-secondary {
+    @apply text-[#A0A0A0];
+  }
+  .text-admin-gold {
+    @apply text-[#D4A84B];
+  }
+
+  /* Admin borders */
+  .border-admin {
+    @apply border-[#333333];
+  }
+  .border-admin-gold {
+    @apply border-[#D4A84B] border-opacity-30;
+  }
+
+  /* Admin button styles */
+  .btn-admin-primary {
+    @apply bg-[#D4A84B] text-black font-medium px-4 py-2 rounded-lg
+           hover:bg-[#E5B95C] transition-colors duration-200;
+  }
+  .btn-admin-secondary {
+    @apply bg-transparent border border-white text-white font-medium px-4 py-2 rounded-lg
+           hover:bg-white hover:text-black transition-colors duration-200;
+  }
+  .btn-admin-ghost {
+    @apply bg-transparent text-[#A0A0A0] font-medium px-4 py-2 rounded-lg
+           hover:bg-[#2a2a2a] hover:text-white transition-colors duration-200;
+  }
+
+  /* Admin card */
+  .card-admin {
+    @apply bg-[#1a1a1a] border border-[#333333] rounded-lg;
+  }
+
+  /* Admin input */
+  .input-admin {
+    @apply bg-[#2a2a2a] border border-[#333333] text-white placeholder-[#666666]
+           px-4 py-2 rounded-lg focus:outline-none focus:border-[#D4A84B]
+           transition-colors duration-200;
+  }
+
+  /* Admin status badges */
+  .badge-admin {
+    @apply px-2 py-1 rounded text-xs font-medium;
+  }
+  .badge-admin-success {
+    @apply badge-admin bg-green-900 bg-opacity-20 text-green-400;
+  }
+  .badge-admin-warning {
+    @apply badge-admin bg-orange-900 bg-opacity-20 text-orange-400;
+  }
+  .badge-admin-error {
+    @apply badge-admin bg-red-900 bg-opacity-20 text-red-400;
+  }
+  .badge-admin-pending {
+    @apply badge-admin bg-yellow-900 bg-opacity-20 text-yellow-400;
+  }
+
+  /* Admin table */
+  .table-admin {
+    @apply w-full text-left border-collapse;
+  }
+  .table-admin thead {
+    @apply bg-[#2a2a2a];
+  }
+  .table-admin th {
+    @apply px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[#A0A0A0];
+  }
+  .table-admin tbody tr {
+    @apply border-b border-[#333333] hover:bg-[#2a2a2a] transition-colors;
+  }
+  .table-admin td {
+    @apply px-4 py-3 text-sm;
+  }
+
+  /* Admin typography */
+  .heading-admin {
+    @apply font-medium uppercase tracking-[0.1em] text-white;
+  }
+  .subheading-admin {
+    @apply font-normal text-[#A0A0A0];
+  }
+  .label-admin {
+    @apply font-normal uppercase tracking-[0.05em] text-[#D4A84B] text-sm;
   }
 }

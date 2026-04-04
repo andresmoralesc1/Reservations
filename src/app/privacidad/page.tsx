@@ -18,7 +18,7 @@ export default function PrivacidadPage() {
               <section>
                 <h2 className="font-display text-xl uppercase mb-3">1. Información que recopilamos</h2>
                 <p className="font-serif text-neutral-600">
-                  En El Posit, recopilamos la siguiente información personal cuando realizas una reserva:
+                  En Anfitrión, recopilamos la siguiente información personal cuando realizas una reserva:
                 </p>
                 <ul className="list-disc list-inside font-serif text-neutral-600 space-y-1">
                   <li>Nombre completo</li>
@@ -66,7 +66,7 @@ export default function PrivacidadPage() {
                   <li>Retirar tu consentimiento en cualquier momento</li>
                 </ul>
                 <p className="font-serif text-neutral-600 mt-3">
-                  Para ejercer estos derechos, escríbenos a: <a href="mailto:privacidad@elposit.com" className="text-accent underline">privacidad@elposit.com</a>
+                  Para ejercer estos derechos, escríbenos a: <a href="mailto:privacidad@anfitrion.co" className="text-accent underline">privacidad@anfitrion.co</a>
                 </p>
               </section>
 
@@ -98,7 +98,7 @@ export default function PrivacidadPage() {
                   Para cualquier cuestión relacionada con la privacidad, puedes contactarnos en:
                 </p>
                 <p className="font-serif text-neutral-600">
-                  Email: <a href="mailto:privacidad@elposit.com" className="text-accent underline">privacidad@elposit.com</a><br />
+                  Email: <a href="mailto:privacidad@anfitrion.co" className="text-accent underline">privacidad@anfitrion.co</a><br />
                   Teléfono: +34 977 00 00 00<br />
                   Dirección: Cambrils, Tarragona, España
                 </p>

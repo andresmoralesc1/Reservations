@@ -4,7 +4,6 @@
  */
 
 import { BulkActionsBar } from "@/components/admin/BulkActionsBar"
-import { Button } from "@/components/Button"
 
 interface ActionBarProps {
   selectedIds: string[]
@@ -38,28 +37,24 @@ export function ActionBar({
         onExportCSV={onExportCSV}
       />
       <div className="flex gap-3 w-full sm:w-auto">
-        <Button
-          variant="outline"
-          size="md"
+        <button
           onClick={onCreateReservation}
-          className="flex-1 sm:flex-none"
+          className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[#D4A84B] text-black font-medium rounded-lg hover:bg-[#E5B95C] transition-colors"
         >
-          <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           Nueva Reserva
-        </Button>
-        <Button
-          variant="outline"
-          size="md"
+        </button>
+        <button
           onClick={onBlockTables}
-          className="flex-1 sm:flex-none text-red-700 border-red-300 hover:bg-red-50 hover:border-red-400"
+          className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-red-900 border-opacity-50 text-red-400 font-medium rounded-lg hover:bg-red-900 hover:bg-opacity-10 transition-colors"
         >
-          <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
           </svg>
           Bloquear Mesas
-        </Button>
+        </button>
       </div>
     </div>
   )

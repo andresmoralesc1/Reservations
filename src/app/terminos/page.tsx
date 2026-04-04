@@ -18,7 +18,7 @@ export default function TerminosPage() {
               <section>
                 <h2 className="font-display text-xl uppercase mb-3">1. Aceptación de los términos</h2>
                 <p className="font-serif text-neutral-600">
-                  Al utilizar el sistema de reservas de El Posit, aceptas estos términos y condiciones. Si no estás
+                  Al utilizar el sistema de reservas de Anfitrión, aceptas estos términos y condiciones. Si no estás
                   de acuerdo con alguno de estos términos, por favor no utilices nuestro servicio.
                 </p>
               </section>
@@ -26,7 +26,7 @@ export default function TerminosPage() {
               <section>
                 <h2 className="font-display text-xl uppercase mb-3">2. Descripción del servicio</h2>
                 <p className="font-serif text-neutral-600">
-                  El Posit proporciona un sistema de reservas en línea que permite a los clientes:
+                  Anfitrión proporciona un sistema de reservas en línea que permite a los clientes:
                 </p>
                 <ul className="list-disc list-inside font-serif text-neutral-600 space-y-1">
                   <li>Realizar reservas en nuestros restaurantes</li>
@@ -70,14 +70,14 @@ export default function TerminosPage() {
                 <h2 className="font-display text-xl uppercase mb-3">5. Propiedad intelectual</h2>
                 <p className="font-serif text-neutral-600">
                   Todos los elementos de este sitio web (diseño, texto, gráficos, logos, imágenes, software) son propiedad
-                  de El Posit o de sus proveedores de contenido y están protegidos por las leyes de propiedad intelectual.
+                  de Anfitrión o de sus proveedores de contenido y están protegidos por las leyes de propiedad intelectual.
                 </p>
               </section>
 
               <section>
                 <h2 className="font-display text-xl uppercase mb-3">6. Limitación de responsabilidad</h2>
                 <p className="font-serif text-neutral-600">
-                  El Posit no se hace responsable por:
+                  Anfitrión no se hace responsable por:
                 </p>
                 <ul className="list-disc list-inside font-serif text-neutral-600 space-y-1">
                   <li>Daños directos o indirectos derivados del uso del servicio</li>
@@ -90,7 +90,7 @@ export default function TerminosPage() {
               <section>
                 <h2 className="font-display text-xl uppercase mb-3">7. Modificaciones del servicio</h2>
                 <p className="font-serif text-neutral-600">
-                  El Posit se reserva el derecho de modificar, suspender o discontinuar cualquier aspecto del servicio
+                  Anfitrión se reserva el derecho de modificar, suspender o discontinuar cualquier aspecto del servicio
                   en cualquier momento, sin previo aviso.
                 </p>
               </section>
@@ -109,7 +109,7 @@ export default function TerminosPage() {
                   Para cualquier pregunta sobre estos términos, contáctanos en:
                 </p>
                 <p className="font-serif text-neutral-600">
-                  Email: <a href="mailto:legal@elposit.com" className="text-accent underline">legal@elposit.com</a><br />
+                  Email: <a href="mailto:legal@anfitrion.co" className="text-accent underline">legal@anfitrion.co</a><br />
                   Teléfono: +34 977 00 00 00
                 </p>
               </section>

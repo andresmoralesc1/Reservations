@@ -8,13 +8,23 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { POST, GET } from '@/app/api/voice-bridge/route'
 import { NextRequest } from 'next/server'
 
+// Mock de db.ts para evitar error de DATABASE_URL
+vi.mock('@/lib/db', () => ({
+  db: {},
+}))
+
 // Mock de los servicios
-vi.mock('@/lib/services/legacy-service', () => ({
-  createLegacyReservation: vi.fn(),
-  getLegacyReservation: vi.fn(),
-  cancelLegacyReservation: vi.fn(),
-  checkLegacyAvailability: vi.fn(),
-  logLegacyCall: vi.fn(),
+vi.mock('@/lib/services', () => ({
+  createReservation: vi.fn(),
+  getReservationByCode: vi.fn(),
+  cancelReservation: vi.fn(),
+  listReservations: vi.fn(),
+}))
+
+vi.mock('@/lib/availability/services-availability', () => ({
+  servicesAvailability: {
+    checkAvailabilityWithServices: vi.fn(),
+  },
 }))
 
 vi.mock('@/lib/voice/call-logger', () => ({
@@ -24,20 +34,18 @@ vi.mock('@/lib/voice/call-logger', () => ({
 }))
 
 import {
-  createLegacyReservation,
-  getLegacyReservation,
-  cancelLegacyReservation,
-  checkLegacyAvailability,
-  logLegacyCall,
-} from '@/lib/services/legacy-service'
+  createReservation,
+  getReservationByCode,
+  cancelReservation,
+} from '@/lib/services'
+import { servicesAvailability } from '@/lib/availability/services-availability'
 import { logCallStart, logCallAction, logCallEnd } from '@/lib/voice/call-logger'
 
 // Type assertions
-const mockCheckLegacyAvailability = checkLegacyAvailability as ReturnType<typeof vi.fn>
-const mockCreateLegacyReservation = createLegacyReservation as ReturnType<typeof vi.fn>
-const mockGetLegacyReservation = getLegacyReservation as ReturnType<typeof vi.fn>
-const mockCancelLegacyReservation = cancelLegacyReservation as ReturnType<typeof vi.fn>
-const mockLogLegacyCall = logLegacyCall as ReturnType<typeof vi.fn>
+const mockCheckAvailability = servicesAvailability.checkAvailabilityWithServices as ReturnType<typeof vi.fn>
+const mockCreateReservation = createReservation as ReturnType<typeof vi.fn>
+const mockGetReservationByCode = getReservationByCode as ReturnType<typeof vi.fn>
+const mockCancelReservation = cancelReservation as ReturnType<typeof vi.fn>
 const mockLogCallStart = logCallStart as ReturnType<typeof vi.fn>
 const mockLogCallAction = logCallAction as ReturnType<typeof vi.fn>
 const mockLogCallEnd = logCallEnd as ReturnType<typeof vi.fn>
@@ -117,11 +125,12 @@ describe('Integration: Voice Bridge API', () => {
 
   describe('POST /api/voice-bridge - checkAvailability', () => {
     it('debería verificar disponibilidad (200)', async () => {
-      mockCheckLegacyAvailability.mockResolvedValue({
-        success: true,
+      mockCheckAvailability.mockResolvedValue({
         available: true,
         message: 'Hay disponibilidad',
         availableTables: [],
+        service: null,
+        suggestedTables: [],
       })
 
       const request = createMockVoiceRequest({
@@ -139,7 +148,7 @@ describe('Integration: Voice Bridge API', () => {
       expect(response.status).toBe(200)
       expect(data.success).toBe(true)
       expect(data.message).toBeDefined()
-      expect(mockCheckLegacyAvailability).toHaveBeenCalled()
+      expect(mockCheckAvailability).toHaveBeenCalled()
     })
 
     it('debería rechazar con parámetros inválidos (200 con success: false)', async () => {
@@ -161,11 +170,12 @@ describe('Integration: Voice Bridge API', () => {
     })
 
     it('debería registrar llamada si se proporciona callLogId', async () => {
-      mockCheckLegacyAvailability.mockResolvedValue({
-        success: true,
+      mockCheckAvailability.mockResolvedValue({
         available: true,
         message: 'Hay disponibilidad',
         availableTables: [],
+        service: null,
+        suggestedTables: [],
       })
       mockLogCallAction.mockResolvedValue(undefined)
 
@@ -191,19 +201,24 @@ describe('Integration: Voice Bridge API', () => {
 
   describe('POST /api/voice-bridge - createReservation', () => {
     it('debería crear reserva exitosamente (200)', async () => {
-      mockCheckLegacyAvailability.mockResolvedValue({
-        success: true,
+      mockCheckAvailability.mockResolvedValue({
         available: true,
         message: 'Hay disponibilidad',
         availableTables: [],
+        service: null,
+        suggestedTables: [],
       })
 
-      mockCreateLegacyReservation.mockResolvedValue({
-        success: true,
+      mockCreateReservation.mockResolvedValue({
         reservationCode: 'RES-TEST1',
-        message: 'Reserva creada',
-        data: {} as any,
-      })
+        id: 'res-1',
+        customerName: 'Carlos García',
+        customerPhone: '612345678',
+        reservationDate: getFutureDate(),
+        reservationTime: '20:00',
+        partySize: 4,
+        status: 'CONFIRMADO',
+      } as any)
 
       const request = createMockVoiceRequest({
         action: 'createReservation',
@@ -222,7 +237,7 @@ describe('Integration: Voice Bridge API', () => {
       expect(response.status).toBe(200)
       expect(data.success).toBe(true)
       expect(data.reservationCode).toBe('RES-TEST1')
-      expect(mockCreateLegacyReservation).toHaveBeenCalled()
+      expect(mockCreateReservation).toHaveBeenCalled()
     })
 
     it('debería rechazar teléfono inválido', async () => {
@@ -246,11 +261,12 @@ describe('Integration: Voice Bridge API', () => {
     })
 
     it('debería fallar si no hay disponibilidad', async () => {
-      mockCheckLegacyAvailability.mockResolvedValue({
-        success: false,
+      mockCheckAvailability.mockResolvedValue({
         available: false,
         message: 'No hay disponibilidad',
         availableTables: [],
+        service: null,
+        suggestedTables: [],
       })
 
       const request = createMockVoiceRequest({
@@ -270,24 +286,21 @@ describe('Integration: Voice Bridge API', () => {
       expect(response.status).toBe(200)
       expect(data.success).toBe(false)
       expect(data.message).toContain('No hay disponibilidad')
-      expect(mockCreateLegacyReservation).not.toHaveBeenCalled()
+      expect(mockCreateReservation).not.toHaveBeenCalled()
     })
   })
 
   describe('POST /api/voice-bridge - getReservation', () => {
     it('debería obtener reserva por código (200)', async () => {
-      mockGetLegacyReservation.mockResolvedValue({
-        success: true,
-        data: {
-          reservationCode: 'RES-TEST1',
-          customerName: 'Carlos García',
-          customerPhone: '612345678',
-          reservationDate: getFutureDate(),
-          reservationTime: '20:00',
-          partySize: 4,
-          status: 'CONFIRMADO',
-        },
-      })
+      mockGetReservationByCode.mockResolvedValue({
+        reservationCode: 'RES-TEST1',
+        customerName: 'Carlos García',
+        customerPhone: '612345678',
+        reservationDate: getFutureDate(),
+        reservationTime: '20:00',
+        partySize: 4,
+        status: 'CONFIRMADO',
+      } as any)
 
       const request = createMockVoiceRequest({
         action: 'getReservation',
@@ -322,10 +335,7 @@ describe('Integration: Voice Bridge API', () => {
     })
 
     it('debería retornar mensaje descriptivo si no existe', async () => {
-      mockGetLegacyReservation.mockResolvedValue({
-        success: false,
-        message: 'No encontré ninguna reserva',
-      })
+      mockGetReservationByCode.mockRejectedValue(new Error('No encontré ninguna reserva'))
 
       const request = createMockVoiceRequest({
         action: 'getReservation',
@@ -345,10 +355,12 @@ describe('Integration: Voice Bridge API', () => {
 
   describe('POST /api/voice-bridge - cancelReservation', () => {
     it('debería cancelar reserva con teléfono correcto (200)', async () => {
-      mockCancelLegacyReservation.mockResolvedValue({
-        success: true,
-        message: 'Reserva RES-TEST1 cancelada correctamente',
-      })
+      mockGetReservationByCode.mockResolvedValue({
+        customerPhone: '612345678',
+      } as any)
+      mockCancelReservation.mockResolvedValue({
+        reservationCode: 'RES-TEST1',
+      } as any)
 
       const request = createMockVoiceRequest({
         action: 'cancelReservation',
@@ -367,10 +379,9 @@ describe('Integration: Voice Bridge API', () => {
     })
 
     it('debería fallar si el teléfono no coincide', async () => {
-      mockCancelLegacyReservation.mockResolvedValue({
-        success: false,
-        message: 'El número de teléfono no coincide',
-      })
+      mockGetReservationByCode.mockResolvedValue({
+        customerPhone: '611111111',
+      } as any)
 
       const request = createMockVoiceRequest({
         action: 'cancelReservation',
@@ -390,14 +401,11 @@ describe('Integration: Voice Bridge API', () => {
 
   describe('POST /api/voice-bridge - modifyReservation', () => {
     it('debería verificar teléfono antes de modificar', async () => {
-      mockGetLegacyReservation.mockResolvedValue({
-        success: true,
-        data: {
-          reservationCode: 'RES-TEST1',
-          customerPhone: '612345678',
-          status: 'CONFIRMADO',
-        },
-      })
+      mockGetReservationByCode.mockResolvedValue({
+        reservationCode: 'RES-TEST1',
+        customerPhone: '612345678',
+        status: 'CONFIRMADO',
+      } as any)
 
       const request = createMockVoiceRequest({
         action: 'modifyReservation',
@@ -490,11 +498,12 @@ describe('Integration: Voice Bridge API', () => {
     })
 
     it('debería aceptar con API key correcta (200)', async () => {
-      mockCheckLegacyAvailability.mockResolvedValue({
-        success: true,
+      mockCheckAvailability.mockResolvedValue({
         available: true,
         message: 'Hay disponibilidad',
         availableTables: [],
+        service: null,
+        suggestedTables: [],
       })
 
       const request = createMockVoiceRequest({
@@ -531,11 +540,12 @@ describe('Integration: Voice Bridge API', () => {
     })
 
     it('debería aceptar Authorization Bearer header', async () => {
-      mockCheckLegacyAvailability.mockResolvedValue({
-        success: true,
+      mockCheckAvailability.mockResolvedValue({
         available: true,
         message: 'Hay disponibilidad',
         availableTables: [],
+        service: null,
+        suggestedTables: [],
       })
 
       const request = new NextRequest('http://localhost:3000/api/voice-bridge', {
@@ -577,7 +587,7 @@ describe('Integration: Voice Bridge API', () => {
     })
 
     it('debería manejar errores del servidor (500)', async () => {
-      mockCheckLegacyAvailability.mockRejectedValue(new Error('Database connection failed'))
+      mockCheckAvailability.mockRejectedValue(new Error('Database connection failed'))
 
       const request = createMockVoiceRequest({
         action: 'checkAvailability',

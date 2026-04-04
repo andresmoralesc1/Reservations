@@ -1,8 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Modal } from "@/components/Modal"
-import { Button } from "@/components/Button"
 import { generateTableCode } from "@/lib/utils/tableUtils"
 
 interface TimelineReservation {
@@ -157,208 +155,230 @@ export function OccupancyTimeline({
     })
   }
 
+  if (!isOpen) return null
+
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={`Vista de Ocupación - ${formatDate(date)}`}
-      size="xl"
-    >
-      {loading && (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-neutral-500">Cargando datos de ocupación...</div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/70" onClick={onClose}></div>
+      <div className="relative bg-[#1a1a1a] border border-[#333333] rounded-lg shadow-xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="border-b border-[#333333] px-6 py-4 flex items-center justify-between">
+          <h3 className="font-display text-lg uppercase tracking-[0.1em] text-white">
+            Vista de Ocupación - {formatDate(date)}
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-[#666666] hover:text-white transition-colors"
+          >
+            ✕
+          </button>
         </div>
-      )}
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-700">{error}</p>
-        </div>
-      )}
-
-      {data && !loading && (
-        <div className="space-y-4">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-medium text-lg">{data.service.name}</h3>
-              <p className="text-sm text-neutral-500">
-                {formatTime(data.service.startTime)} - {formatTime(data.service.endTime)}
-                {" • "}
-                {data.service.defaultDurationMinutes} min por reserva
-              </p>
+        {/* Body */}
+        <div className="p-6 overflow-y-auto flex-1">
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-[#666666]">Cargando datos de ocupación...</div>
             </div>
+          )}
 
-            {/* Filters */}
-            <div className="flex items-center gap-3">
-              <select
-                value={filters.location}
-                onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-                className="px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black"
-              >
-                <option value="all">Todas las secciones</option>
-                <option value="patio">Patio</option>
-                <option value="interior">Interior</option>
-                <option value="terraza">Terraza</option>
-              </select>
-
-              <label className="flex items-center text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.showOnlyAvailable}
-                  onChange={(e) =>
-                    setFilters({ ...filters, showOnlyAvailable: e.target.checked })
-                  }
-                  className="mr-2"
-                />
-                Solo libres
-              </label>
+          {error && (
+            <div className="bg-[#E53935]/20 border border-[#E53935]/30 rounded-lg p-4">
+              <p className="text-sm text-[#E53935]">{error}</p>
             </div>
-          </div>
+          )}
 
-          {/* Timeline */}
-          <div className="overflow-x-auto border border-neutral-200 rounded-lg">
-            <table className="min-w-full">
-              <thead className="bg-neutral-50">
-                <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider sticky left-0 bg-neutral-50">
-                    Hora
-                  </th>
-                  {filteredTables.map((table) => (
-                    <th
-                      key={table.id}
-                      className="px-4 py-2 text-center text-xs font-medium text-neutral-500 uppercase tracking-wider min-w-[140px]"
-                    >
-                      Mesa {generateTableCode(table.location, table.tableNumber)}
-                      <div className="text-[10px] text-neutral-400">
-                        {table.capacity}p
-                        {table.location && ` • ${LOCATION_LABELS[table.location] || table.location}`}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-200">
-                {data.timeSlots.map((slot) => (
-                  <tr key={slot} className="hover:bg-neutral-50">
-                    <td className="px-4 py-2 text-sm font-mono font-medium whitespace-nowrap sticky left-0 bg-white">
-                      {formatTime(slot)}
-                    </td>
-                    {filteredTables.map((table) => {
-                      const reservation = findReservationAtTime(table.id, slot)
+          {data && !loading && (
+            <div className="space-y-4">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-lg text-white">{data.service.name}</h3>
+                  <p className="text-sm text-[#666666]">
+                    {formatTime(data.service.startTime)} - {formatTime(data.service.endTime)}
+                    {" • "}
+                    {data.service.defaultDurationMinutes} min por reserva
+                  </p>
+                </div>
 
-                      // Check if table is available
-                      const isAvailable = !reservation
+                {/* Filters */}
+                <div className="flex items-center gap-3">
+                  <select
+                    value={filters.location}
+                    onChange={(e) => setFilters({ ...filters, location: e.target.value })}
+                    className="px-3 py-1.5 bg-[#2a2a2a] border border-[#333333] text-white rounded-lg text-sm focus:outline-none focus:border-[#D4A84B]"
+                  >
+                    <option value="all" className="bg-[#2a2a2a]">Todas las secciones</option>
+                    <option value="patio" className="bg-[#2a2a2a]">Patio</option>
+                    <option value="interior" className="bg-[#2a2a2a]">Interior</option>
+                    <option value="terraza" className="bg-[#2a2a2a]">Terraza</option>
+                  </select>
 
-                      // Filter if showOnlyAvailable is enabled
-                      if (filters.showOnlyAvailable && !isAvailable) {
-                        return (
-                          <td key={table.id} className="px-2 py-1">
-                            <div className="h-16"></div>
-                          </td>
-                        )
+                  <label className="flex items-center text-sm text-[#A0A0A0]">
+                    <input
+                      type="checkbox"
+                      checked={filters.showOnlyAvailable}
+                      onChange={(e) =>
+                        setFilters({ ...filters, showOnlyAvailable: e.target.checked })
                       }
+                      className="mr-2 accent-[#D4A84B]"
+                    />
+                    Solo libres
+                  </label>
+                </div>
+              </div>
 
-                      return (
-                        <td key={table.id} className="px-2 py-1 min-w-[140px]">
-                          {isAvailable ? (
-                            <div className="h-16 bg-green-50 border border-green-200 rounded flex items-center justify-center">
-                              <span className="text-xs text-green-700 font-medium">Libre</span>
-                            </div>
-                          ) : (
-                            <div
-                              className="h-16 bg-blue-100 border border-blue-300 rounded p-2 cursor-pointer hover:bg-blue-200 transition-colors"
-                              onClick={() => handleClick(reservation!)}
-                            >
-                              <div className="font-medium text-xs text-blue-900 truncate">
-                                {reservation.customerName}
-                              </div>
-                              <div className="text-xs text-blue-700">
-                                {reservation.partySize}p
-                              </div>
-                              <div className="text-[10px] text-blue-600">
-                                hasta {formatTime(reservation.endTime)}
-                              </div>
-                            </div>
-                          )}
+              {/* Timeline */}
+              <div className="overflow-x-auto border border-[#333333] rounded-lg">
+                <table className="min-w-full">
+                  <thead className="bg-[#2a2a2a]">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-[#666666] uppercase tracking-wider sticky left-0 bg-[#2a2a2a]">
+                        Hora
+                      </th>
+                      {filteredTables.map((table) => (
+                        <th
+                          key={table.id}
+                          className="px-4 py-2 text-center text-xs font-medium text-[#666666] uppercase tracking-wider min-w-[140px]"
+                        >
+                          Mesa {generateTableCode(table.location, table.tableNumber)}
+                          <div className="text-[10px] text-[#666666]">
+                            {table.capacity}p
+                            {table.location && ` • ${LOCATION_LABELS[table.location] || table.location}`}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#333333]">
+                    {data.timeSlots.map((slot) => (
+                      <tr key={slot} className="hover:bg-[#2a2a2a]/50">
+                        <td className="px-4 py-2 text-sm font-mono font-medium whitespace-nowrap sticky left-0 bg-[#1a1a1a] text-white">
+                          {formatTime(slot)}
                         </td>
-                      )
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                        {filteredTables.map((table) => {
+                          const reservation = findReservationAtTime(table.id, slot)
 
-          {/* Legend */}
-          <div className="flex items-center gap-6 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-50 border border-green-200 rounded"></div>
-              <span>Disponible</span>
+                          // Check if table is available
+                          const isAvailable = !reservation
+
+                          // Filter if showOnlyAvailable is enabled
+                          if (filters.showOnlyAvailable && !isAvailable) {
+                            return (
+                              <td key={table.id} className="px-2 py-1">
+                                <div className="h-16"></div>
+                              </td>
+                            )
+                          }
+
+                          return (
+                            <td key={table.id} className="px-2 py-1 min-w-[140px]">
+                              {isAvailable ? (
+                                <div className="h-16 bg-[#4CAF50]/10 border border-[#4CAF50]/30 rounded flex items-center justify-center">
+                                  <span className="text-xs text-[#4CAF50] font-medium">Libre</span>
+                                </div>
+                              ) : (
+                                <div
+                                  className="h-16 bg-[#2196F3]/20 border border-[#2196F3]/40 rounded p-2 cursor-pointer hover:bg-[#2196F3]/30 transition-colors"
+                                  onClick={() => handleClick(reservation!)}
+                                >
+                                  <div className="font-medium text-xs text-white truncate">
+                                    {reservation.customerName}
+                                  </div>
+                                  <div className="text-xs text-[#A0A0A0]">
+                                    {reservation.partySize}p
+                                  </div>
+                                  <div className="text-[10px] text-[#666666]">
+                                    hasta {formatTime(reservation.endTime)}
+                                  </div>
+                                </div>
+                              )}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Legend */}
+              <div className="flex items-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-[#4CAF50]/10 border border-[#4CAF50]/30 rounded"></div>
+                  <span className="text-[#A0A0A0]">Disponible</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-[#2196F3]/20 border border-[#2196F3]/40 rounded"></div>
+                  <span className="text-[#A0A0A0]">Ocupada</span>
+                </div>
+                <div className="text-[#666666]">
+                  Click en una reserva para ver detalles
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-100 border border-blue-300 rounded"></div>
-              <span>Ocupada</span>
-            </div>
-            <div className="text-neutral-500">
-              Click en una reserva para ver detalles
-            </div>
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Reservation Details */}
       {selectedReservation && (
-        <Modal
-          isOpen={!!selectedReservation}
-          onClose={() => setSelectedReservation(null)}
-          title="Detalles de Reserva"
-          size="md"
-          footer={
-            <Button variant="ghost" size="md" onClick={() => setSelectedReservation(null)}>
-              Cerrar
-            </Button>
-          }
-        >
-          <div className="space-y-4">
-            <div>
-              <div className="text-xs text-neutral-400">Cliente</div>
-              <div className="font-medium">{selectedReservation.customerName}</div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/70" onClick={() => setSelectedReservation(null)}></div>
+          <div className="relative bg-[#1a1a1a] border border-[#333333] rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <h3 className="font-display text-lg uppercase tracking-[0.1em] text-white mb-4">
+              Detalles de Reserva
+            </h3>
+
+            <div className="space-y-4">
               <div>
-                <div className="text-xs text-neutral-400">Personas</div>
-                <div className="font-medium">{selectedReservation.partySize}</div>
+                <div className="text-xs text-[#666666]">Cliente</div>
+                <div className="font-medium text-white">{selectedReservation.customerName}</div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <div className="text-xs text-[#666666]">Personas</div>
+                  <div className="font-medium text-white">{selectedReservation.partySize}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-[#666666]">Inicio</div>
+                  <div className="font-medium text-white">{formatTime(selectedReservation.startTime)}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-[#666666]">Fin</div>
+                  <div className="font-medium text-white">{formatTime(selectedReservation.endTime)}</div>
+                </div>
               </div>
               <div>
-                <div className="text-xs text-neutral-400">Inicio</div>
-                <div className="font-medium">{formatTime(selectedReservation.startTime)}</div>
+                <div className="text-xs text-[#666666]">Mesas</div>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {selectedReservation.tables.map((t, i) => (
+                    <span
+                      key={i}
+                      className="px-2 py-1 bg-[#2a2a2a] border border-[#333333] rounded text-sm text-white"
+                    >
+                      Mesa {t.number}
+                    </span>
+                  ))}
+                </div>
               </div>
               <div>
-                <div className="text-xs text-neutral-400">Fin</div>
-                <div className="font-medium">{formatTime(selectedReservation.endTime)}</div>
+                <div className="text-xs text-[#666666]">Estado</div>
+                <div className="font-medium text-white">{selectedReservation.status}</div>
               </div>
             </div>
-            <div>
-              <div className="text-xs text-neutral-400">Mesas</div>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {selectedReservation.tables.map((t, i) => (
-                  <span
-                    key={i}
-                    className="px-2 py-1 bg-neutral-100 rounded text-sm"
-                  >
-                    Mesa {t.number}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs text-neutral-400">Estado</div>
-              <div className="font-medium">{selectedReservation.status}</div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setSelectedReservation(null)}
+                className="px-4 py-2 bg-[#D4A84B] text-black rounded-lg hover:bg-[#E5B95C] transition-colors text-sm font-medium"
+              >
+                Cerrar
+              </button>
             </div>
           </div>
-        </Modal>
+        </div>
       )}
-    </Modal>
+    </div>
   )
 }

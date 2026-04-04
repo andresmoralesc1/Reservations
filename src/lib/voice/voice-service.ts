@@ -2,15 +2,20 @@
  * Voice Service - Adaptado a tablas existentes en Supabase
  *
  * Trabaja directamente con:
- * - reservas (no reservations)
- * - mesas_disponibles (no tables)
- * - info_llamadas (no call_logs)
+ * - reservations
+ * - tables
+ * - call_logs
  *
  * Type-safe: Usa type guards en lugar de 'as unknown as'
  */
 
-import { createLegacyReservation, getLegacyReservation, cancelLegacyReservation, checkLegacyAvailability, logLegacyCall } from "@/lib/services/legacy-service"
-import { generateReservationCode } from "@/lib/utils"
+import {
+  getReservationByCode,
+  createReservation as createReservationService,
+  cancelReservation as cancelReservationService,
+  listReservations
+} from "@/lib/services"
+import { servicesAvailability } from "@/lib/availability/services-availability"
 import type {
   VoiceActionResult,
   CheckAvailabilityInput,
@@ -28,8 +33,12 @@ import {
   VoiceModifyReservationSchema,
 } from "@/lib/schemas/reservation-schemas"
 import { createLogger, logError } from "@/lib/logger"
+import { db } from "@/lib/db"
+import { callLogs } from "@/drizzle/schema"
 
 const logger = createLogger({ module: "voice-service" })
+
+const DEFAULT_RESTAURANT_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 
 // ============ Type Guards ============
 
@@ -89,16 +98,16 @@ function isLogCallStartParams(params: unknown): params is LogCallStartParams {
 // ============ Función 1: checkAvailability ============
 export async function checkAvailability(params: CheckAvailabilityInput): Promise<VoiceActionResult> {
   try {
-    const result = await checkLegacyAvailability({
-      fecha: params.date,
-      hora: params.time,
-      invitados: params.partySize,
-      restaurante: params.restaurantId || "default",
+    const result = await servicesAvailability.checkAvailabilityWithServices({
+      date: params.date,
+      time: params.time,
+      partySize: params.partySize,
+      restaurantId: params.restaurantId || DEFAULT_RESTAURANT_ID
     })
 
     return {
-      success: result.success || result.available === true,
-      message: result.message || "Error al verificar disponibilidad",
+      success: result.available,
+      message: result.message || (result.available ? "Tenemos disponibilidad" : "No hay disponibilidad"),
       availableSlots: result.available ? [] : undefined,
     }
   } catch (error) {
@@ -114,11 +123,11 @@ export async function checkAvailability(params: CheckAvailabilityInput): Promise
 export async function createReservation(params: CreateReservationInput): Promise<VoiceActionResult> {
   try {
     // Verificar disponibilidad primero
-    const availability = await checkLegacyAvailability({
-      fecha: params.date,
-      hora: params.time,
-      invitados: params.partySize,
-      restaurante: params.restaurantId || "default",
+    const availability = await servicesAvailability.checkAvailabilityWithServices({
+      date: params.date,
+      time: params.time,
+      partySize: params.partySize,
+      restaurantId: params.restaurantId || DEFAULT_RESTAURANT_ID
     })
 
     if (!availability.available && availability.availableTables?.length === 0) {
@@ -129,28 +138,22 @@ export async function createReservation(params: CreateReservationInput): Promise
       }
     }
 
-    // Crear reserva
-    const result = await createLegacyReservation({
-      nombre: params.customerName,
-      numero: params.customerPhone,
-      fecha: params.date,
-      hora: params.time,
-      invitados: params.partySize,
-      fuente: "VOICE",
-      restaurante: params.restaurantId || "default",
-      observaciones: params.specialRequests,
+    // Crear reserva con el nuevo servicio
+    const reservation = await createReservationService({
+      customerName: params.customerName,
+      customerPhone: params.customerPhone,
+      reservationDate: params.date,
+      reservationTime: params.time,
+      partySize: params.partySize,
+      restaurantId: params.restaurantId || DEFAULT_RESTAURANT_ID,
+      source: "VOICE",
+      specialRequests: params.specialRequests,
+      tableIds: availability.availableTables?.[0]?.id ? [availability.availableTables[0].id] : undefined
     })
-
-    if (!result.success) {
-      return {
-        success: false,
-        message: result.error || "Error al crear la reserva",
-      }
-    }
 
     logger.info({
       msg: "Reserva creada por voz",
-      reservationCode: result.reservationCode,
+      reservationCode: reservation.reservationCode,
       customerName: params.customerName,
       customerPhone: params.customerPhone,
       date: params.date,
@@ -160,16 +163,16 @@ export async function createReservation(params: CreateReservationInput): Promise
 
     return {
       success: true,
-      message: `Reserva creada exitosamente. Tu código es ${result.reservationCode}. Te esperamos el ${formatDate(params.date)} a las ${params.time} para ${params.partySize} personas.`,
-      reservationCode: result.reservationCode,
+      message: `Reserva creada exitosamente. Tu código es ${reservation.reservationCode}. Te esperamos el ${formatDate(params.date)} a las ${params.time} para ${params.partySize} personas.`,
+      reservationCode: reservation.reservationCode,
       reservation: {
-        reservationCode: result.reservationCode!,
+        reservationCode: reservation.reservationCode!,
         customerName: params.customerName,
         customerPhone: params.customerPhone,
         date: params.date,
         time: params.time,
         partySize: params.partySize,
-        status: "PENDIENTE",
+        status: reservation.status,
       },
     }
   } catch (error) {
@@ -189,45 +192,38 @@ export async function createReservation(params: CreateReservationInput): Promise
 // ============ Función 3: getReservation ============
 export async function getReservation(params: GetReservationInput): Promise<VoiceActionResult> {
   try {
-    const result = await getLegacyReservation(params.code)
-
-    if (!result.success) {
-      return {
-        success: false,
-        message: result.message || "No encontré ninguna reserva con ese código.",
-      }
-    }
-
-    const r = result.data!
+    const reservation = await getReservationByCode(params.code)
 
     // Formatear mensaje
     const statusMessages: Record<string, string> = {
       PENDIENTE: "pendiente de confirmación",
       CONFIRMADO: "confirmada",
       CANCELADO: "cancelada",
+      COMPLETADA: "completada",
+      NO_SHOW: "no show",
     }
 
     return {
       success: true,
-      message: `Reserva ${params.code} a nombre de ${r.customerName}. ` +
-               `El ${formatDate(r.reservationDate)} a las ${r.reservationTime} ` +
-               `para ${r.partySize} personas. ` +
-               `Estado: ${statusMessages[r.status] || r.status}.`,
+      message: `Reserva ${params.code} a nombre de ${reservation.customerName}. ` +
+               `El ${formatDate(reservation.reservationDate)} a las ${reservation.reservationTime} ` +
+               `para ${reservation.partySize} personas. ` +
+               `Estado: ${statusMessages[reservation.status] || reservation.status}.`,
       reservation: {
-        reservationCode: r.reservationCode,
-        customerName: r.customerName,
-        customerPhone: r.customerPhone || "",
-        date: r.reservationDate,
-        time: r.reservationTime,
-        partySize: r.partySize,
-        status: r.status,
+        reservationCode: reservation.reservationCode,
+        customerName: reservation.customerName,
+        customerPhone: reservation.customerPhone || "",
+        date: reservation.reservationDate,
+        time: reservation.reservationTime,
+        partySize: reservation.partySize,
+        status: reservation.status,
       },
     }
   } catch (error) {
     console.error("[Voice Service] Error in getReservation:", error)
     return {
       success: false,
-      message: "Error al buscar la reserva. Por favor intenta nuevamente.",
+      message: "No encontré ninguna reserva con ese código. Por favor verifica e intenta nuevamente.",
     }
   }
 }
@@ -235,24 +231,34 @@ export async function getReservation(params: GetReservationInput): Promise<Voice
 // ============ Función 4: cancelReservation ============
 export async function cancelReservation(params: CancelReservationInput): Promise<VoiceActionResult> {
   try {
-    const result = await cancelLegacyReservation(params.code, params.phone)
+    // First get the reservation to verify the phone
+    const reservation = await getReservationByCode(params.code)
 
-    if (!result.success) {
+    // Verify phone matches
+    const phone = params.phone?.toString().replace(/[\s-]/g, "") || ""
+    const reservationPhone = (reservation.customerPhone || "").replace(/[\s-]/g, "")
+
+    if (phone && phone !== reservationPhone &&
+        !phone.includes(reservationPhone) &&
+        !reservationPhone.includes(phone)) {
       return {
         success: false,
-        message: result.message || "No se pudo cancelar la reserva.",
+        message: "El número de teléfono no coincide con el de la reserva.",
       }
     }
 
+    // Cancel the reservation
+    await cancelReservationService(reservation.id)
+
     return {
       success: true,
-      message: result.message || `La reserva ${params.code} ha sido cancelada exitosamente.`,
+      message: `La reserva ${params.code} ha sido cancelada exitosamente.`,
     }
   } catch (error) {
     console.error("[Voice Service] Error in cancelReservation:", error)
     return {
       success: false,
-      message: "Error al cancelar la reserva. Por favor intenta nuevamente.",
+      message: "No se pudo cancelar la reserva. Verifica el código e intenta nuevamente.",
     }
   }
 }
@@ -261,20 +267,11 @@ export async function cancelReservation(params: CancelReservationInput): Promise
 export async function modifyReservation(params: ModifyReservationInput): Promise<VoiceActionResult> {
   try {
     // Get reservation first
-    const getResult = await getLegacyReservation(params.code)
-
-    if (!getResult.success || !getResult.data) {
-      return {
-        success: false,
-        message: "No encontré ninguna reserva con ese código.",
-      }
-    }
-
-    const r = getResult.data
+    const reservation = await getReservationByCode(params.code)
 
     // Verify phone
     const phone = params.phone?.toString().replace(/[\s-]/g, "") || ""
-    const reservationPhone = (r.customerPhone || "").replace(/[\s-]/g, "")
+    const reservationPhone = (reservation.customerPhone || "").replace(/[\s-]/g, "")
 
     if (phone !== reservationPhone &&
         !phone.includes(reservationPhone) &&
@@ -365,11 +362,13 @@ export async function processVoiceAction(
         }
       }
       // Registrar inicio de llamada
-      const logResult = await logLegacyCall({
-        telefono: params.callerPhone,
-        restaurante: params.restaurantId
-      })
-      return { success: true, message: "Llamada registrada", callLogId: logResult.callId } as VoiceActionResult
+      const [callLog] = await db.insert(callLogs).values({
+        callerPhone: params.callerPhone,
+        restaurantId: params.restaurantId || DEFAULT_RESTAURANT_ID,
+        startTime: new Date(),
+        status: "IN_PROGRESS"
+      }).returning()
+      return { success: true, message: "Llamada registrada", callLogId: callLog.id } as VoiceActionResult
 
     case "logCallEnd":
       // Finalizar llamada (no implementado aún)

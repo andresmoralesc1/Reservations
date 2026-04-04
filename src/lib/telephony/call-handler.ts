@@ -169,7 +169,7 @@ export function handleIncomingCall(callInfo: CallInfo): string {
     <Response>
       <Pause length="1" />
       <Say language="es-ES" voice="female">
-        Hola, gracias por llamar a El Posit.
+        Hola, gracias por llamar.
         En un momento te atenderá nuestro asistente virtual.
       </Say>
       <Pause length="1" />
@@ -221,7 +221,7 @@ export function endCall(callId: string, goodbyeMessage?: string): string {
   sessionManager.updateState(callId, CallState.COMPLETED);
 
   const message =
-    goodbyeMessage || "Gracias por llamar a El Posit. Que tengas un buen día.";
+    goodbyeMessage || "Gracias por llamar. Que tengas un buen día.";
 
   const response = `
     <Response>

@@ -2,7 +2,6 @@
 
 import { cn } from "@/lib/utils"
 import { useEffect, useRef } from "react"
-import { Button } from "./Button"
 
 interface ModalProps {
   isOpen: boolean
@@ -58,7 +57,7 @@ export function Modal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
 
@@ -66,7 +65,7 @@ export function Modal({
       <div
         ref={modalRef}
         className={cn(
-          "relative z-10 w-full bg-white shadow-xl flex flex-col max-h-[90vh]",
+          "relative z-10 w-full bg-[#1a1a1a1] border border-[#333333] flex flex-col max-h-[90vh] rounded-lg shadow-2xl",
           sizeClasses[size],
           className
         )}
@@ -74,13 +73,13 @@ export function Modal({
       >
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4 flex-shrink-0">
-            <h2 className="font-display text-xl uppercase tracking-wider text-black">
+          <div className="flex items-center justify-between border-b border-[#333333] px-6 py-4 flex-shrink-0">
+            <h2 className="font-display text-xl uppercase tracking-[0.1em] text-white">
               {title}
             </h2>
             <button
               onClick={onClose}
-              className="font-sans text-neutral-400 transition-colors hover:text-black"
+              className="text-[#666666] hover:text-white transition-colors"
               aria-label="Cerrar"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -91,13 +90,13 @@ export function Modal({
         )}
 
         {/* Content */}
-        <div className="px-6 py-6 overflow-y-auto flex-1">
+        <div className="px-6 py-6 overflow-y-auto flex-1 text-white">
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 border-t border-neutral-200 px-6 py-4 flex-shrink-0">
+          <div className="flex items-center justify-end gap-3 border-t border-[#333333] px-6 py-4 flex-shrink-0">
             {footer}
           </div>
         )}
@@ -121,12 +120,20 @@ Modal.Footer = function ModalFooter({
 }) {
   return (
     <>
-      <Button variant="ghost" size="md" onClick={onCancel} disabled={isConfirming}>
+      <button
+        onClick={onCancel}
+        disabled={isConfirming}
+        className="px-4 py-2 bg-transparent border border-[#333333] text-white rounded-lg text-sm font-medium hover:bg-[#2a2a2a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
         {cancelText}
-      </Button>
-      <Button variant="primary" size="md" onClick={onConfirm} disabled={isConfirming}>
+      </button>
+      <button
+        onClick={onConfirm}
+        disabled={isConfirming}
+        className="px-4 py-2 bg-[#D4A84B] text-black rounded-lg text-sm font-medium hover:bg-[#E5B95C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
         {isConfirming ? "Procesando..." : confirmText}
-      </Button>
+      </button>
     </>
   )
 }
@@ -148,12 +155,20 @@ export function ModalFooter({
 }: ModalFooterProps) {
   return (
     <>
-      <Button variant="ghost" size="md" onClick={onCancel} disabled={isConfirming}>
+      <button
+        onClick={onCancel}
+        disabled={isConfirming}
+        className="px-4 py-2 bg-transparent border border-[#333333] text-white rounded-lg text-sm font-medium hover:bg-[#2a2a2a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
         {cancelText}
-      </Button>
-      <Button variant="primary" size="md" onClick={onConfirm} disabled={isConfirming}>
+      </button>
+      <button
+        onClick={onConfirm}
+        disabled={isConfirming}
+        className="px-4 py-2 bg-[#D4A84B] text-black rounded-lg text-sm font-medium hover:bg-[#E5B95C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
         {isConfirming ? "Procesando..." : confirmText}
-      </Button>
+      </button>
     </>
   )
 }

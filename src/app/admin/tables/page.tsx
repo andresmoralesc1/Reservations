@@ -179,22 +179,28 @@ export default function TablesPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl uppercase tracking-wider text-black">
+          <h1 className="font-display text-2xl sm:text-3xl uppercase tracking-[0.1em] text-white">
             Configuración de Mesas
           </h1>
-          <p className="font-sans text-neutral-500 mt-1">
+          <p className="font-sans text-[#A0A0A0] mt-1 text-sm">
             Gestiona la configuración de mesas del restaurante
           </p>
         </div>
         <div className="flex items-center gap-3">
           {viewMode === "list" && (
             <>
-              <Button variant="outline" size="md" onClick={() => setShowBulk(true)}>
+              <button
+                onClick={() => setShowBulk(true)}
+                className="px-4 py-2 bg-transparent border border-[#333333] text-white rounded-lg text-sm font-medium hover:bg-[#2a2a2a] transition-colors"
+              >
                 + Varias
-              </Button>
-              <Button variant="primary" size="md" onClick={handleCreateTable}>
+              </button>
+              <button
+                onClick={handleCreateTable}
+                className="px-4 py-2 bg-[#D4A84B] text-black rounded-lg text-sm font-medium hover:bg-[#E5B95C] transition-colors"
+              >
                 + Agregar Mesa
-              </Button>
+              </button>
             </>
           )}
         </div>
@@ -210,23 +216,23 @@ export default function TablesPage() {
       />
 
       {/* View Mode Tabs */}
-      <div className="flex border-b border-gray-200">
+      <div className="flex border-b border-[#333333]">
         <button
           onClick={() => setViewMode("list")}
-          className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+          className={`px-6 py-3 font-medium transition-colors border-b-2 text-sm ${
             viewMode === "list"
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-gray-500 hover:text-gray-700"
+              ? "border-[#D4A84B] text-[#D4A84B]"
+              : "border-transparent text-[#666666] hover:text-white"
           }`}
         >
           Vista Lista
         </button>
         <button
           onClick={() => setViewMode("layout")}
-          className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+          className={`px-6 py-3 font-medium transition-colors border-b-2 text-sm ${
             viewMode === "layout"
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-gray-500 hover:text-gray-700"
+              ? "border-[#D4A84B] text-[#D4A84B]"
+              : "border-transparent text-[#666666] hover:text-white"
           }`}
         >
           Editor Visual

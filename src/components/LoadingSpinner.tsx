@@ -16,11 +16,11 @@ export function LoadingSpinner({ size = "md", className, text }: LoadingSpinnerP
   return (
     <div className={cn("flex flex-col items-center justify-center gap-4", className)}>
       <div className={cn(
-        "animate-spin rounded-full border-black border-t-transparent",
+        "animate-spin rounded-full border-[#D4A84B] border-t-transparent",
         sizeClasses[size]
       )} />
       {text && (
-        <p className="font-sans text-sm text-neutral-500">{text}</p>
+        <p className="font-sans text-sm text-[#A0A0A0]">{text}</p>
       )}
     </div>
   )
@@ -38,7 +38,7 @@ export function InlineLoader({ text }: { text?: string }) {
   return (
     <div className="flex items-center gap-3 py-8">
       <LoadingSpinner size="sm" />
-      {text && <span className="font-sans text-sm text-neutral-500">{text}</span>}
+      {text && <span className="font-sans text-sm text-[#A0A0A0]">{text}</span>}
     </div>
   )
 }

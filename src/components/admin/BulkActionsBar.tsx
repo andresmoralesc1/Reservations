@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/Button"
 import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { toast } from "@/components/Toast"
 
@@ -79,45 +78,39 @@ export function BulkActionsBar({
 
   return (
     <>
-      <div className="bg-black text-white px-6 py-4 flex items-center justify-between">
+      <div className="bg-[#1a1a1a] border border-[#D4A84B] border-opacity-30 px-6 py-4 flex items-center justify-between rounded-lg">
         <div className="flex items-center gap-4">
-          <span className="font-display text-sm uppercase tracking-wider">
+          <span className="font-display text-xs uppercase tracking-[0.15em] text-[#D4A84B]">
             {selectedCount} {selectedCount === 1 ? "seleccionada" : "seleccionadas"}
           </span>
           <button
             onClick={onClearSelection}
-            className="text-neutral-400 hover:text-white transition-colors text-sm"
+            className="text-[#666666] hover:text-white transition-colors text-sm"
           >
             Limpiar selección
           </button>
         </div>
         <div className="flex items-center gap-3">
-          <Button
-            variant="secondary"
-            size="sm"
+          <button
             onClick={onExportCSV}
-            className="bg-white text-black hover:bg-neutral-100"
+            className="px-4 py-2 bg-[#2a2a2a] border border-[#333333] text-white rounded-lg text-sm font-medium hover:bg-[#333333] transition-colors"
           >
             Exportar CSV
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
+          </button>
+          <button
             onClick={() => setConfirmDialog({ isOpen: true, action: "reject" })}
             disabled={isProcessing}
-            className="border-white text-white hover:bg-white hover:text-black"
+            className="px-4 py-2 bg-transparent border border-red-900 border-opacity-50 text-red-400 rounded-lg text-sm font-medium hover:bg-red-900 hover:bg-opacity-10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Rechazar
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
+          </button>
+          <button
             onClick={() => setConfirmDialog({ isOpen: true, action: "approve" })}
             disabled={isProcessing}
-            className="bg-emerald-500 text-white hover:bg-emerald-600"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Aprobar
-          </Button>
+          </button>
         </div>
       </div>
 

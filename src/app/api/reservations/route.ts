@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-import { config } from "@/lib/config/env"
-import { createLegacyReservation, getLegacyReservation, cancelLegacyReservation, listLegacyReservations } from "@/lib/services/legacy-service"
+import {
+  createReservation,
+  getReservationByCode,
+  listReservations,
+  cancelReservation as cancelReservationService
+} from "@/lib/services"
 import { validateRequestBody, formatZodError, CreateReservationSchema, spanishPhoneSchema } from "@/lib/schemas/reservation-schemas"
 import { z } from "zod"
 import { invalidateReservationCache } from "@/lib/cache"
@@ -14,7 +18,7 @@ const logger = createLogger({ module: "api-reservations" })
  * Mantiene compatibilidad con el sistema existente
  */
 const HybridCreateReservationSchema = z.object({
-  // Spanish fields (legacy)
+  // Spanish fields (legacy compatibility)
   nombre: z.string().min(2).optional(),
   numero: spanishPhoneSchema.optional(),
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -44,14 +48,16 @@ const HybridCreateReservationSchema = z.object({
   { message: "Se requieren todos los campos (en español o inglés)" }
 )
 
+const DEFAULT_RESTAURANT_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+
 // GET /api/reservations - Listar o consultar reservas
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const code = searchParams.get("code")
-    const restaurant = searchParams.get("restaurante")
-    const date = searchParams.get("fecha")
-    const status = searchParams.get("estatus")
+    const restaurant = searchParams.get("restaurante") || searchParams.get("restaurantId")
+    const date = searchParams.get("fecha") || searchParams.get("date")
+    const status = searchParams.get("estatus") || searchParams.get("status")
     const limit = parseInt(searchParams.get("limit") || "50")
 
     logger.debug({
@@ -65,28 +71,25 @@ export async function GET(request: NextRequest) {
 
     // Buscar por código
     if (code) {
-      const result = await getLegacyReservation(code)
-      if (!result.success) {
-        return NextResponse.json({ error: result.message }, { status: 404 })
+      try {
+        const reservation = await getReservationByCode(code)
+        return NextResponse.json({ reservation })
+      } catch {
+        return NextResponse.json({ error: "Reserva no encontrada" }, { status: 404 })
       }
-      return NextResponse.json({ reservation: result.data })
     }
 
     // Listar con filtros
-    const result = await listLegacyReservations({
-      restaurante: restaurant || undefined,
-      fecha: date || undefined,
-      estatus: status || undefined,
+    const reservations = await listReservations({
+      restaurantId: restaurant || DEFAULT_RESTAURANT_ID,
+      date: date || undefined,
+      status: status || undefined,
       limit
     })
 
-    if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 500 })
-    }
-
     return NextResponse.json({
-      reservations: result.data,
-      meta: { count: result.data?.length || 0 }
+      reservations,
+      meta: { count: reservations.length }
     })
   } catch (error) {
     logger.error({ msg: "Error en GET /api/reservations", error })
@@ -135,39 +138,38 @@ export async function POST(request: NextRequest) {
 
     const validatedData = validated.data
 
-    // Normalize to Spanish format for legacy service
-    const nombre = validatedData.nombre || validatedData.customerName!
-    const numero = validatedData.numero || validatedData.customerPhone!
-    const fecha = validatedData.fecha || validatedData.reservationDate!
-    const hora = validatedData.hora || validatedData.reservationTime!
-    const invitados = validatedData.invitados || validatedData.partySize!
-    const fuente = validatedData.fuente || validatedData.source || "MANUAL"
-    const restaurante = validatedData.restaurante || validatedData.restaurantId || "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-    const observaciones = validatedData.observaciones || validatedData.specialRequests
+    // Normalize to English format for new service
+    const customerName = validatedData.nombre || validatedData.customerName!
+    const customerPhone = validatedData.numero || validatedData.customerPhone!
+    const reservationDate = validatedData.fecha || validatedData.reservationDate!
+    const reservationTime = validatedData.hora || validatedData.reservationTime!
+    const partySize = validatedData.invitados || validatedData.partySize!
+    const source = validatedData.fuente || validatedData.source || "MANUAL"
+    const restaurantId = validatedData.restaurante || validatedData.restaurantId || DEFAULT_RESTAURANT_ID
+    const specialRequests = validatedData.observaciones || validatedData.specialRequests
 
-    // Crear reserva usando servicio legacy
-    const result = await createLegacyReservation({
-      nombre,
-      numero,
-      fecha,
-      hora,
-      invitados,
-      idMesa: validatedData.idMesa,
-      fuente,
-      restaurante,
-      observaciones,
+    // Parse table IDs from idMesa if provided
+    const tableIds = validatedData.idMesa ? [validatedData.idMesa] : undefined
+
+    // Crear reserva usando el nuevo servicio
+    const reservation = await createReservation({
+      customerName,
+      customerPhone,
+      reservationDate,
+      reservationTime,
+      partySize,
+      restaurantId,
+      source,
+      specialRequests,
+      tableIds
     })
 
-    if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 500 })
-    }
-
     // Invalidar caché de dashboard/analytics
-    await invalidateReservationCache(restaurante, fecha)
+    await invalidateReservationCache(restaurantId, reservationDate)
 
     return NextResponse.json({
-      reservation: result.data,
-      reservationCode: result.reservationCode
+      reservation,
+      reservationCode: reservation.reservationCode
     }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {

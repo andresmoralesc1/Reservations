@@ -1,8 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button } from "@/components/Button"
-import { Modal } from "@/components/Modal"
 import { ServiceModal } from "./ServiceModal"
 
 interface Service {
@@ -247,88 +245,94 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-8">
+      <div className="bg-[#1a1a1a] rounded-lg border border-[#333333] p-8">
         <div className="animate-pulse space-y-4">
-          <div className="h-4 bg-neutral-200 rounded w-1/4"></div>
+          <div className="h-4 bg-[#333333] rounded w-1/4"></div>
           <div className="space-y-3">
-            <div className="h-16 bg-neutral-200 rounded"></div>
-            <div className="h-16 bg-neutral-200 rounded"></div>
-            <div className="h-16 bg-neutral-200 rounded"></div>
+            <div className="h-16 bg-[#2a2a2a] rounded"></div>
+            <div className="h-16 bg-[#2a2a2a] rounded"></div>
+            <div className="h-16 bg-[#2a2a2a] rounded"></div>
           </div>
         </div>
-        <p className="text-sm text-neutral-500 mt-4 text-center">Cargando servicios...</p>
+        <p className="text-sm text-[#666666] mt-4 text-center">Cargando servicios...</p>
       </div>
     )
   }
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-sm border border-neutral-200">
+      <div className="bg-[#1a1a1a] rounded-lg border border-[#333333]">
         {/* Header */}
-        <div className="border-b border-neutral-200 px-6 py-4">
+        <div className="border-b border-[#333333] px-6 py-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-xl uppercase tracking-wider text-black">
+            <h2 className="font-display text-xl uppercase tracking-[0.1em] text-white">
               Servicios
             </h2>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="md" onClick={fetchServices}>
+              <button
+                onClick={fetchServices}
+                className="px-4 py-2 bg-transparent border border-[#333333] text-white text-sm font-medium rounded-lg hover:bg-[#2a2a2a] hover:border-[#D4A84B] transition-colors"
+              >
                 ↻ Refrescar
-              </Button>
-              <Button variant="primary" size="md" onClick={handleCreate}>
+              </button>
+              <button
+                onClick={handleCreate}
+                className="px-4 py-2 bg-[#D4A84B] text-black text-sm font-medium rounded-lg hover:bg-[#E5B95C] transition-colors"
+              >
                 + Crear Servicio
-              </Button>
+              </button>
             </div>
           </div>
 
           {/* Filters */}
-          <div className="flex items-center gap-4 mt-4">
+          <div className="flex items-center gap-4 mt-4 flex-wrap">
             <select
               value={filters.isActive}
               onChange={(e) => setFilters({ ...filters, isActive: e.target.value })}
-              className="px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+              className="px-3 py-1.5 bg-[#2a2a2a] border border-[#333333] text-white rounded-lg text-sm focus:outline-none focus:border-[#D4A84B]"
             >
-              <option value="all">Todos los estados</option>
-              <option value="true">Activos</option>
-              <option value="false">Inactivos</option>
+              <option value="all" className="bg-[#2a2a2a] text-white">Todos los estados</option>
+              <option value="true" className="bg-[#2a2a2a] text-white">Activos</option>
+              <option value="false" className="bg-[#2a2a2a] text-white">Inactivos</option>
             </select>
 
             <select
               value={filters.serviceType}
               onChange={(e) => setFilters({ ...filters, serviceType: e.target.value })}
-              className="px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+              className="px-3 py-1.5 bg-[#2a2a2a] border border-[#333333] text-white rounded-lg text-sm focus:outline-none focus:border-[#D4A84B]"
             >
-              <option value="all">Todos los tipos</option>
-              <option value="comida">Comida</option>
-              <option value="cena">Cena</option>
+              <option value="all" className="bg-[#2a2a2a] text-white">Todos los tipos</option>
+              <option value="comida" className="bg-[#2a2a2a] text-white">Comida</option>
+              <option value="cena" className="bg-[#2a2a2a] text-white">Cena</option>
             </select>
 
             <select
               value={filters.season}
               onChange={(e) => setFilters({ ...filters, season: e.target.value })}
-              className="px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+              className="px-3 py-1.5 bg-[#2a2a2a] border border-[#333333] text-white rounded-lg text-sm focus:outline-none focus:border-[#D4A84B]"
             >
-              <option value="all">Todas las temporadas</option>
-              <option value="todos">Todas</option>
-              <option value="invierno">Invierno</option>
-              <option value="primavera">Primavera</option>
-              <option value="verano">Verano</option>
-              <option value="otoño">Otoño</option>
+              <option value="all" className="bg-[#2a2a2a] text-white">Todas las temporadas</option>
+              <option value="todos" className="bg-[#2a2a2a] text-white">Todas</option>
+              <option value="invierno" className="bg-[#2a2a2a] text-white">Invierno</option>
+              <option value="primavera" className="bg-[#2a2a2a] text-white">Primavera</option>
+              <option value="verano" className="bg-[#2a2a2a] text-white">Verano</option>
+              <option value="otoño" className="bg-[#2a2a2a] text-white">Otoño</option>
             </select>
           </div>
         </div>
 
         {/* Error */}
         {error && (
-          <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-700">{error}</p>
+          <div className="mx-6 mt-4 p-4 bg-[#E53935]/20 border border-[#E53935]/30 rounded-lg">
+            <p className="text-sm text-[#E53935]">{error}</p>
           </div>
         )}
 
         {/* Services List */}
-        <div className="divide-y divide-neutral-200">
+        <div className="divide-y divide-[#333333]">
           {filteredServices.length === 0 ? (
             <div className="px-6 py-12 text-center">
-              <p className="text-neutral-500">
+              <p className="text-[#A0A0A0]">
                 {services.length === 0
                   ? "No hay servicios configurados. Crea tu primer servicio para empezar."
                   : "No hay servicios que coincidan con los filtros seleccionados."}
@@ -338,31 +342,31 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
             filteredServices.map((service) => (
               <div
                 key={service.id}
-                className="px-6 py-4 hover:bg-neutral-50 transition-colors"
+                className="px-6 py-4 hover:bg-[#2a2a2a] transition-colors"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
-                      <h3 className="font-medium text-lg">{service.name}</h3>
+                      <h3 className="font-medium text-lg text-white">{service.name}</h3>
                       <span
                         className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                           service.isActive
-                            ? "bg-green-100 text-green-700"
-                            : "bg-neutral-100 text-neutral-600"
+                            ? "bg-[#4CAF50]/20 text-[#4CAF50] border border-[#4CAF50]/30"
+                            : "bg-[#666666]/20 text-[#666666] border border-[#666666]/30"
                         }`}
                       >
                         {service.isActive ? "Activo" : "Inactivo"}
                       </span>
-                      <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
+                      <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-[#2196F3]/20 text-[#2196F3] border border-[#2196F3]/30">
                         {SERVICE_TYPE_LABELS[service.serviceType] || service.serviceType}
                       </span>
                     </div>
 
                     {service.description && (
-                      <p className="text-sm text-neutral-600 mt-1">{service.description}</p>
+                      <p className="text-sm text-[#A0A0A0] mt-1">{service.description}</p>
                     )}
 
-                    <div className="flex items-center gap-4 mt-2 text-sm text-neutral-500">
+                    <div className="flex items-center gap-4 mt-2 text-sm text-[#666666]">
                       <span>
                         {SEASON_LABELS[service.season] || service.season}
                       </span>
@@ -371,7 +375,7 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
                         {DAY_TYPE_LABELS[service.dayType] || service.dayType}
                       </span>
                       <span>•</span>
-                      <span>
+                      <span className="text-[#D4A84B]">
                         {formatTime(service.startTime)} - {formatTime(service.endTime)}
                       </span>
                       <span>•</span>
@@ -379,42 +383,37 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
                     </div>
 
                     {service.restaurant && (
-                      <div className="text-xs text-neutral-400 mt-1">
+                      <div className="text-xs text-[#666666] mt-1">
                         {service.restaurant.name}
                       </div>
                     )}
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                    <button
                       onClick={() => handleEdit(service)}
+                      className="px-3 py-1.5 bg-transparent border border-[#333333] text-white text-sm font-medium rounded-lg hover:bg-[#2a2a2a] hover:border-[#D4A84B] transition-colors"
                     >
                       Editar
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                    </button>
+                    <button
                       onClick={() => handleToggleActive(service)}
                       disabled={deletingService?.id === service.id}
-                      className={service.isActive ? "text-orange-600 hover:text-orange-700 hover:bg-orange-50" : "text-green-600 hover:text-green-700 hover:bg-green-50"}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                        !service.isActive
+                          ? "opacity-50 cursor-not-allowed bg-[#666666]/20 text-[#666666]"
+                          : "bg-[#E53935]/20 text-[#E53935] border border-[#E53935]/30 hover:bg-[#E53935]/30"
+                      }`}
                     >
-                      {deletingService?.id === service.id
-                        ? "Procesando..."
-                        : service.isActive
-                        ? "Desactivar"
-                        : "Activar"}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                      {deletingService?.id === service.id ? "Procesando..." : service.isActive ? "Desactivar" : "Activar"}
+                    </button>
+                    <button
                       onClick={() => openDeleteConfirm(service)}
                       disabled={deletingService?.id === service.id}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="px-3 py-1.5 bg-transparent border border-[#E53935]/50 text-[#E53935] text-sm font-medium rounded-lg hover:bg-[#E53935] hover:text-white transition-colors disabled:opacity-50"
                     >
                       {deletingService?.id === service.id ? "Eliminando..." : "Eliminar"}
-                    </Button>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -433,68 +432,58 @@ export function ServicesManager({ restaurantId }: ServicesManagerProps) {
       />
 
       {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={deleteConfirmOpen}
-        onClose={closeDeleteConfirm}
-        title="Eliminar Servicio"
-        size="md"
-        footer={
-          <>
+      <div className={`fixed inset-0 z-50 flex items-center justify-center ${deleteConfirmOpen ? "" : "hidden"}`}>
+        <div className="absolute inset-0 bg-black/70" onClick={closeDeleteConfirm}></div>
+        <div className="relative bg-[#1a1a1a] border border-[#333333] rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+          <h3 className="font-display text-lg uppercase tracking-[0.1em] text-white mb-4">
+            Eliminar Servicio
+          </h3>
+
+          <div className="space-y-4">
+            <div className="bg-[#E53935]/20 border border-[#E53935]/30 rounded-lg p-4">
+              <p className="text-sm text-[#E53935] font-medium">
+                ⚠️ Esta acción es irreversible
+              </p>
+            </div>
+
+            <p className="text-[#A0A0A0]">
+              ¿Estás seguro que deseas eliminar el servicio <strong className="text-white">"{serviceToDelete?.name}"</strong>?
+            </p>
+
+            <p className="text-sm text-[#666666]">
+              Esta acción eliminará permanentemente el servicio. Si el servicio tiene reservas asociadas, no se podrá eliminar.
+            </p>
+
+            {serviceToDelete && (
+              <div className="bg-[#2a2a2a] rounded-lg p-3 text-sm border border-[#333333]">
+                <div className="grid grid-cols-2 gap-2 text-[#A0A0A0]">
+                  <span><strong className="text-white">Tipo:</strong> {SERVICE_TYPE_LABELS[serviceToDelete.serviceType] || serviceToDelete.serviceType}</span>
+                  <span><strong className="text-white">Días:</strong> {DAY_TYPE_LABELS[serviceToDelete.dayType] || serviceToDelete.dayType}</span>
+                  <span><strong className="text-white">Horario:</strong> {formatTime(serviceToDelete.startTime)} - {formatTime(serviceToDelete.endTime)}</span>
+                  <span><strong className="text-white">Temporada:</strong> {SEASON_LABELS[serviceToDelete.season] || serviceToDelete.season}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-3 mt-6">
             <button
               onClick={closeDeleteConfirm}
               disabled={deletingService !== null}
-              className="px-4 py-2 text-neutral-600 hover:text-black transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-transparent border border-[#333333] text-white text-sm font-medium rounded-lg hover:bg-[#2a2a2a] transition-colors disabled:opacity-50"
             >
               Cancelar
             </button>
             <button
               onClick={handleDeletePermanently}
               disabled={deletingService !== null}
-              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+              className="px-6 py-2 bg-[#E53935] text-white rounded-lg hover:bg-[#C62828] transition-colors disabled:opacity-50"
             >
               {deletingService ? "Eliminando..." : "Eliminar Permanentemente"}
             </button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-sm text-red-800 font-medium">
-              ⚠️ Esta acción eliminará permanentemente el servicio
-            </p>
           </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-800 font-medium mb-2">
-              📋 Información del servicio:
-            </p>
-            <div className="text-sm text-neutral-700 space-y-1">
-              <p><strong>Nombre:</strong> {serviceToDelete?.name}</p>
-              <p><strong>Tipo:</strong> {serviceToDelete ? SERVICE_TYPE_LABELS[serviceToDelete.serviceType] : ''}</p>
-              <p><strong>Horario:</strong> {serviceToDelete?.startTime} - {serviceToDelete?.endTime}</p>
-            </div>
-          </div>
-
-          <p className="text-neutral-700">
-            ¿Estás seguro que deseas eliminar el servicio <strong>"{serviceToDelete?.name}"</strong>?
-          </p>
-
-          <p className="text-sm text-neutral-500">
-            💡 Si el servicio tiene reservas asociadas, el sistema te lo indicará y podrás desactivarlo en su lugar.
-          </p>
-
-          {serviceToDelete && (
-            <div className="bg-neutral-50 rounded-lg p-3 text-sm">
-              <div className="grid grid-cols-2 gap-2 text-neutral-600">
-                <span><strong>Tipo:</strong> {SERVICE_TYPE_LABELS[serviceToDelete.serviceType] || serviceToDelete.serviceType}</span>
-                <span><strong>Días:</strong> {DAY_TYPE_LABELS[serviceToDelete.dayType] || serviceToDelete.dayType}</span>
-                <span><strong>Horario:</strong> {formatTime(serviceToDelete.startTime)} - {formatTime(serviceToDelete.endTime)}</span>
-                <span><strong>Temporada:</strong> {SEASON_LABELS[serviceToDelete.season] || serviceToDelete.season}</span>
-              </div>
-            </div>
-          )}
         </div>
-      </Modal>
+      </div>
     </>
   )
 }

@@ -12,11 +12,11 @@ import { POST as CheckAvailabilityPOST } from '@/app/api/reservations/check-avai
 import { NextRequest } from 'next/server'
 
 // Mock de los servicios
-vi.mock('@/lib/services/legacy-service', () => ({
-  createLegacyReservation: vi.fn(),
-  getLegacyReservation: vi.fn(),
-  cancelLegacyReservation: vi.fn(),
-  listLegacyReservations: vi.fn(),
+vi.mock('@/lib/services', () => ({
+  createReservation: vi.fn(),
+  getReservationByCode: vi.fn(),
+  cancelReservation: vi.fn(),
+  listReservations: vi.fn(),
 }))
 
 vi.mock('@/lib/availability/services-availability', () => ({
@@ -55,10 +55,10 @@ vi.mock('@/lib/config/env', () => ({
 }))
 
 import {
-  createLegacyReservation,
-  getLegacyReservation,
-  listLegacyReservations,
-} from '@/lib/services/legacy-service'
+  createReservation,
+  getReservationByCode,
+  listReservations,
+} from '@/lib/services'
 import { servicesAvailability } from '@/lib/availability/services-availability'
 import { db } from '@/lib/db'
 
@@ -105,12 +105,10 @@ describe('POST /api/reservations', () => {
   })
 
   it('debería crear reserva exitosamente con campos en español (201)', async () => {
-    vi.mocked(createLegacyReservation).mockResolvedValue({
-      success: true,
+    vi.mocked(createReservation).mockResolvedValue({
+      ...mockReservation,
       reservationCode: 'TEST-12345',
-      message: 'Reserva creada',
-      data: mockReservation,
-    })
+    } as any)
 
     const request = createMockRequest({
       nombre: 'Juan Pérez',
@@ -125,16 +123,14 @@ describe('POST /api/reservations', () => {
 
     expect(response.status).toBe(201)
     expect(data.reservationCode).toBe('TEST-12345')
-    expect(createLegacyReservation).toHaveBeenCalled()
+    expect(createReservation).toHaveBeenCalled()
   })
 
   it('debería crear reserva exitosamente con campos en inglés (201)', async () => {
-    vi.mocked(createLegacyReservation).mockResolvedValue({
-      success: true,
+    vi.mocked(createReservation).mockResolvedValue({
+      ...mockReservation,
       reservationCode: 'TEST-67890',
-      message: 'Reserva creada',
-      data: mockReservation,
-    })
+    } as any)
 
     const request = createMockRequest({
       customerName: 'John Doe',
@@ -181,12 +177,10 @@ describe('POST /api/reservations', () => {
   })
 
   it('debería validar fecha pasada (400) - lógica de negocio', async () => {
-    vi.mocked(createLegacyReservation).mockResolvedValue({
-      success: true,
+    vi.mocked(createReservation).mockResolvedValue({
+      ...mockReservation,
       reservationCode: 'TEST-12345',
-      message: 'Reserva creada',
-      data: mockReservation,
-    })
+    } as any)
 
     const request = createMockRequest({
       nombre: 'Juan Pérez',
@@ -198,7 +192,7 @@ describe('POST /api/reservations', () => {
 
     const response = await POST(request)
     // La validación de fecha pasada puede estar en el servicio, no en el API
-    expect(createLegacyReservation).toHaveBeenCalled()
+    expect(createReservation).toHaveBeenCalled()
   })
 
   it('debería validar partySize fuera de rango (400)', async () => {
@@ -218,10 +212,7 @@ describe('POST /api/reservations', () => {
   })
 
   it('debería manejar error del servicio (500)', async () => {
-    vi.mocked(createLegacyReservation).mockResolvedValue({
-      success: false,
-      error: 'Error al crear reserva',
-    })
+    vi.mocked(createReservation).mockRejectedValue(new Error('Error al crear reserva'))
 
     const request = createMockRequest({
       nombre: 'Juan Pérez',
@@ -524,10 +515,7 @@ describe('GET /api/reservations (listar)', () => {
   })
 
   it('debería listar reservas con filtros', async () => {
-    vi.mocked(listLegacyReservations).mockResolvedValue({
-      success: true,
-      data: [mockReservation],
-    })
+    vi.mocked(listReservations).mockResolvedValue([mockReservation] as any)
 
     const request = createMockRequestWithUrl(
       'http://localhost:3000/api/reservations?fecha=2026-04-15&limit=10'
@@ -540,17 +528,15 @@ describe('GET /api/reservations (listar)', () => {
 
     expect(response.status).toBe(200)
     expect(data.reservations).toBeDefined()
-    expect(listLegacyReservations).toHaveBeenCalledWith({
-      fecha: '2026-04-15',
+    expect(listReservations).toHaveBeenCalledWith({
+      date: '2026-04-15',
       limit: 10,
+      restaurantId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     })
   })
 
   it('debería buscar por código', async () => {
-    vi.mocked(getLegacyReservation).mockResolvedValue({
-      success: true,
-      data: mockReservation,
-    })
+    vi.mocked(getReservationByCode).mockResolvedValue(mockReservation as any)
 
     const request = createMockRequestWithUrl(
       'http://localhost:3000/api/reservations?code=TEST-12345'
@@ -562,14 +548,11 @@ describe('GET /api/reservations (listar)', () => {
 
     expect(response.status).toBe(200)
     expect(data.reservation).toBeDefined()
-    expect(getLegacyReservation).toHaveBeenCalledWith('TEST-12345')
+    expect(getReservationByCode).toHaveBeenCalledWith('TEST-12345')
   })
 
   it('debería retornar 404 si código no existe', async () => {
-    vi.mocked(getLegacyReservation).mockResolvedValue({
-      success: false,
-      message: 'No encontré ninguna reserva',
-    })
+    vi.mocked(getReservationByCode).mockRejectedValue(new Error('No encontré ninguna reserva'))
 
     const request = createMockRequestWithUrl(
       'http://localhost:3000/api/reservations?code=NOTEXIST'

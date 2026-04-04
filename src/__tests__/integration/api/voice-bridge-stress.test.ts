@@ -8,13 +8,23 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { POST } from '@/app/api/voice-bridge/route'
 import { NextRequest } from 'next/server'
 
+// Mock de db.ts para evitar error de DATABASE_URL
+vi.mock('@/lib/db', () => ({
+  db: {},
+}))
+
 // Mock de los servicios
-vi.mock('@/lib/services/legacy-service', () => ({
-  createLegacyReservation: vi.fn(),
-  getLegacyReservation: vi.fn(),
-  cancelLegacyReservation: vi.fn(),
-  checkLegacyAvailability: vi.fn(),
-  logLegacyCall: vi.fn(),
+vi.mock('@/lib/services', () => ({
+  createReservation: vi.fn(),
+  getReservationByCode: vi.fn(),
+  cancelReservation: vi.fn(),
+  listReservations: vi.fn(),
+}))
+
+vi.mock('@/lib/availability/services-availability', () => ({
+  servicesAvailability: {
+    checkAvailabilityWithServices: vi.fn(),
+  },
 }))
 
 vi.mock('@/lib/voice/call-logger', () => ({
@@ -24,17 +34,17 @@ vi.mock('@/lib/voice/call-logger', () => ({
 }))
 
 import {
-  createLegacyReservation,
-  getLegacyReservation,
-  cancelLegacyReservation,
-  checkLegacyAvailability,
-} from '@/lib/services/legacy-service'
+  createReservation,
+  getReservationByCode,
+  cancelReservation,
+} from '@/lib/services'
+import { servicesAvailability } from '@/lib/availability/services-availability'
 
 // Type assertions
-const mockCheckLegacyAvailability = checkLegacyAvailability as ReturnType<typeof vi.fn>
-const mockCreateLegacyReservation = createLegacyReservation as ReturnType<typeof vi.fn>
-const mockGetLegacyReservation = getLegacyReservation as ReturnType<typeof vi.fn>
-const mockCancelLegacyReservation = cancelLegacyReservation as ReturnType<typeof vi.fn>
+const mockCheckAvailability = servicesAvailability.checkAvailabilityWithServices as ReturnType<typeof vi.fn>
+const mockCreateReservation = createReservation as ReturnType<typeof vi.fn>
+const mockGetReservationByCode = getReservationByCode as ReturnType<typeof vi.fn>
+const mockCancelReservation = cancelReservation as ReturnType<typeof vi.fn>
 
 // Helper para generar fecha futura válida
 function getFutureDate(daysFromNow = 7): string {
@@ -62,11 +72,12 @@ describe('Stress Test: Voice Bridge API', () => {
 
   describe('Concurrent checkAvailability calls', () => {
     it('debería manejar 10 llamadas simultáneas de checkAvailability', async () => {
-      mockCheckLegacyAvailability.mockResolvedValue({
-        success: true,
+      mockCheckAvailability.mockResolvedValue({
         available: true,
         message: 'Hay disponibilidad',
         availableTables: [],
+        service: null,
+        suggestedTables: [],
       })
 
       const concurrentRequests = Array.from({ length: 10 }, (_, i) =>
@@ -86,15 +97,16 @@ describe('Stress Test: Voice Bridge API', () => {
       results.forEach(response => {
         expect(response.status).toBe(200)
       })
-      expect(mockCheckLegacyAvailability).toHaveBeenCalledTimes(10)
+      expect(mockCheckAvailability).toHaveBeenCalledTimes(10)
     })
 
     it('debería manejar 50 llamadas simultáneas de checkAvailability', async () => {
-      mockCheckLegacyAvailability.mockResolvedValue({
-        success: true,
+      mockCheckAvailability.mockResolvedValue({
         available: true,
         message: 'Hay disponibilidad',
         availableTables: [],
+        service: null,
+        suggestedTables: [],
       })
 
       const concurrentRequests = Array.from({ length: 50 }, (_, i) =>
@@ -116,21 +128,22 @@ describe('Stress Test: Voice Bridge API', () => {
       results.forEach(response => {
         expect(response.status).toBe(200)
       })
-      expect(mockCheckLegacyAvailability).toHaveBeenCalledTimes(50)
+      expect(mockCheckAvailability).toHaveBeenCalledTimes(50)
 
       // Todas las llamadas deben completarse en un tiempo razonable
       expect(duration).toBeLessThan(5000)
     })
 
     it('debería manejar 100 llamadas simultáneas de checkAvailability', async () => {
-      mockCheckLegacyAvailability.mockImplementation(async () => {
+      mockCheckAvailability.mockImplementation(async () => {
         // Simular un pequeño delay de red
         await new Promise(resolve => setTimeout(resolve, Math.random() * 50))
         return {
-          success: true,
           available: true,
           message: 'Hay disponibilidad',
           availableTables: [],
+          service: null,
+          suggestedTables: [],
         }
       })
 
@@ -157,7 +170,7 @@ describe('Stress Test: Voice Bridge API', () => {
       // Todas deben completarse exitosamente
       expect(fulfilled.length).toBe(100)
       expect(rejected.length).toBe(0)
-      expect(mockCheckLegacyAvailability).toHaveBeenCalledTimes(100)
+      expect(mockCheckAvailability).toHaveBeenCalledTimes(100)
 
       // Performance check: debe ser rápido incluso con 100 llamadas
       expect(duration).toBeLessThan(10000)
@@ -166,21 +179,26 @@ describe('Stress Test: Voice Bridge API', () => {
 
   describe('Concurrent createReservation calls', () => {
     it('debería manejar 20 llamadas simultáneas de createReservation', async () => {
-      mockCheckLegacyAvailability.mockResolvedValue({
-        success: true,
+      mockCheckAvailability.mockResolvedValue({
         available: true,
         message: 'Hay disponibilidad',
         availableTables: [],
+        service: null,
+        suggestedTables: [],
       })
 
-      mockCreateLegacyReservation.mockImplementation(async () => {
+      mockCreateReservation.mockImplementation(async () => {
         await new Promise(resolve => setTimeout(resolve, Math.random() * 30))
         return {
-          success: true,
           reservationCode: `RES-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
-          message: 'Reserva creada',
-          data: {} as any,
-        }
+          id: 'res-1',
+          customerName: 'Test',
+          customerPhone: '612345678',
+          reservationDate: '2026-04-15',
+          reservationTime: '20:00',
+          partySize: 4,
+          status: 'CONFIRMADO',
+        } as any
       })
 
       const concurrentRequests = Array.from({ length: 20 }, (_, i) =>
@@ -216,28 +234,30 @@ describe('Stress Test: Voice Bridge API', () => {
 
     it('debería manejar mix de éxito y error en createReservation concurrente', async () => {
       let callCount = 0
-      mockCheckLegacyAvailability.mockResolvedValue({
-        success: true,
+      mockCheckAvailability.mockResolvedValue({
         available: true,
         message: 'Hay disponibilidad',
         availableTables: [],
+        service: null,
+        suggestedTables: [],
       })
 
-      mockCreateLegacyReservation.mockImplementation(async () => {
+      mockCreateReservation.mockImplementation(async () => {
         callCount++
         // Simular que 30% de las llamadas fallan
         if (callCount % 10 < 3) {
-          return {
-            success: false,
-            error: 'Error al crear reserva',
-          }
+          throw new Error('Error al crear reserva')
         }
         return {
-          success: true,
           reservationCode: `RES-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
-          message: 'Reserva creada',
-          data: {} as any,
-        }
+          id: 'res-1',
+          customerName: 'Test',
+          customerPhone: '612345678',
+          reservationDate: '2026-04-15',
+          reservationTime: '20:00',
+          partySize: 4,
+          status: 'CONFIRMADO',
+        } as any
       })
 
       const concurrentRequests = Array.from({ length: 30 }, (_, i) =>
@@ -272,32 +292,34 @@ describe('Stress Test: Voice Bridge API', () => {
 
   describe('Mixed concurrent operations', () => {
     it('debería manejar mix de checkAvailability, createReservation y getReservation', async () => {
-      mockCheckLegacyAvailability.mockResolvedValue({
-        success: true,
+      mockCheckAvailability.mockResolvedValue({
         available: true,
         message: 'Hay disponibilidad',
         availableTables: [],
+        service: null,
+        suggestedTables: [],
       })
 
-      mockCreateLegacyReservation.mockResolvedValue({
-        success: true,
+      mockCreateReservation.mockResolvedValue({
         reservationCode: 'RES-TEST1',
-        message: 'Reserva creada',
-        data: {} as any,
-      })
+        id: 'res-1',
+        customerName: 'Test Cliente',
+        customerPhone: '612345678',
+        reservationDate: getFutureDate(),
+        reservationTime: '20:00',
+        partySize: 4,
+        status: 'CONFIRMADO',
+      } as any)
 
-      mockGetLegacyReservation.mockResolvedValue({
-        success: true,
-        data: {
-          reservationCode: 'RES-TEST1',
-          customerName: 'Test Cliente',
-          customerPhone: '612345678',
-          reservationDate: getFutureDate(),
-          reservationTime: '20:00',
-          partySize: 4,
-          status: 'CONFIRMADO',
-        },
-      })
+      mockGetReservationByCode.mockResolvedValue({
+        reservationCode: 'RES-TEST1',
+        customerName: 'Test Cliente',
+        customerPhone: '612345678',
+        reservationDate: getFutureDate(),
+        reservationTime: '20:00',
+        partySize: 4,
+        status: 'CONFIRMADO',
+      } as any)
 
       const requests = [
         // 10 checkAvailability
@@ -345,10 +367,10 @@ describe('Stress Test: Voice Bridge API', () => {
       expect(fulfilled.length).toBe(20)
 
       // Verificar que todos los servicios fueron llamados
-      // Nota: createReservation también llama a checkLegacyAvailability internamente
-      expect(mockCheckLegacyAvailability).toHaveBeenCalledTimes(15) // 10 directas + 5 desde create
-      expect(mockCreateLegacyReservation).toHaveBeenCalledTimes(5)
-      expect(mockGetLegacyReservation).toHaveBeenCalledTimes(5)
+      // Nota: createReservation también llama a checkAvailability internamente
+      expect(mockCheckAvailability).toHaveBeenCalledTimes(15) // 10 directas + 5 desde create
+      expect(mockCreateReservation).toHaveBeenCalledTimes(5)
+      expect(mockGetReservationByCode).toHaveBeenCalledTimes(5)
 
       // Performance check
       expect(duration).toBeLessThan(3000)
@@ -357,16 +379,17 @@ describe('Stress Test: Voice Bridge API', () => {
 
   describe('Error handling under load', () => {
     it('debería manejar correctamente errores parciales en carga alta', async () => {
-      mockCheckLegacyAvailability.mockImplementation(async () => {
+      mockCheckAvailability.mockImplementation(async () => {
         // 20% de error aleatorio
         if (Math.random() < 0.2) {
           throw new Error('Random DB error')
         }
         return {
-          success: true,
           available: true,
           message: 'Hay disponibilidad',
           availableTables: [],
+          service: null,
+          suggestedTables: [],
         }
       })
 
@@ -402,14 +425,15 @@ describe('Stress Test: Voice Bridge API', () => {
     })
 
     it('debería manejar timeouts simulados', async () => {
-      mockCheckLegacyAvailability.mockImplementation(async () => {
+      mockCheckAvailability.mockImplementation(async () => {
         // Simular timeout para algunas peticiones
         await new Promise(resolve => setTimeout(resolve, 200 + Math.random() * 100))
         return {
-          success: true,
           available: true,
           message: 'Hay disponibilidad',
           availableTables: [],
+          service: null,
+          suggestedTables: [],
         }
       })
 
@@ -436,11 +460,12 @@ describe('Stress Test: Voice Bridge API', () => {
 
   describe('Rate limiting behavior', () => {
     it('no debería tener rate limiting hardcoded (verificación)', async () => {
-      mockCheckLegacyAvailability.mockResolvedValue({
-        success: true,
+      mockCheckAvailability.mockResolvedValue({
         available: true,
         message: 'Hay disponibilidad',
         availableTables: [],
+        service: null,
+        suggestedTables: [],
       })
 
       // Enviar 100 peticiones rápidamente
@@ -474,11 +499,12 @@ describe('Stress Test: Voice Bridge API', () => {
       // Resetear mocks antes del test
       vi.clearAllMocks()
 
-      mockCheckLegacyAvailability.mockResolvedValue({
-        success: true,
+      mockCheckAvailability.mockResolvedValue({
         available: true,
         message: 'Hay disponibilidad',
         availableTables: [],
+        service: null,
+        suggestedTables: [],
       })
 
       // Hacer muchas peticiones en secuencia
@@ -494,7 +520,7 @@ describe('Stress Test: Voice Bridge API', () => {
       }
 
       // Verificar que los mocks no están acumulando llamadas antiguas
-      expect(mockCheckLegacyAvailability).toHaveBeenCalledTimes(50)
+      expect(mockCheckAvailability).toHaveBeenCalledTimes(50)
 
       // Limpiar y verificar
       vi.clearAllMocks()
@@ -509,7 +535,7 @@ describe('Stress Test: Voice Bridge API', () => {
         },
       }))
 
-      expect(mockCheckLegacyAvailability).toHaveBeenCalledTimes(1)
+      expect(mockCheckAvailability).toHaveBeenCalledTimes(1)
     })
   })
 })

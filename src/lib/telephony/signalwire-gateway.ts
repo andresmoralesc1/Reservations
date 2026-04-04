@@ -108,7 +108,7 @@ export function handleIncomingCall(event: SignalWireEvent): string {
   return `
     <Response>
       <Say language="es-ES" voice="female">
-        Hola, gracias por llamar a El Posit. Nuestro sistema de voz por inteligencia artificial estará disponible pronto.
+        Hola, gracias por llamar. Nuestro sistema de voz por inteligencia artificial estará disponible pronto.
         Por favor, llama más tarde o usa nuestra aplicación web.
       </Say>
       <Hangup />

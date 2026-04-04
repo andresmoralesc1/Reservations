@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🍽️ El Posit - Sistema de Reservas
+# 🍽️ Anfitrión - Plataforma de Reservas
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-15.1.6-black?logo=next.js)](https://nextjs.org/)
@@ -8,7 +8,7 @@
 [![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis)](https://redis.io/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**Plataforma completa de gestión de reservas restaurante con múltiples canales**
+**Plataforma SaaS de gestión de reservas para restaurantes y establecimientos de hostelería**
 
 [Qué hace](#-qué-hace) · [Cómo usarla](#-cómo-usarla) · [Características](#-características) · [Quick Start](#-quick-start) · [API](#-api)
 
@@ -18,18 +18,20 @@
 
 ## 📋 Sobre el Proyecto
 
-**El Posit** es un sistema moderno de gestión de reservas diseñado específicamente para restaurantes. Transforma la operación tradicional mediante automatización inteligente, permitiendo a los clientes reservar a través de múltiples canales:
+**Anfitrión** es una plataforma SaaS moderna de gestión de reservas diseñada para restaurantes y establecimientos de hostelería. Transforma la operación tradicional mediante automatización inteligente, permitiendo a los clientes reservar a través de múltiples canales:
 
 - 🌐 **Web Interface** - Formulario intuitivo de reservas
 - 📞 **IVR 24/7** - Sistema de respuesta de voz interactivo
 - 💬 **WhatsApp** - Confirmaciones y recordatorios automáticos
 - 📊 **Admin Dashboard** - Panel de gestión completo
 
+Anfitrión es un producto multi-tenant que puede ser implementado en cualquier restaurante, incluyendo clientes como **El Posit**.
+
 ---
 
 ## 🎯 Qué Hace
 
-El Posit resuelve un problema común en los restaurantes: **gestionar reservas eficientemente sin depender solo del teléfono**.
+Anfitrión resuelve un problema común en los restaurantes: **gestionar reservas eficientemente sin depender solo del teléfono**.
 
 ### El Problema
 
@@ -42,7 +44,7 @@ Los restaurantes tradicionales enfrentan desafíos diarios:
 
 ### La Solución
 
-**El Posit automatiza todo el ciclo de vida de una reserva:**
+**Anfitrión automatiza todo el ciclo de vida de una reserva:**
 
 ```mermaid
 graph LR
@@ -86,7 +88,7 @@ Los clientes tienen **3 formas** de hacer una reserva:
 #### 1️⃣ Reserva por Web
 
 ```
-1. Entrar a elposit.co/reservar
+1. Entrar a [dominio-del-restaurante]/reservar
 2. Seleccionar fecha y hora
 3. Indicar número de personas
 4. Ingresar nombre y teléfono
@@ -114,8 +116,8 @@ Los clientes tienen **3 formas** de hacer una reserva:
 #### 2️⃣ Reserva por Teléfono (IVR)
 
 ```
-1. Llamar al +57 300 123 4567
-2. Escuchar: "Bienvenido a El Posit..."
+1. Llamar al número del restaurante
+2. Escuchar: "Bienvenido al sistema de reservas..."
 3. Seguir instrucciones de voz
 4. Confirmar fecha, hora y personas
 5. Recibir código por WhatsApp
@@ -123,7 +125,7 @@ Los clientes tienen **3 formas** de hacer una reserva:
 
 **Diálogo del IVR:**
 ```
-📞 Sistema: "Bienvenido a El Posit. Para reservar, dime el día."
+📞 Sistema: "Bienvenido. Para reservar, dime el día."
 👤 Cliente: "Para este sábado a las 8pm"
 📞 Sistema: "Sábado 15 de febrero a las 8pm. ¿Cuántas personas?"
 👤 Cliente: "Cuatro personas"
@@ -154,7 +156,7 @@ El dashboard está en `/admin` y requiere autenticación.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  📊 DASHBOARD EL POSIT                              [Admin]     │
+│  📊 DASHBOARD ANFITRIÓN                             [Admin]     │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  📈 ESTADÍSTICAS DE HOY                                          │
@@ -226,7 +228,7 @@ Para análisis avanzados:
 Click en "Exportar CSV" → Descarga archivo
 
 # Opción 2: API
-curl "https://elposit.co/api/admin/reservations?export=true" \
+curl "https://[dominio]/api/admin/reservations?export=true" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -o reservas.csv
 ```
@@ -282,8 +284,8 @@ curl "https://elposit.co/api/admin/reservations?export=true" \
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/tu-usuario/reservations.git
-cd reservations
+git clone https://github.com/andresmoralesc1/Reservations.git
+cd Reservations
 
 # 2. Instalar dependencias
 npm install
@@ -306,7 +308,7 @@ npm run db:push
 npm run dev
 ```
 
-Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
+Abre [http://localhost:3005](http://localhost:3005) en tu navegador.
 
 ### Linux / macOS
 
@@ -465,12 +467,12 @@ reservations/
 
 ## 🎨 Design System
 
-El proyecto utiliza un sistema de diseño personalizado llamado "El Posit":
+El proyecto utiliza un sistema de diseño personalizado:
 
 ```css
 /* Colores de Marca */
 --cream: #F5F5F0      /* Fondo principal */
---posit-red: #C41E3A  /* Color primario */
+--accent: #C41E3A     /* Color primario configurable por restaurante */
 --black: #1A1A1A      /* Texto */
 --white: #FFFFFF      /* Contraste */
 
@@ -547,7 +549,6 @@ IVR_PHONE_NUMBER=+573001234567
 |---|---|
 | Dashboard Admin (6 secciones) | ✅ Completo |
 | Voice Bot IA (Pipecat + Cartesia + OpenAI) | ✅ Desplegado |
-| 30 mesas configuradas (124 pax) | ✅ Operativo |
 | Base de datos PostgreSQL (Supabase) | ✅ Conectada |
 | Autenticación Admin | ✅ Funcional |
 | Tests (Vitest + Playwright) | ✅ 276/276 pasando |
@@ -587,9 +588,9 @@ Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) par
 
 ## 📞 Contacto
 
-**El Posit** - Cocina marítima catalana tradicional
+**Anfitrión** - Plataforma de Reservas para Hostelería
 
-[Website](https://elposit.co) · [Support](mailto:soporte@elposit.co)
+[Website](https://anfitrion.co) · [Support](mailto:soporte@anfitrion.co)
 
 ---
 

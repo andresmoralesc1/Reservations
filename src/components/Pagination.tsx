@@ -1,7 +1,6 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { Button } from "./Button"
 
 interface PaginationProps {
   currentPage: number
@@ -44,32 +43,28 @@ export function Pagination({
   return (
     <div className={cn("flex items-center justify-center gap-2", className)}>
       {showFirstLast && (
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
           onClick={() => onPageChange(1)}
           disabled={currentPage === 1}
-          className="px-3"
+          className="px-3 py-2 text-[#A0A0A0] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
           &laquo;
-        </Button>
+        </button>
       )}
 
-      <Button
-        variant="ghost"
-        size="sm"
+      <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="px-3"
+        className="px-3 py-2 text-[#A0A0A0] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
       >
         &lsaquo;
-      </Button>
+      </button>
 
       {getPageNumbers().map((page, index) => (
         page === "..." ? (
           <span
             key={`ellipsis-${index}`}
-            className="px-2 font-sans text-sm text-neutral-500"
+            className="px-2 font-sans text-sm text-[#666666]"
           >
             ...
           </span>
@@ -78,10 +73,10 @@ export function Pagination({
             key={page}
             onClick={() => onPageChange(page as number)}
             className={cn(
-              "min-w-[40px] px-3 py-2 font-display text-sm uppercase tracking-wider transition-colors",
+              "min-w-[40px] px-3 py-2 font-display text-sm uppercase tracking-wider transition-all border rounded-lg",
               currentPage === page
-                ? "bg-black text-white"
-                : "bg-transparent text-black hover:bg-black/5"
+                ? "bg-[#D4A84B] text-black border-[#D4A84B]"
+                : "bg-transparent text-[#A0A0A0] border-transparent hover:border-[#333333] hover:text-white"
             )}
           >
             {page}
@@ -89,26 +84,22 @@ export function Pagination({
         )
       ))}
 
-      <Button
-        variant="ghost"
-        size="sm"
+      <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="px-3"
+        className="px-3 py-2 text-[#A0A0A0] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
       >
         &rsaquo;
-      </Button>
+      </button>
 
       {showFirstLast && (
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
           onClick={() => onPageChange(totalPages)}
           disabled={currentPage === totalPages}
-          className="px-3"
+          className="px-3 py-2 text-[#A0A0A0] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
           &raquo;
-        </Button>
+        </button>
       )}
     </div>
   )

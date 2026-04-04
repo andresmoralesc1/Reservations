@@ -144,7 +144,7 @@ export default function CookiesPage() {
                   Si tienes preguntas sobre nuestras cookies, contáctanos en:
                 </p>
                 <p className="font-serif text-neutral-600">
-                  Email: <a href="mailto:cookies@elposit.com" className="text-accent underline">cookies@elposit.com</a><br />
+                  Email: <a href="mailto:cookies@anfitrion.co" className="text-accent underline">cookies@anfitrion.co</a><br />
                   Teléfono: +34 977 00 00 00
                 </p>
               </section>
