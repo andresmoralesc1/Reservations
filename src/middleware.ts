@@ -82,13 +82,28 @@ function createMiddlewareClient(request: NextRequest) {
 
 /**
  * Verifica si el usuario está autenticado
+ * - Primero verifica cookie de demo (para desarrollo)
+ * - Si no hay demo, verifica Supabase
+ * - Si AUTH_ENABLED=false, siempre permite
  */
 async function isAuthenticated(request: NextRequest): Promise<boolean> {
   try {
+    // Si AUTH está desactivado explícitamente, permitir
+    if (!AUTH_ENABLED) {
+      return true
+    }
+
+    // 1. Verificar cookie de autenticación demo (para desarrollo local)
+    const demoAuthToken = request.cookies.get("demo_auth_token")?.value
+    if (demoAuthToken === "demo_authenticated") {
+      return true
+    }
+
+    // 2. Si no hay demo auth, verificar Supabase
     const supabase = createMiddlewareClient(request)
     if (!supabase) {
-      // Si Supabase no está configurado, permitir acceso (modo desarrollo)
-      return true
+      // Si Supabase no está configurado y no hay demo auth, denegar
+      return false
     }
 
     const { data, error } = await supabase.auth.getSession()
@@ -99,8 +114,8 @@ async function isAuthenticated(request: NextRequest): Promise<boolean> {
 
     return true
   } catch {
-    // En caso de error, permitir acceso (fail-open)
-    return true
+    // En caso de error, denegar acceso (fail-secure)
+    return false
   }
 }
 

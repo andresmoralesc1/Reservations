@@ -106,12 +106,16 @@ const DEMO_USERS: User[] = [
   },
 ]
 
+// Nombre de la cookie para autenticación demo
+const DEMO_AUTH_COOKIE = "demo_auth_token"
+const DEMO_USER_COOKIE = "demo_user"
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check for stored user on mount
+    // Check for stored user on mount (localStorage para client-side)
     const storedUser = localStorage.getItem("posit_user")
     if (storedUser) {
       try {
@@ -130,6 +134,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (foundUser && password === "demo123") {
       setUser(foundUser)
       localStorage.setItem("posit_user", JSON.stringify(foundUser))
+
+      // Establecer cookie para que el middleware pueda leerla
+      // Usamos fetch para llamar a una API que establece la cookie
+      try {
+        await fetch("/api/auth/demo-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user: foundUser }),
+        })
+      } catch (err) {
+        console.error("Error setting auth cookie:", err)
+      }
+
       return true
     }
     return false
@@ -138,6 +155,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = () => {
     setUser(null)
     localStorage.removeItem("posit_user")
+
+    // Limpiar cookie via API
+    fetch("/api/auth/demo-logout", { method: "POST" }).catch(() => {})
   }
 
   const hasPermission = (permission: Permission): boolean => {
