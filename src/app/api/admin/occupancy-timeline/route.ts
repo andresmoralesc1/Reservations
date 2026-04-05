@@ -46,6 +46,9 @@ export async function GET(request: NextRequest) {
 
     // Filter services that match the date
     const matchingServices = allServices.filter((service) =>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // Drizzle query return type includes extra properties from findMany()
+      // that don't match the Service type expected by servicesAvailability
       servicesAvailability.isDateMatchingService(date, service as any)
     )
 
@@ -121,6 +124,9 @@ export async function GET(request: NextRequest) {
     })
 
     // Generate time slots for the service
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Drizzle query return type includes extra properties from findMany()
+    // that don't match the Service type expected by servicesAvailability
     const timeSlots = servicesAvailability.generateAutoSlots(service as any)
 
     // Ensure start and end times are included

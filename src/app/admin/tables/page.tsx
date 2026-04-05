@@ -255,8 +255,8 @@ export default function TablesPage() {
         </>
       ) : (
         <TableLayoutEditor
-          tables={tables as any}
-          onTablesChange={handleTablesChange as any}
+          tables={tables}
+          onTablesChange={handleTablesChange}
           onCreateTable={handleCreateTable}
           onUpdateTable={handleUpdateTable}
           onDeleteTable={handleDeleteTableFromEditor}

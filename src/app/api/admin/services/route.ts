@@ -42,8 +42,9 @@ export async function GET(request: NextRequest) {
     console.log("[GET /api/admin/services] Conditions:", conditions.length)
 
     // Try to fetch services
-    // TODO: Drizzle ORM types son complejos de tipar manualmente
-    // Se usa tipo any[] aquí pero se valida en runtime
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Drizzle ORM returns complex union types for queries with relations (with: { restaurant })
+    // that cannot be easily typed without creating elaborate wrapper types
     let allServices: any[] = []
     try {
       const query = db.query.services.findMany({

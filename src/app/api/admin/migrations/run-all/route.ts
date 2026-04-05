@@ -7,9 +7,17 @@ import { NextResponse } from "next/server"
  * This runs both migrations in sequence and returns a combined report
  */
 export async function GET() {
-  const results = {
-    timezone: null as any,
-    encoding: null as any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Using any for timezone/encoding because they hold JSON responses from migration APIs
+  // Creating specific types would be over-engineering for this pass-through data
+  const results: {
+    timezone: any;
+    encoding: any;
+    success: boolean;
+    timestamp: string;
+  } = {
+    timezone: null,
+    encoding: null,
     success: false,
     timestamp: new Date().toISOString()
   }
