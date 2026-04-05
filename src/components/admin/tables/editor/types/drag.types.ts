@@ -4,6 +4,7 @@
 
 import { DragEndEvent, DragStartEvent } from "@dnd-kit/core"
 import { Table } from "@/drizzle/schema"
+import type { TableOperationResult } from "./operations.types"
 
 export interface DragState {
   activeId: string | null
@@ -20,7 +21,7 @@ export interface UseTableDragOptions {
     y: number,
     tableSize: number
   ) => { x: number; y: number }
-  onUpdateTable: (tableId: string, updates: any) => Promise<any>
+  onUpdateTable: (tableId: string, updates: Partial<Table>) => Promise<void | TableOperationResult>
   enabled?: boolean
 }
 

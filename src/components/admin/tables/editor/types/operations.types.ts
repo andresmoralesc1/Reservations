@@ -22,15 +22,15 @@ export interface CreateTableOptions {
 }
 
 export interface UpdateTableOptions {
-  tableNumber?: string
-  capacity?: number
+  tableNumber?: string | null
+  capacity?: number | null
   // Más flexible para compatibilidad con Drizzle ORM (string | null)
   location?: string | null | undefined
-  isAccessible?: boolean
+  isAccessible?: boolean | null
   shape?: string | null
-  positionX?: number
-  positionY?: number
-  rotation?: number
+  positionX?: number | null
+  positionY?: number | null
+  rotation?: number | null
   width?: number | null
   height?: number | null
   diameter?: number | null

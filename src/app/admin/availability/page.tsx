@@ -131,7 +131,7 @@ export default function AvailabilityPage() {
       const slotEndMinutes = slotStartMinutes + serviceDuration
 
       // Filter reservations that overlap with this time slot
-      const slotReservations = data.reservations?.filter((r: any) => {
+      const slotReservations = data.reservations?.filter((r: ExistingReservation) => {
         // Only show active reservations
         if (!['PENDIENTE', 'CONFIRMADO'].includes(r.status)) return false
 
@@ -151,7 +151,7 @@ export default function AvailabilityPage() {
       }) || []
 
       // Sort by time, with exact time first
-      slotReservations.sort((a: any, b: any) => {
+      slotReservations.sort((a: ExistingReservation, b: ExistingReservation) => {
         if (a.isOverlap && !b.isOverlap) return 1
         if (!a.isOverlap && b.isOverlap) return -1
         return a.reservationTime.localeCompare(b.reservationTime)

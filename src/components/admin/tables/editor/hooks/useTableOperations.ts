@@ -5,6 +5,7 @@
 
 import { useState, useCallback, useEffect } from "react"
 import { Table } from "@/drizzle/schema"
+import type { TableTemplate } from "../../TableTemplatesBar"
 import {
   CreateTableOptions,
   UpdateTableOptions,
@@ -37,7 +38,7 @@ export interface UseTableOperationsReturn {
     snapAndConstrainToCanvas: (x: number, y: number, size: number) => { x: number; y: number }
   ) => Promise<TableOperationResult>
   duplicateTableFromTemplate: (
-    template: any,
+    template: Table | TableTemplate,
     snapAndConstrainToCanvas: (x: number, y: number, size: number) => { x: number; y: number },
     location?: "patio" | "interior" | "terraza" | "barra"
   ) => Promise<TableOperationResult>
@@ -275,7 +276,7 @@ export function useTableOperations(
   // Duplicate table from template
   const duplicateTableFromTemplate = useCallback(
     async (
-      template: Table,
+      template: Table | TableTemplate,
       snapAndConstrainToCanvas: (x: number, y: number, size: number) => { x: number; y: number },
       location: "patio" | "interior" | "terraza" | "barra" = "interior"
     ): Promise<TableOperationResult> => {

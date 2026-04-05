@@ -9,6 +9,22 @@ import { db } from "@/lib/db"
 import { reservations, dailyAnalytics, tables } from "@/drizzle/schema"
 import { eq, and, sql } from "drizzle-orm"
 
+// Tipo para datos diarios (compartido con analytics route)
+type DailyStats = {
+  date: string
+  totalReservations: number
+  confirmedCount: number
+  pendingCount: number
+  cancelledCount: number
+  noShowCount: number
+  totalCovers: number
+  avgPartySize: number | null
+  confirmationRate: number
+  sourceBreakdown?: Record<string, number>
+  hourlyBreakdown?: Array<{ hour: number; count: number; covers: number }>
+  noShowRate?: number
+}
+
 export interface DailyAnalyticsInput {
   restaurantId: string
   date: string // YYYY-MM-DD
@@ -177,7 +193,7 @@ export async function getHybridAnalytics(
   // Si hoy está en el rango, calcularlo en tiempo real
   const needsTodayCalculation = startDate <= today && today <= endDate
 
-  let todayData: any = null
+  let todayData: DailyStats | null = null
   if (needsTodayCalculation) {
     // Usar la función existente de analytics.service.ts para hoy
     const { getDashboardStats } = await import("./analytics.service")
@@ -201,7 +217,7 @@ export async function getHybridAnalytics(
   }
 
   // Combinar datos pre-calculados con datos de hoy
-  const allData = preCalculated.filter((d) => d.date !== today)
+  const allData = preCalculated.filter((d) => d.date !== today) as Array<DailyStats | typeof preCalculated[number]>
   if (todayData) {
     allData.push(todayData)
   }

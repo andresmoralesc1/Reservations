@@ -7,6 +7,21 @@ import { getCachedAnalytics } from "@/lib/cache"
 import { redisEnabled } from "@/lib/redis"
 import { getDashboardStats } from "@/lib/services/analytics.service"
 
+// Tipo para datos diarios (compartido entre histórico y tiempo real)
+type DailyStats = {
+  date: string
+  totalReservations: number
+  confirmedCount: number
+  pendingCount: number
+  cancelledCount: number
+  noShowCount: number
+  totalCovers: number
+  avgPartySize: number
+  confirmationRate: number
+  sourceBreakdown?: Record<string, number>
+  hourlyBreakdown?: Array<{ hour: number; count: number; covers: number }>
+}
+
 // Tipo de respuesta de analíticas
 interface AnalyticsResponse {
   period: {
@@ -75,7 +90,7 @@ async function fetchAnalyticsOptimized(
   console.log(`📊 [OPTIMIZED] Found ${historicalData.length} pre-calculated days`)
 
   // Si hoy está en el rango, obtener datos en tiempo real
-  let todayData: any = null
+  let todayData: DailyStats | null = null
   if (needsTodayData) {
     const stats = await getDashboardStats({ restaurantId, date: today })
     todayData = {
@@ -93,7 +108,8 @@ async function fetchAnalyticsOptimized(
   }
 
   // Combinar datos históricos con hoy
-  const allDailyData = [...historicalData]
+  // historicalData tiene campos de BD, todayData solo campos de stats
+  const allDailyData = [...historicalData] as Array<DailyStats | typeof historicalData[number]>
   if (todayData) {
     allDailyData.push(todayData)
   }
