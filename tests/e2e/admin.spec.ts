@@ -2,10 +2,10 @@
  * E2E Tests - Panel de Administración
  */
 
-import { test, expect } from "@playwright/test"
+import { test, expect, type Page } from "@playwright/test"
 
 // Helper: esperar a que la página cargue completamente (spinner desaparezca)
-async function waitForPageLoad(page: ReturnType<typeof test.fixtures.page>) {
+async function waitForPageLoad(page: Page) {
   // Esperar a que el spinner de carga desaparezca
   await page.waitForLoadState('networkidle')
 

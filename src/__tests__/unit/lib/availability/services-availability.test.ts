@@ -6,6 +6,8 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { ServicesAvailability, type Service, type Table } from '@/lib/availability/services-availability'
+import { createMockService, createMockTable } from '@/__tests__/helpers/mock-factories'
+import type { Service as DrizzleService, Table as DrizzleTable } from '@/drizzle/schema'
 
 // Mock de Drizzle
 vi.mock('@/lib/db', () => ({
@@ -26,93 +28,116 @@ vi.mock('@/lib/db', () => ({
 
 import { db } from '@/lib/db'
 
-// Mock services de prueba
-const mockService: Service = {
+// Helper: Convert Drizzle Service to local Service type
+function toLocalService(drizzleService: DrizzleService): Service {
+  return {
+    id: drizzleService.id,
+    restaurantId: drizzleService.restaurantId,
+    name: drizzleService.name,
+    description: drizzleService.description,
+    isActive: drizzleService.isActive,
+    serviceType: drizzleService.serviceType as any,
+    season: drizzleService.season as any,
+    dayType: drizzleService.dayType as any,
+    startTime: drizzleService.startTime,
+    endTime: drizzleService.endTime,
+    defaultDurationMinutes: drizzleService.defaultDurationMinutes,
+    bufferMinutes: drizzleService.bufferMinutes,
+    slotGenerationMode: drizzleService.slotGenerationMode as any,
+    dateRange: drizzleService.dateRange as any,
+    manualSlots: drizzleService.manualSlots,
+    availableTableIds: drizzleService.availableTableIds,
+    createdAt: drizzleService.createdAt,
+    updatedAt: drizzleService.updatedAt,
+  }
+}
+
+// Helper: Convert Drizzle Table to local Table type
+function toLocalTable(drizzleTable: DrizzleTable): Table {
+  return {
+    id: drizzleTable.id,
+    restaurantId: drizzleTable.restaurantId,
+    tableNumber: drizzleTable.tableNumber,
+    tableCode: drizzleTable.tableCode,
+    capacity: drizzleTable.capacity,
+    location: drizzleTable.location,
+    isAccessible: drizzleTable.isAccessible,
+  }
+}
+
+// Mock services de prueba - using factories to ensure all schema fields
+const mockService: Service = toLocalService(createMockService({
   id: 'service-1',
   restaurantId: 'restaurant-1',
   name: 'Comida Invierno - Semana',
   description: 'Servicio de comida días de semana',
-  isActive: true,
   serviceType: 'comida',
-  season: 'todos',
   dayType: 'all',
   startTime: '13:00',
   endTime: '16:00',
-  defaultDurationMinutes: 90,
-  bufferMinutes: 15,
-  slotGenerationMode: 'auto',
-  dateRange: null,
-  manualSlots: null,
-  availableTableIds: null,
-  createdAt: new Date('2026-01-01'),
-  updatedAt: new Date('2026-01-01'),
-}
+}))
 
-const mockServiceWeekend: Service = {
-  ...mockService,
+const mockServiceWeekend: Service = toLocalService(createMockService({
   id: 'service-2',
+  restaurantId: 'restaurant-1',
   name: 'Cena Fin de Semana',
   serviceType: 'cena',
   dayType: 'weekend',
   startTime: '20:00',
   endTime: '23:00',
   defaultDurationMinutes: 120,
-}
+}))
 
-const mockServiceDateRange: Service = {
-  ...mockService,
+const mockServiceDateRange: Service = toLocalService(createMockService({
   id: 'service-3',
+  restaurantId: 'restaurant-1',
   name: 'Comida Verano',
   season: 'verano',
   dateRange: { start: '2026-06-21', end: '2026-09-21' },
-}
+}))
 
-const mockServiceManual: Service = {
-  ...mockService,
+const mockServiceManual: Service = toLocalService(createMockService({
   id: 'service-4',
+  restaurantId: 'restaurant-1',
   name: 'Cena Manual',
   slotGenerationMode: 'manual',
   manualSlots: ['20:00', '20:30', '21:00', '21:30', '22:00'],
-}
+}))
 
 const mockTables: Table[] = [
-  {
+  toLocalTable(createMockTable({
     id: 'table-1',
     restaurantId: 'restaurant-1',
     tableNumber: '1',
     tableCode: 'I-1',
     capacity: 2,
     location: 'interior',
-    isAccessible: false,
-  },
-  {
+  })),
+  toLocalTable(createMockTable({
     id: 'table-2',
     restaurantId: 'restaurant-1',
     tableNumber: '2',
     tableCode: 'I-2',
     capacity: 4,
     location: 'interior',
-    isAccessible: false,
-  },
-  {
+  })),
+  toLocalTable(createMockTable({
     id: 'table-3',
     restaurantId: 'restaurant-1',
     tableNumber: '3',
     tableCode: 'I-3',
     capacity: 4,
     location: 'interior',
-    isAccessible: false,
-  },
-  {
+  })),
+  toLocalTable(createMockTable({
     id: 'table-4',
     restaurantId: 'restaurant-1',
     tableNumber: '4',
     tableCode: 'I-4',
     capacity: 6,
     location: 'interior',
-    isAccessible: false,
-  },
-  {
+  })),
+  toLocalTable(createMockTable({
     id: 'table-5',
     restaurantId: 'router-1',
     tableNumber: '5',
@@ -120,7 +145,7 @@ const mockTables: Table[] = [
     capacity: 8,
     location: 'terraza',
     isAccessible: true,
-  },
+  })),
 ]
 
 describe('ServicesAvailability', () => {
@@ -175,7 +200,7 @@ describe('ServicesAvailability', () => {
     })
 
     it('debería rechazar fecha fuera del rango especificado', () => {
-      const service = { ...mockService, dateRange: { start: '2026-06-21', end: '2026-09-21' } }
+      const service: Service = { ...mockService, dateRange: { start: '2026-06-21', end: '2026-09-21' } }
       const result1 = servicesAvailability.isDateMatchingService('2026-07-01', service) // Dentro del rango
       const result2 = servicesAvailability.isDateMatchingService('2026-10-01', service) // Fuera del rango
 
@@ -184,7 +209,7 @@ describe('ServicesAvailability', () => {
     })
 
     it('debería rechazar weekday en fin de semana', () => {
-      const service = { ...mockService, dayType: 'weekday' as const }
+      const service: Service = { ...mockService, dayType: 'weekday' as const }
       const saturday = servicesAvailability.isDateMatchingService('2026-04-04', service) // Sábado
       const sunday = servicesAvailability.isDateMatchingService('2026-04-05', service)   // Domingo
 
@@ -193,7 +218,7 @@ describe('ServicesAvailability', () => {
     })
 
     it('debería rechazar weekend en día de semana', () => {
-      const service = { ...mockService, dayType: 'weekend' as const }
+      const service: Service = { ...mockService, dayType: 'weekend' as const }
       const monday = servicesAvailability.isDateMatchingService('2026-04-07', service) // Lunes
 
       expect(monday).toBe(false)
@@ -204,10 +229,26 @@ describe('ServicesAvailability', () => {
     it('debería retornar servicios activos que coinciden con fecha y hora', async () => {
       // El mock simula que la BD YA filtró por isActive=true
       vi.mocked(db.query.services.findMany).mockResolvedValue([
-        mockService, // ya tiene isActive: true, coincide con fecha/hora
-        mockServiceWeekend, // Cena (20:00-23:00) no coincide con 14:00, y dayType='weekend' no coincide con miércoles
+        createMockService({
+          id: 'service-1',
+          restaurantId: 'restaurant-1',
+          name: 'Comida Invierno - Semana',
+          serviceType: 'comida',
+          dayType: 'all',
+          startTime: '13:00',
+          endTime: '16:00',
+        }),
+        createMockService({
+          id: 'service-2',
+          restaurantId: 'restaurant-1',
+          name: 'Cena Fin de Semana',
+          serviceType: 'cena',
+          dayType: 'weekend',
+          startTime: '20:00',
+          endTime: '23:00',
+        }),
         // No incluimos el servicio inactivo porque la BD ya filtró por isActive=true
-      ])
+      ] as any)
 
       const result = await servicesAvailability.getActiveServicesForDateTime(
         '2026-04-15', // Miércoles
@@ -237,8 +278,8 @@ describe('ServicesAvailability', () => {
       // Simulamos que la BD devuelve un servicio de otro restaurante
       // con un horario que NO coincide (para simular que no debería estar en los resultados)
       vi.mocked(db.query.services.findMany).mockResolvedValue([
-        { ...mockService, restaurantId: 'other-restaurant', startTime: '08:00', endTime: '10:00' },
-      ])
+        createMockService({ restaurantId: 'other-restaurant', startTime: '08:00', endTime: '10:00' }),
+      ] as any)
 
       const result = await servicesAvailability.getActiveServicesForDateTime(
         '2026-04-15',
@@ -290,7 +331,7 @@ describe('ServicesAvailability', () => {
 
       // Mock para db.query.tables.findMany - devuelve solo mesas de restaurant-1
       const restaurantTables = mockTables.filter(t => t.restaurantId === 'restaurant-1')
-      vi.mocked(db.query.tables.findMany).mockResolvedValue(restaurantTables)
+      vi.mocked(db.query.tables.findMany).mockResolvedValue(restaurantTables as any)
 
       // Mock para getConflictingReservations
       vi.spyOn(servicesAvailability, 'getConflictingReservations' as any).mockResolvedValue([])
@@ -327,7 +368,7 @@ describe('ServicesAvailability', () => {
     it('debería retornar available=false cuando no hay mesas adecuadas', async () => {
       // Mock de tablas con capacidades menores que partySize
       vi.mocked(db.query.tables.findMany).mockResolvedValue(
-        mockTables.filter(t => t.capacity < 2)
+        mockTables.filter(t => t.capacity < 2) as any
       )
 
       const result = await servicesAvailability.checkAvailabilityWithServices({
@@ -362,7 +403,7 @@ describe('ServicesAvailability', () => {
     it('debería sugerir slots alternativos cuando no hay disponibilidad', async () => {
       // Mock que hay mesas pero todas ocupadas
       const restaurantTables = mockTables.filter(t => t.restaurantId === 'restaurant-1')
-      vi.mocked(db.query.tables.findMany).mockResolvedValue(restaurantTables)
+      vi.mocked(db.query.tables.findMany).mockResolvedValue(restaurantTables as any)
       vi.spyOn(servicesAvailability, 'getConflictingReservations' as any).mockResolvedValue([
         { tableIds: restaurantTables.map(t => t.id) } // Todas las mesas ocupadas
       ])
@@ -380,7 +421,7 @@ describe('ServicesAvailability', () => {
 
     it('debería excluir reserva específica al verificar disponibilidad', async () => {
       // Mock que excluye reservation-123
-      vi.spyOn(servicesAvailability, 'getConflictingReservations' as any).mockImplementation(async (params) => {
+      vi.spyOn(servicesAvailability, 'getConflictingReservations' as any).mockImplementation(async (params: any) => {
         if (params.excludeReservationId === 'reservation-123') {
           return [] // No conflictos si excluimos esta reserva
         }
@@ -521,7 +562,7 @@ describe('ServicesAvailability', () => {
       vi.spyOn(servicesAvailability, 'getActiveServicesForDateTime').mockResolvedValue([mockService])
       // Solo mesas de restaurant-1
       const restaurantTables = mockTables.filter(t => t.restaurantId === 'restaurant-1')
-      vi.mocked(db.query.tables.findMany).mockResolvedValue(restaurantTables)
+      vi.mocked(db.query.tables.findMany).mockResolvedValue(restaurantTables as any)
       vi.spyOn(servicesAvailability, 'getConflictingReservations' as any).mockResolvedValue([])
 
       const result = await servicesAvailability.checkAvailabilityWithServices({
@@ -540,7 +581,7 @@ describe('ServicesAvailability', () => {
     it('debería manejar partySize de 1', async () => {
       vi.spyOn(servicesAvailability, 'getActiveServicesForDateTime').mockResolvedValue([mockService])
       const restaurantTables = mockTables.filter(t => t.restaurantId === 'restaurant-1')
-      vi.mocked(db.query.tables.findMany).mockResolvedValue(restaurantTables)
+      vi.mocked(db.query.tables.findMany).mockResolvedValue(restaurantTables as any)
       vi.spyOn(servicesAvailability, 'getConflictingReservations' as any).mockResolvedValue([])
 
       const result = await servicesAvailability.checkAvailabilityWithServices({
@@ -557,7 +598,7 @@ describe('ServicesAvailability', () => {
     it('debería preferir mesa perfecta (capacidad cercana)', async () => {
       vi.spyOn(servicesAvailability, 'getActiveServicesForDateTime').mockResolvedValue([mockService])
       const restaurantTables = mockTables.filter(t => t.restaurantId === 'restaurant-1')
-      vi.mocked(db.query.tables.findMany).mockResolvedValue(restaurantTables)
+      vi.mocked(db.query.tables.findMany).mockResolvedValue(restaurantTables as any)
       vi.spyOn(servicesAvailability, 'getConflictingReservations' as any).mockResolvedValue([])
 
       const result = await servicesAvailability.checkAvailabilityWithServices({
@@ -576,7 +617,7 @@ describe('ServicesAvailability', () => {
       vi.spyOn(servicesAvailability, 'getActiveServicesForDateTime').mockResolvedValue([mockService])
       // Hay mesas pero todas ocupadas
       const restaurantTables = mockTables.filter(t => t.restaurantId === 'restaurant-1')
-      vi.mocked(db.query.tables.findMany).mockResolvedValue(restaurantTables)
+      vi.mocked(db.query.tables.findMany).mockResolvedValue(restaurantTables as any)
       vi.spyOn(servicesAvailability, 'getConflictingReservations' as any).mockResolvedValue([
         { tableIds: restaurantTables.map(t => t.id) }
       ])

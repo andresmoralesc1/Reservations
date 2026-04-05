@@ -38,7 +38,7 @@ describe('Logger', () => {
 
   it('debería incluir metadata en los logs', () => {
     expect(() => {
-      logger.info('Test con metadata', { userId: '123', action: 'test' })
+      logger.info({ msg: 'Test con metadata', userId: '123', action: 'test' })
     }).not.toThrow()
   })
 

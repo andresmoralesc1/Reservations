@@ -10,6 +10,7 @@ import { GET } from '@/app/api/reservations/code/[code]/route'
 import { DELETE } from '@/app/api/reservations/[id]/route'
 import { POST as CheckAvailabilityPOST } from '@/app/api/reservations/check-availability/route'
 import { NextRequest } from 'next/server'
+import { createMockReservation, createMockTable } from '@/__tests__/helpers/mock-factories'
 
 // Mock de los servicios
 vi.mock('@/lib/services', () => ({
@@ -62,28 +63,17 @@ import {
 import { servicesAvailability } from '@/lib/availability/services-availability'
 import { db } from '@/lib/db'
 
-const mockReservation = {
+// Use factory to ensure all schema fields are included
+const mockReservation = createMockReservation({
   id: 'res-1',
   reservationCode: 'TEST-12345',
-  customerId: 'customer-1',
   customerName: 'Juan Pérez',
   customerPhone: '612345678',
-  restaurantId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
   reservationDate: '2026-04-15',
   reservationTime: '14:00',
   partySize: 4,
   tableIds: ['table-1'],
-  status: 'PENDIENTE',
-  source: 'WEB',
-  specialRequests: null,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  confirmedAt: null,
-  cancelledAt: null,
-  customer: null,
-  restaurant: null,
-  whatsappMessages: [],
-}
+})
 
 function createMockRequest(body: any, method = 'POST') {
   return new NextRequest('http://localhost:3000/api/reservations', {
@@ -251,7 +241,7 @@ describe('GET /api/reservations/code/[code]', () => {
   })
 
   it('debería retornar 404 si código no existe', async () => {
-    vi.mocked(db.query.reservations.findFirst).mockResolvedValue(null)
+    vi.mocked(db.query.reservations.findFirst).mockResolvedValue(null as any)
 
     const request = createMockRequestWithUrl(
       'http://localhost:3000/api/reservations/code/NOTEXIST'
@@ -318,7 +308,7 @@ describe('DELETE /api/reservations/[id]', () => {
   })
 
   it('debería retornar 404 si reserva no existe', async () => {
-    vi.mocked(db.query.reservations.findFirst).mockResolvedValue(null)
+    vi.mocked(db.query.reservations.findFirst).mockResolvedValue(null as any)
 
     const request = createMockRequestWithUrl(
       'http://localhost:3000/api/reservations/notexist',
@@ -372,7 +362,7 @@ describe('POST /api/reservations/check-availability', () => {
   it('debería verificar disponibilidad correctamente (200)', async () => {
     vi.mocked(servicesAvailability.checkAvailabilityWithServices).mockResolvedValue({
       available: true,
-      availableTables: [{ id: 'table-1', capacity: 4 }],
+      availableTables: [createMockTable({ id: 'table-1', capacity: 4 })],
       service: null,
       suggestedTables: ['table-1'],
     })

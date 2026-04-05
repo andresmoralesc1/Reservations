@@ -2,10 +2,10 @@
  * E2E Tests - Flujo completo de reservas
  */
 
-import { test, expect } from "@playwright/test"
+import { test, expect, type Page } from "@playwright/test"
 
 // Helper: esperar a que la página cargue completamente
-async function waitForPageLoad(page: ReturnType<typeof test.fixtures.page>) {
+async function waitForPageLoad(page: Page) {
   await page.waitForLoadState('networkidle')
 
   // Esperar a que el spinner desaparezca

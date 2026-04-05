@@ -98,8 +98,7 @@ describe('Integration: Voice Bridge API', () => {
 
   describe('GET /api/voice-bridge', () => {
     it('debería retornar información del bridge (200)', async () => {
-      const request = createMockGetRequest()
-      const response = await GET(request)
+      const response = await GET()
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -110,8 +109,7 @@ describe('Integration: Voice Bridge API', () => {
     })
 
     it('debería incluir documentación de todas las acciones', async () => {
-      const request = createMockGetRequest()
-      const response = await GET(request)
+      const response = await GET()
       const data = await response.json()
 
       const actionNames = data.actions.map((a: any) => a.name)

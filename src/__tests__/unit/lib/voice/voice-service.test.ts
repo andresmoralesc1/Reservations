@@ -409,7 +409,7 @@ describe('voice-service', () => {
         values: vi.fn().mockReturnValue({
           returning: vi.fn().mockResolvedValue([mockCallLog]),
         }),
-      })
+      } as any)
 
       const result = await processVoiceAction('logCallStart', {
         callerPhone: '612345678',

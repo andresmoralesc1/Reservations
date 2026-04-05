@@ -7,11 +7,43 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useFilters } from '@/hooks/admin/useFilters'
-import type { Reservation } from '@/types/admin'
+import type { AdminReservation } from '@/types/admin'
+import { createMockReservation } from '@/__tests__/helpers/mock-factories'
+
+// Helper to create AdminReservation from the Drizzle Reservation
+function createMockAdminReservation(overrides?: {
+  id?: string
+  reservationCode?: string
+  customerName?: string
+  customerPhone?: string
+  reservationDate?: string
+  reservationTime?: string
+  partySize?: number
+  status?: string
+  source?: string
+  customerNoShowCount?: number
+}): AdminReservation {
+  const drizzleReservation = createMockReservation({
+    id: overrides?.id || '1',
+    reservationCode: overrides?.reservationCode || 'RES-A1B2C',
+    customerName: overrides?.customerName || 'Mock Customer',
+    customerPhone: overrides?.customerPhone || '612345678',
+    reservationDate: overrides?.reservationDate || '2026-03-30',
+    reservationTime: overrides?.reservationTime || '20:00',
+    partySize: overrides?.partySize || 4,
+    status: overrides?.status || 'PENDIENTE',
+    source: overrides?.source || 'WEB',
+  })
+
+  return {
+    ...drizzleReservation,
+    customerNoShowCount: overrides?.customerNoShowCount ?? 0,
+  }
+}
 
 // Mock reservations data
-const mockReservations: Reservation[] = [
-  {
+const mockReservations: AdminReservation[] = [
+  createMockAdminReservation({
     id: '1',
     reservationCode: 'RES-A1B2C',
     customerName: 'Carlos García',
@@ -22,11 +54,8 @@ const mockReservations: Reservation[] = [
     status: 'PENDIENTE',
     source: 'WEB',
     customerNoShowCount: 0,
-    tableIds: ['table-1'],
-    createdAt: '2026-03-30T10:00:00Z',
-    updatedAt: '2026-03-30T10:00:00Z',
-  },
-  {
+  }),
+  createMockAdminReservation({
     id: '2',
     reservationCode: 'RES-D3E4F',
     customerName: 'María López',
@@ -37,11 +66,8 @@ const mockReservations: Reservation[] = [
     status: 'CONFIRMADO',
     source: 'WHATSAPP',
     customerNoShowCount: 0,
-    tableIds: ['table-2'],
-    createdAt: '2026-03-30T10:00:00Z',
-    updatedAt: '2026-03-30T10:00:00Z',
-  },
-  {
+  }),
+  createMockAdminReservation({
     id: '3',
     reservationCode: 'RES-G5H6I',
     customerName: 'Juan Martínez',
@@ -52,11 +78,8 @@ const mockReservations: Reservation[] = [
     status: 'CANCELADO',
     source: 'IVR',
     customerNoShowCount: 0,
-    tableIds: ['table-3'],
-    createdAt: '2026-03-30T10:00:00Z',
-    updatedAt: '2026-03-30T10:00:00Z',
-  },
-  {
+  }),
+  createMockAdminReservation({
     id: '4',
     reservationCode: 'RES-J7K8L',
     customerName: 'Ana Sánchez',
@@ -67,11 +90,8 @@ const mockReservations: Reservation[] = [
     status: 'PENDIENTE',
     source: 'WEB',
     customerNoShowCount: 2, // Cliente con no-shows
-    tableIds: ['table-4'],
-    createdAt: '2026-03-30T10:00:00Z',
-    updatedAt: '2026-03-30T10:00:00Z',
-  },
-  {
+  }),
+  createMockAdminReservation({
     id: '5',
     reservationCode: 'RES-M9N0O',
     customerName: 'Pedro Ruiz',
@@ -82,10 +102,7 @@ const mockReservations: Reservation[] = [
     status: 'CONFIRMADO',
     source: 'MANUAL',
     customerNoShowCount: 0,
-    tableIds: ['table-5'],
-    createdAt: '2026-03-30T10:00:00Z',
-    updatedAt: '2026-03-30T10:00:00Z',
-  },
+  }),
 ]
 
 describe('useFilters', () => {
