@@ -130,8 +130,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     // Demo login - replace with real authentication
+    const DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD || "demo123"
     const foundUser = DEMO_USERS.find((u) => u.email === email)
-    if (foundUser && password === "demo123") {
+    if (foundUser && password === DEMO_PASSWORD) {
       setUser(foundUser)
       localStorage.setItem("posit_user", JSON.stringify(foundUser))
 
