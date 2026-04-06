@@ -111,7 +111,7 @@ export const DraggableTable: React.FC<DraggableTableProps> = ({
         {/* Table shape */}
         <div ref={tableRef}>
           <TableShape
-            shape={table.shape as any}
+            shape={(table.shape as "circular" | "cuadrada" | "rectangular" | "barra") || "rectangular"}
             width={width}
             height={height}
             diameter={diameter}

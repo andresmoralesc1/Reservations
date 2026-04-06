@@ -93,6 +93,9 @@ export class WhatsAppService {
         "Fecha: " + this.formatDate(reservation.reservationDate),
         "Hora: " + reservation.reservationTime,
         "Personas: " + reservation.partySize,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // Reason: Reservation type from Drizzle doesn't include nested restaurant relation.
+        // This should be fetched with a proper join or the type should be extended.
         "Lugar: " + ((reservation as any).restaurant?.name || "Nuestro restaurante"),
         "",
         "Codigo de reserva: " + reservation.reservationCode,

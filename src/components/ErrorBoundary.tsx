@@ -43,6 +43,9 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log del error usando nuestro sistema centralizado
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Reason: Next.js extends React's ErrorInfo to include 'digest' for error tracking,
+    // but this is not reflected in React's type definitions
     logError(error, {
       componentStack: errorInfo.componentStack,
       digest: (errorInfo as any).digest,

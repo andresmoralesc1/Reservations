@@ -173,6 +173,9 @@ export const TableLayoutEditor: React.FC<TableLayoutEditorProps> = ({
   const handleUpdateTable = useCallback(
     async (updates: Partial<Table>) => {
       if (!selectedTableId) return
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // Reason: updateTable expects UpdateTableOptions which is compatible with Partial<Table>,
+      // but TypeScript doesn't infer the compatibility correctly due to null vs undefined differences
       await updateTable(selectedTableId, updates as any)
       setSelectedTableId(null)
     },

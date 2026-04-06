@@ -33,7 +33,7 @@ export const DragOverlayTable: React.FC<DragOverlayTableProps> = ({ table, zoom 
 
         {/* Table shape */}
         <TableShape
-          shape={table.shape as any}
+          shape={(table.shape as "circular" | "cuadrada" | "rectangular" | "barra") || "rectangular"}
           width={width}
           height={height}
           diameter={diameter}

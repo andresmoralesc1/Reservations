@@ -127,6 +127,9 @@ export async function restoreService(serviceId: string): Promise<void> {
  * Query helper que excluye automáticamente registros eliminados
  * Envuelve findMany y findFirst para excluir soft deletes
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// Reason: Generic proxy handler must work with any Drizzle query builder type.
+// Using specific types would defeat the purpose of this generic utility.
 export function withSoftDeleteFilter<T extends { findMany: (...args: any[]) => any, findFirst: (...args: any[]) => any }>(
   queryBuilder: T
 ): T {
