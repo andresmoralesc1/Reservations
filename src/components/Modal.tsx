@@ -65,7 +65,7 @@ export function Modal({
       <div
         ref={modalRef}
         className={cn(
-          "relative z-10 w-full bg-[#1a1a1a1] border border-[#333333] flex flex-col max-h-[90vh] rounded-lg shadow-2xl",
+          "relative z-10 w-full bg-white border border-neutral-200 flex flex-col max-h-[90vh] rounded-lg shadow-2xl",
           sizeClasses[size],
           className
         )}
@@ -73,13 +73,13 @@ export function Modal({
       >
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between border-b border-[#333333] px-6 py-4 flex-shrink-0">
-            <h2 className="font-display text-xl uppercase tracking-[0.1em] text-white">
+          <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4 flex-shrink-0">
+            <h2 className="font-display text-xl uppercase tracking-[0.1em] text-black">
               {title}
             </h2>
             <button
               onClick={onClose}
-              className="text-[#666666] hover:text-white transition-colors"
+              className="text-neutral-500 hover:text-black transition-colors"
               aria-label="Cerrar"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -90,13 +90,13 @@ export function Modal({
         )}
 
         {/* Content */}
-        <div className="px-6 py-6 overflow-y-auto flex-1 text-white">
+        <div className="px-6 py-6 overflow-y-auto flex-1 text-black">
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 border-t border-[#333333] px-6 py-4 flex-shrink-0">
+          <div className="flex items-center justify-end gap-3 border-t border-neutral-200 px-6 py-4 flex-shrink-0">
             {footer}
           </div>
         )}
@@ -123,14 +123,14 @@ Modal.Footer = function ModalFooter({
       <button
         onClick={onCancel}
         disabled={isConfirming}
-        className="px-4 py-2 bg-transparent border border-[#333333] text-white rounded-lg text-sm font-medium hover:bg-[#2a2a2a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-4 py-2 bg-transparent border border-neutral-300 text-black rounded-lg text-sm font-medium hover:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {cancelText}
       </button>
       <button
         onClick={onConfirm}
         disabled={isConfirming}
-        className="px-4 py-2 bg-[#D4A84B] text-black rounded-lg text-sm font-medium hover:bg-[#E5B95C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isConfirming ? "Procesando..." : confirmText}
       </button>
@@ -158,14 +158,14 @@ export function ModalFooter({
       <button
         onClick={onCancel}
         disabled={isConfirming}
-        className="px-4 py-2 bg-transparent border border-[#333333] text-white rounded-lg text-sm font-medium hover:bg-[#2a2a2a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-4 py-2 bg-transparent border border-neutral-300 text-black rounded-lg text-sm font-medium hover:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {cancelText}
       </button>
       <button
         onClick={onConfirm}
         disabled={isConfirming}
-        className="px-4 py-2 bg-[#D4A84B] text-black rounded-lg text-sm font-medium hover:bg-[#E5B95C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isConfirming ? "Procesando..." : confirmText}
       </button>

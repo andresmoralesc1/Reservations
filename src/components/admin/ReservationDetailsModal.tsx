@@ -92,11 +92,11 @@ export function ReservationDetailsModal({
         {/* Header with code and status */}
         <div className="flex items-start justify-between">
           <div>
-            <div className="font-display text-2xl uppercase tracking-[0.1em] text-white">
+            <div className="font-display text-2xl uppercase tracking-[0.1em] text-black">
               {reservation.reservationCode}
             </div>
             {reservation.restaurant && (
-              <div className="text-sm text-[#A0A0A0] mt-1">
+              <div className="text-sm text-neutral-600 mt-1">
                 {reservation.restaurant.name}
               </div>
             )}
@@ -105,8 +105,8 @@ export function ReservationDetailsModal({
         </div>
 
         {/* Customer Info */}
-        <div className="bg-[#2a2a2a] border border-[#333333] rounded-lg p-4">
-          <h3 className="text-sm font-medium uppercase tracking-[0.05em] text-[#D4A84B] mb-3">
+        <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
+          <h3 className="text-sm font-medium uppercase tracking-[0.05em] text-black mb-3">
             Cliente
           </h3>
           <div className="grid grid-cols-2 gap-4">
@@ -119,7 +119,7 @@ export function ReservationDetailsModal({
               <div className="font-medium">
                 <a
                   href={`tel:${reservation.customerPhone}`}
-                  className="text-black hover:text-posit-red transition-colors"
+                  className="text-blue-600 hover:text-blue-800 transition-colors"
                 >
                   {reservation.customerPhone}
                 </a>
@@ -129,8 +129,8 @@ export function ReservationDetailsModal({
         </div>
 
         {/* Reservation Info */}
-        <div className="bg-[#2a2a2a] border border-[#333333] rounded-lg p-4">
-          <h3 className="text-sm font-medium uppercase tracking-[0.05em] text-[#D4A84B] mb-3">
+        <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
+          <h3 className="text-sm font-medium uppercase tracking-[0.05em] text-black mb-3">
             Reserva
           </h3>
           <div className="grid grid-cols-3 gap-4">
@@ -155,15 +155,15 @@ export function ReservationDetailsModal({
 
         {/* Tables */}
         {reservation.tables && reservation.tables.length > 0 && (
-          <div className="bg-[#2a2a2a] border border-[#333333] rounded-lg p-4">
-            <h3 className="text-sm font-medium uppercase tracking-[0.05em] text-[#D4A84B] mb-3">
+          <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
+            <h3 className="text-sm font-medium uppercase tracking-[0.05em] text-black mb-3">
               Mesas Asignadas
             </h3>
             <div className="flex flex-wrap gap-2">
               {reservation.tables.map((table) => (
                 <span
                   key={table.id}
-                  className="px-3 py-1 bg-[#1a1a1a] border border-[#D4A84B] rounded-full text-sm font-medium text-[#D4A84B]"
+                  className="px-3 py-1 bg-black border border-black rounded-full text-sm font-medium text-white"
                   title={`${table.location || ''} - ${table.capacity} pax`}
                 >
                   {table.tableCode}
@@ -198,7 +198,7 @@ export function ReservationDetailsModal({
         )}
 
         {/* Timestamps */}
-        <div className="text-xs text-neutral-400 space-y-1">
+        <div className="text-xs text-neutral-500 space-y-1">
           <div>Creada: {formatDateTime(reservation.createdAt)}</div>
           <div>Actualizada: {formatDateTime(reservation.updatedAt)}</div>
           {reservation.confirmedAt && (

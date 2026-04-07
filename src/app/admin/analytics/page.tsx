@@ -241,7 +241,7 @@ export default function AnalyticsPage() {
           <select
             value={period}
             onChange={(e) => setPeriod(e.target.value as typeof period)}
-            className="px-4 py-2 bg-[#2a2a2a] border border-[#333333] rounded-lg text-sm text-white focus:outline-none focus:border-[#D4A84B] transition-colors"
+            className="px-4 py-2 bg-white border border-neutral-300 rounded-lg text-sm text-black focus:outline-none focus:border-black transition-colors"
           >
             {PERIOD_OPTIONS.map((opt) => (
               <option key={opt.label} value={opt.value}>
@@ -251,19 +251,19 @@ export default function AnalyticsPage() {
           </select>
           <button
             onClick={handleExport}
-            className="px-4 py-2 bg-transparent border border-[#333333] text-white rounded-lg text-sm font-medium hover:bg-[#2a2a2a] transition-colors"
+            className="px-4 py-2 bg-transparent border border-neutral-300 text-black rounded-lg text-sm font-medium hover:bg-neutral-100 transition-colors"
           >
             Exportar CSV
           </button>
           <button
             onClick={handleExportJSON}
-            className="px-4 py-2 bg-transparent border border-[#333333] text-white rounded-lg text-sm font-medium hover:bg-[#2a2a2a] transition-colors"
+            className="px-4 py-2 bg-transparent border border-neutral-300 text-black rounded-lg text-sm font-medium hover:bg-neutral-100 transition-colors"
           >
             Exportar JSON
           </button>
           <button
             onClick={loadAnalytics}
-            className="p-2 rounded-lg hover:bg-[#2a2a2a] text-[#A0A0A0] hover:text-white transition-colors"
+            className="p-2 rounded-lg hover:bg-neutral-100 text-neutral-600 hover:text-black transition-colors"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -352,8 +352,8 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Daily Breakdown Chart */}
-      <div className="bg-[#1a1a1a] border border-[#333333] rounded-lg p-6">
-        <h3 className="font-display text-lg uppercase tracking-[0.1em] text-white mb-4">
+      <div className="bg-white border border-neutral-200 rounded-lg p-6">
+        <h3 className="font-display text-lg uppercase tracking-[0.1em] text-black mb-4">
           Reservas por Día
         </h3>
         <div className="space-y-2">
@@ -363,19 +363,19 @@ export default function AnalyticsPage() {
 
             return (
               <div key={day.date} className="flex items-center gap-4">
-                <div className="w-24 text-sm text-[#A0A0A0]">
+                <div className="w-24 text-sm text-neutral-600">
                   {format(new Date(day.date), "dd MMM", { locale: es })}
                 </div>
-                <div className="flex-1 h-8 bg-[#2a2a2a] rounded-sm relative overflow-hidden">
+                <div className="flex-1 h-8 bg-neutral-100 rounded-sm relative overflow-hidden">
                   <div
-                    className="absolute left-0 top-0 bottom-0 bg-[#D4A84B] transition-all duration-300"
+                    className="absolute left-0 top-0 bottom-0 bg-black transition-all duration-300"
                     style={{ width: `${height}%` }}
                   />
                   <div className="absolute inset-0 flex items-center px-3 text-sm font-medium text-white">
                     {day.total} reservas
                   </div>
                 </div>
-                <div className="w-20 text-right text-sm text-[#666666]">
+                <div className="w-20 text-right text-sm text-neutral-600">
                   {day.covers} pax
                 </div>
               </div>
@@ -385,8 +385,8 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Source Breakdown */}
-      <div className="bg-[#1a1a1a] border border-[#333333] rounded-lg p-6">
-        <h3 className="font-display text-lg uppercase tracking-[0.1em] text-white mb-4">
+      <div className="bg-white border border-neutral-200 rounded-lg p-6">
+        <h3 className="font-display text-lg uppercase tracking-[0.1em] text-black mb-4">
           Reservas por Origen
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -396,14 +396,14 @@ export default function AnalyticsPage() {
               : 0
 
             return (
-              <div key={source} className="text-center p-4 bg-[#2a2a2a] border border-[#333333] rounded-lg">
-                <div className="text-3xl font-display font-bold text-white">
+              <div key={source} className="text-center p-4 bg-neutral-50 border border-neutral-200 rounded-lg">
+                <div className="text-3xl font-display font-bold text-black">
                   {count}
                 </div>
-                <div className="text-sm text-[#A0A0A0] uppercase tracking-wider mt-1">
+                <div className="text-sm text-neutral-600 uppercase tracking-wider mt-1">
                   {source}
                 </div>
-                <div className="text-xs text-[#666666] mt-1">
+                <div className="text-xs text-neutral-500 mt-1">
                   {percentage}%
                 </div>
               </div>
@@ -413,8 +413,8 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Hourly Distribution */}
-      <div className="bg-[#1a1a1a] border border-[#333333] rounded-lg p-6">
-        <h3 className="font-display text-lg uppercase tracking-[0.1em] text-white mb-4">
+      <div className="bg-white border border-neutral-200 rounded-lg p-6">
+        <h3 className="font-display text-lg uppercase tracking-[0.1em] text-black mb-4">
           Distribución por Hora
         </h3>
         <div className="flex items-end gap-1 h-40">
@@ -429,15 +429,15 @@ export default function AnalyticsPage() {
 
               return (
                 <div key={hour.hour} className="flex-1 flex flex-col items-center">
-                  <div className="w-full h-32 bg-[#2a2a2a] rounded-sm relative">
+                  <div className="w-full h-32 bg-neutral-100 rounded-sm relative">
                     {hour.count > 0 && (
                       <div
-                        className="absolute bottom-0 left-0 right-0 bg-[#D4A84B] transition-all duration-300"
+                        className="absolute bottom-0 left-0 right-0 bg-black transition-all duration-300"
                         style={{ height: `${height}%` }}
                       />
                     )}
                   </div>
-                  <span className="text-[10px] text-[#666666] mt-1">
+                  <span className="text-[10px] text-neutral-500 mt-1">
                     {hour.hour}h
                   </span>
                 </div>

@@ -16,18 +16,8 @@ export type LogMetadata = Record<string, unknown>
 // Determinar si estamos en producción
 const isProduction = process.env.NODE_ENV === 'production'
 
-// Configuración del transporte (pretty print en desarrollo)
-const transport = isProduction
-  ? undefined // JSON por defecto en prod
-  : pino.transport({
-      target: 'pino-pretty',
-      options: {
-        colorize: true,
-        translateTime: 'HH:MM:ss',
-        ignore: 'pid,hostname',
-        singleLine: false,
-      },
-    })
+// Configuración del transporte - JSON simple para evitar problemas con webpack
+const transport = undefined // JSON en ambos ambientes para máxima compatibilidad
 
 // Configuración base del logger
 const baseConfig = {
@@ -37,6 +27,8 @@ const baseConfig = {
   timestamp: isProduction ? pino.stdTimeFunctions.epochTime : pino.stdTimeFunctions.isoTime,
   formatters: {
     // Agregar caller (archivo y línea) a los logs
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Reason: Pino's log formatter expects 'any' type - this is a third-party library signature
     log(object: any) {
       const { level, time, ...rest } = object
       return {

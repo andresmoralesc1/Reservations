@@ -307,7 +307,7 @@ export default function AvailabilityPage() {
       {/* Controls */}
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Date Navigation */}
-        <div className="flex-1 bg-[#1a1a1a] rounded-xl border border-[#333333] p-4">
+        <div className="flex-1 bg-white rounded-xl border border-neutral-200 p-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="flex items-center gap-1">
               <button onClick={() => navigateDay(-1)} className="p-2 hover:bg-neutral-100 rounded-lg">
@@ -350,7 +350,7 @@ export default function AvailabilityPage() {
         </div>
 
         {/* Party Size */}
-        <div className="bg-[#1a1a1a] rounded-xl border border-[#333333] p-4">
+        <div className="bg-white rounded-xl border border-neutral-200 p-4">
           <div className="flex items-center gap-3">
             <Users className="w-5 h-5 text-neutral-500" />
             <span className="text-sm font-medium">Personas:</span>
@@ -497,8 +497,8 @@ export default function AvailabilityPage() {
 
                 {/* Availability View */}
                 {!showReservations ? (
-                  <div className="bg-[#1a1a1a] rounded-xl border border-[#333333] p-4">
-                    <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                  <div className="bg-white rounded-xl border border-neutral-200 p-4">
+                    <h3 className="font-semibold text-lg mb-4 flex items-center gap-2 text-black">
                       <Clock className="w-5 h-5" />
                       {selectedSlot}
                     </h3>
@@ -577,8 +577,8 @@ export default function AvailabilityPage() {
                   </div>
                 ) : (
                   /* Reservations View */
-                  <div className="bg-[#1a1a1a] rounded-xl border border-[#333333] p-4">
-                    <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                  <div className="bg-white rounded-xl border border-neutral-200 p-4">
+                    <h3 className="font-semibold text-lg mb-4 flex items-center gap-2 text-black">
                       <Clock className="w-5 h-5" />
                       Reservas a las {selectedSlot}
                     </h3>
@@ -640,8 +640,8 @@ export default function AvailabilityPage() {
                 )}
 
                 {/* Quick Summary */}
-                <div className="bg-[#1a1a1a] rounded-xl border border-[#333333] p-4">
-                  <h3 className="font-semibold text-sm mb-3">Resumen del Día</h3>
+                <div className="bg-white rounded-xl border border-neutral-200 p-4">
+                  <h3 className="font-semibold text-sm mb-3 text-black">Resumen del Día</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-neutral-600">Horarios:</span>
