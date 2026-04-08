@@ -88,7 +88,9 @@ export async function getDashboardStats({ restaurantId, date }: DashboardStatsOp
   const cancelledCount = todayReservations.filter((r) => r.status === "CANCELADO").length
   const noShowCount = todayReservations.filter((r) => r.status === "NO_SHOW").length
 
-  const totalToday = confirmedCount + pendingCount
+  // Total hoy incluye todas las reservas activas (confirmadas, pendientes, no-show)
+  // Excluye canceladas porque no ocupan espacio ni generan ingresos
+  const totalToday = confirmedCount + pendingCount + noShowCount
   const confirmationRate = totalToday > 0
     ? Math.round((confirmedCount / totalToday) * 100)
     : 0
@@ -101,14 +103,34 @@ export async function getDashboardStats({ restaurantId, date }: DashboardStatsOp
       ) / 10
     : 0
 
-  // Occupancy rate
+  // Occupancy rate - Mejorado: considera que cada mesa puede usarse múltiples veces por día
+  // Dividimos en turnos: comida (13:00-17:00) y cena (19:00-23:00)
   const totalCapacity = allTables.reduce((sum, t) => sum + t.capacity, 0)
+
+  // Filtrar reservas activas por turno
+  const lunchReservations = todayReservations.filter((r) => {
+    const hour = parseInt(r.reservationTime.split(":")[0])
+    return r.status !== "CANCELADO" && hour >= 13 && hour < 17
+  })
+  const dinnerReservations = todayReservations.filter((r) => {
+    const hour = parseInt(r.reservationTime.split(":")[0])
+    return r.status !== "CANCELADO" && hour >= 19 && hour < 24
+  })
+
+  const lunchCovers = lunchReservations.reduce((sum, r) => sum + r.partySize, 0)
+  const dinnerCovers = dinnerReservations.reduce((sum, r) => sum + r.partySize, 0)
+
+  // Ocupación por turno (máximo 100% cada uno)
+  const lunchOccupancy = totalCapacity > 0 ? Math.min(100, (lunchCovers / totalCapacity) * 100) : 0
+  const dinnerOccupancy = totalCapacity > 0 ? Math.min(100, (dinnerCovers / totalCapacity) * 100) : 0
+
+  // Promedio de ocupación entre los dos turnos
+  const occupancyRate = Math.round((lunchOccupancy + dinnerOccupancy) / 2)
+
+  // Total covers del día (para el KPI de cubiertos)
   const totalCovers = todayReservations
     .filter((r) => r.status !== "CANCELADO")
     .reduce((sum, r) => sum + r.partySize, 0)
-  const occupancyRate = totalCapacity > 0
-    ? Math.min(100, Math.round((totalCovers / totalCapacity) * 100))
-    : 0
 
   // Get pending stats for all future reservations
   const futureReservations = await db.query.reservations.findMany({

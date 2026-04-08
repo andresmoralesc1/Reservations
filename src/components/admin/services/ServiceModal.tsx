@@ -292,11 +292,11 @@ export function ServiceModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/70" onClick={onClose}></div>
-      <div className="relative bg-[#1a1a1a] border border-[#333333] rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose}></div>
+      <div className="relative bg-white border border-neutral-200 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="border-b border-[#333333] px-6 py-4">
-          <h3 className="font-display text-lg uppercase tracking-[0.1em] text-white">
+        <div className="border-b border-neutral-200 px-6 py-4">
+          <h3 className="font-display text-lg uppercase tracking-[0.1em] text-black">
             {service ? "Editar Servicio" : "Crear Servicio"}
           </h3>
         </div>
@@ -305,10 +305,10 @@ export function ServiceModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Errors */}
           {errors.length > 0 && (
-            <div className="bg-[#E53935]/20 border border-[#E53935]/30 rounded-lg p-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <ul className="list-disc list-inside space-y-1">
                 {errors.map((error, i) => (
-                  <li key={i} className="text-sm text-[#E53935]">
+                  <li key={i} className="text-sm text-red-600">
                     {error}
                   </li>
                 ))}
@@ -318,26 +318,26 @@ export function ServiceModal({
 
           {/* Basic Info */}
           <div className="space-y-4">
-            <h3 className="text-sm font-medium uppercase tracking-wider text-[#666666]">
+            <h3 className="text-sm font-medium uppercase tracking-wider text-black">
               Información Básica
             </h3>
 
             <div>
-              <label className="block text-sm font-medium text-[#A0A0A0] mb-1">
-                Nombre <span className="text-[#E53935]">*</span>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
+                Nombre <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Ej: Comida Verano - Fin de Semana"
-                className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#333333] text-white rounded-lg focus:outline-none focus:border-[#D4A84B]"
+                className="w-full px-3 py-2 bg-white border border-neutral-300 text-black rounded-lg focus:outline-none focus:border-black"
                 disabled={isSaving}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#A0A0A0] mb-1">
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
                 Descripción
               </label>
               <textarea
@@ -345,7 +345,7 @@ export function ServiceModal({
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Ej: Horario de comida para temporada alta"
                 rows={2}
-                className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#333333] text-white rounded-lg focus:outline-none focus:border-[#D4A84B]"
+                className="w-full px-3 py-2 bg-white border border-neutral-300 text-black rounded-lg focus:outline-none focus:border-black"
                 disabled={isSaving}
               />
             </div>
@@ -359,13 +359,13 @@ export function ServiceModal({
 
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-[#A0A0A0] mb-1">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
                   Tipo
                 </label>
                 <select
                   value={formData.serviceType}
                   onChange={(e) => handleServiceTypeChange(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#333333] text-white rounded-lg focus:outline-none focus:border-[#D4A84B]"
+                  className="w-full px-3 py-2 bg-white border border-neutral-300 text-black rounded-lg focus:outline-none focus:border-black"
                   disabled={isSaving}
                 >
                   {SERVICE_TYPES.map((st) => (
@@ -377,13 +377,13 @@ export function ServiceModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#A0A0A0] mb-1">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
                   Temporada
                 </label>
                 <select
                   value={formData.season}
                   onChange={(e) => setFormData({ ...formData, season: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#333333] text-white rounded-lg focus:outline-none focus:border-[#D4A84B]"
+                  className="w-full px-3 py-2 bg-white border border-neutral-300 text-black rounded-lg focus:outline-none focus:border-black"
                   disabled={isSaving}
                 >
                   {SEASONS.map((s) => (
@@ -395,13 +395,13 @@ export function ServiceModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#A0A0A0] mb-1">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
                   Días
                 </label>
                 <select
                   value={formData.dayType}
                   onChange={(e) => setFormData({ ...formData, dayType: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#333333] text-white rounded-lg focus:outline-none focus:border-[#D4A84B]"
+                  className="w-full px-3 py-2 bg-white border border-neutral-300 text-black rounded-lg focus:outline-none focus:border-black"
                   disabled={isSaving}
                 >
                   {DAY_TYPES.map((dt) => (
@@ -415,27 +415,27 @@ export function ServiceModal({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-[#A0A0A0] mb-1">
-                  Hora Inicio <span className="text-[#E53935]">*</span>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  Hora Inicio <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="time"
                   value={formData.startTime}
                   onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#333333] text-white rounded-lg focus:outline-none focus:border-[#D4A84B] [color-scheme:dark]"
+                  className="w-full px-3 py-2 bg-white border border-neutral-300 text-black rounded-lg focus:outline-none focus:border-black [color-scheme:dark]"
                   disabled={isSaving}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#A0A0A0] mb-1">
-                  Hora Fin <span className="text-[#E53935]">*</span>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  Hora Fin <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="time"
                   value={formData.endTime}
                   onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#333333] text-white rounded-lg focus:outline-none focus:border-[#D4A84B] [color-scheme:dark]"
+                  className="w-full px-3 py-2 bg-white border border-neutral-300 text-black rounded-lg focus:outline-none focus:border-black [color-scheme:dark]"
                   disabled={isSaving}
                 />
               </div>
@@ -443,7 +443,7 @@ export function ServiceModal({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-[#A0A0A0] mb-1">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
                   Duración (min)
                 </label>
                 <input
@@ -457,13 +457,13 @@ export function ServiceModal({
                       defaultDurationMinutes: parseInt(e.target.value) || 90,
                     })
                   }
-                  className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#333333] text-white rounded-lg focus:outline-none focus:border-[#D4A84B]"
+                  className="w-full px-3 py-2 bg-white border border-neutral-300 text-black rounded-lg focus:outline-none focus:border-black"
                   disabled={isSaving}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#A0A0A0] mb-1">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
                   Buffer (min)
                 </label>
                 <input
@@ -477,14 +477,14 @@ export function ServiceModal({
                       bufferMinutes: parseInt(e.target.value) || 15,
                     })
                   }
-                  className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#333333] text-white rounded-lg focus:outline-none focus:border-[#D4A84B]"
+                  className="w-full px-3 py-2 bg-white border border-neutral-300 text-black rounded-lg focus:outline-none focus:border-black"
                   disabled={isSaving}
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#A0A0A0] mb-2">
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
                 Generación de Turnos
               </label>
               <div className="flex gap-4">
@@ -499,7 +499,7 @@ export function ServiceModal({
                     disabled={isSaving}
                     className="mr-2 accent-[#D4A84B]"
                   />
-                  <span className="text-sm text-[#A0A0A0]">Automática</span>
+                  <span className="text-sm text-neutral-700">Automática</span>
                 </label>
                 <label className="flex items-center">
                   <input
@@ -512,7 +512,7 @@ export function ServiceModal({
                     disabled={isSaving}
                     className="mr-2 accent-[#D4A84B]"
                   />
-                  <span className="text-sm text-[#A0A0A0]">Manual (Fase 2)</span>
+                  <span className="text-sm text-neutral-700">Manual (Fase 2)</span>
                 </label>
               </div>
             </div>
@@ -520,7 +520,7 @@ export function ServiceModal({
             {/* Manual slots (only shown when mode is manual) */}
             {formData.slotGenerationMode === "manual" && (
               <div>
-                <label className="block text-sm font-medium text-[#A0A0A0] mb-2">
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
                   Turnos Manuales
                 </label>
 
@@ -530,14 +530,14 @@ export function ServiceModal({
                     type="time"
                     value={newSlotTime}
                     onChange={(e) => setNewSlotTime(e.target.value)}
-                    className="px-3 py-2 bg-[#2a2a2a] border border-[#333333] text-white rounded-lg focus:outline-none focus:border-[#D4A84B] [color-scheme:dark]"
+                    className="px-3 py-2 bg-white border border-neutral-300 text-black rounded-lg focus:outline-none focus:border-black [color-scheme:dark]"
                     disabled={isSaving}
                   />
                   <button
                     type="button"
                     onClick={addManualSlot}
                     disabled={isSaving || !newSlotTime}
-                    className="px-4 py-2 bg-[#D4A84B] text-black rounded-lg hover:bg-[#E5B95C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    className="px-4 py-2 bg-black text-white rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >
                     + Agregar
                   </button>
@@ -546,19 +546,19 @@ export function ServiceModal({
                 {/* List of existing slots */}
                 {formData.manualSlots.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-xs text-[#666666]">
+                    <p className="text-xs text-neutral-500">
                       Turnos configurados: {formData.manualSlots.length}
                     </p>
                     {formData.manualSlots.map((slot, index) => (
-                      <div key={index} className="flex items-center gap-2 p-2 bg-[#2a2a2a] rounded-lg border border-[#333333]">
-                        <span className="px-3 py-1 bg-[#1a1a1a] border border-[#333333] rounded font-mono text-sm text-white">
+                      <div key={index} className="flex items-center gap-2 p-2 bg-neutral-50 rounded-lg border border-neutral-200">
+                        <span className="px-3 py-1 bg-white border border-neutral-300 rounded font-mono text-sm text-black">
                           {slot}
                         </span>
                         <button
                           type="button"
                           onClick={() => removeManualSlot(index)}
                           disabled={isSaving}
-                          className="ml-auto text-[#E53935] hover:text-[#C62828] text-sm"
+                          className="ml-auto text-red-500 hover:text-red-700 text-sm"
                         >
                           Eliminar
                         </button>
@@ -568,7 +568,7 @@ export function ServiceModal({
                 )}
 
                 {formData.manualSlots.length === 0 && (
-                  <p className="text-sm text-[#666666] italic">
+                  <p className="text-sm text-neutral-400 italic">
                     No hay turnos configurados. Agrega al menos uno.
                   </p>
                 )}
@@ -578,7 +578,7 @@ export function ServiceModal({
             {/* Date range (optional) */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-[#A0A0A0] mb-1">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
                   Fecha Inicio (opcional)
                 </label>
                 <input
@@ -587,13 +587,13 @@ export function ServiceModal({
                   onChange={(e) =>
                     setFormData({ ...formData, dateRangeStart: e.target.value })
                   }
-                  className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#333333] text-white rounded-lg focus:outline-none focus:border-[#D4A84B] [color-scheme:dark]"
+                  className="w-full px-3 py-2 bg-white border border-neutral-300 text-black rounded-lg focus:outline-none focus:border-black [color-scheme:dark]"
                   disabled={isSaving}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#A0A0A0] mb-1">
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
                   Fecha Fin (opcional)
                 </label>
                 <input
@@ -602,7 +602,7 @@ export function ServiceModal({
                   onChange={(e) =>
                     setFormData({ ...formData, dateRangeEnd: e.target.value })
                   }
-                  className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#333333] text-white rounded-lg focus:outline-none focus:border-[#D4A84B] [color-scheme:dark]"
+                  className="w-full px-3 py-2 bg-white border border-neutral-300 text-black rounded-lg focus:outline-none focus:border-black [color-scheme:dark]"
                   disabled={isSaving}
                 />
               </div>
@@ -619,25 +619,25 @@ export function ServiceModal({
               disabled={isSaving}
               className="mr-2 accent-[#D4A84B]"
             />
-            <label htmlFor="isActive" className="text-sm font-medium text-[#A0A0A0]">
+            <label htmlFor="isActive" className="text-sm font-medium text-neutral-700">
               Activo
             </label>
           </div>
         </form>
 
         {/* Footer */}
-        <div className="border-t border-[#333333] px-6 py-4 flex justify-end gap-3">
+        <div className="border-t border-neutral-200 px-6 py-4 flex justify-end gap-3">
           <button
             onClick={onClose}
             disabled={isSaving}
-            className="px-4 py-2 bg-transparent border border-[#333333] text-white text-sm font-medium rounded-lg hover:bg-[#2a2a2a] transition-colors disabled:opacity-50"
+            className="px-4 py-2 bg-transparent border border-neutral-300 text-black text-sm font-medium rounded-lg hover:bg-neutral-100 transition-colors disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             onClick={handleSubmit}
             disabled={isSaving}
-            className="px-6 py-2 bg-[#D4A84B] text-black rounded-lg hover:bg-[#E5B95C] transition-colors disabled:opacity-50"
+            className="px-6 py-2 bg-black text-white rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50"
           >
             {isSaving ? "Guardando..." : "Guardar"}
           </button>

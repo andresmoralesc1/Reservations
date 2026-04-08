@@ -168,13 +168,63 @@ async function fetchAnalyticsOptimized(
   })
 
   const totalCapacity = allTables.reduce((sum, t) => sum + t.capacity, 0)
-  const daysWithData = allDailyData.length
-  const avgOccupancy = (totalCapacity > 0 && daysWithData > 0)
-    ? Math.round((totalCovers / (totalCapacity * daysWithData)) * 100)
-    : 0
 
-  const noShowRate = confirmedCount > 0
-    ? Math.round((noShowCount / confirmedCount) * 100)
+  // Calcular ocupación promedio considerando los dos turnos del día
+  // Comida: 13:00-17:00, Cena: 19:00-23:00
+  let totalLunchOccupancy = 0
+  let totalDinnerOccupancy = 0
+  let daysWithLunch = 0
+  let daysWithDinner = 0
+
+  for (const day of allDailyData) {
+    // Si hay hourlyBreakdown, usarlo para calcular ocupación por turno
+    if (day.hourlyBreakdown && day.hourlyBreakdown.length > 0) {
+      // Comida (13:00-17:00)
+      const lunchCovers = day.hourlyBreakdown
+        .filter((h) => h.hour >= 13 && h.hour < 17)
+        .reduce((sum, h) => sum + h.covers, 0)
+      // Cena (19:00-23:00)
+      const dinnerCovers = day.hourlyBreakdown
+        .filter((h) => h.hour >= 19 && h.hour < 24)
+        .reduce((sum, h) => sum + h.covers, 0)
+
+      if (lunchCovers > 0 || day.hourlyBreakdown.some((h) => h.hour >= 13 && h.hour < 17)) {
+        const lunchOcc = totalCapacity > 0 ? Math.min(100, (lunchCovers / totalCapacity) * 100) : 0
+        totalLunchOccupancy += lunchOcc
+        daysWithLunch++
+      }
+
+      if (dinnerCovers > 0 || day.hourlyBreakdown.some((h) => h.hour >= 19 && h.hour < 24)) {
+        const dinnerOcc = totalCapacity > 0 ? Math.min(100, (dinnerCovers / totalCapacity) * 100) : 0
+        totalDinnerOccupancy += dinnerOcc
+        daysWithDinner++
+      }
+    } else {
+      // Si no hay hourlyBreakdown, estimar usando totalCovers del día
+      // Asumir distribución 50/50 entre comida y cena
+      const estimatedLunch = day.totalCovers * 0.5
+      const estimatedDinner = day.totalCovers * 0.5
+
+      const lunchOcc = totalCapacity > 0 ? Math.min(100, (estimatedLunch / totalCapacity) * 100) : 0
+      const dinnerOcc = totalCapacity > 0 ? Math.min(100, (estimatedDinner / totalCapacity) * 100) : 0
+
+      totalLunchOccupancy += lunchOcc
+      totalDinnerOccupancy += dinnerOcc
+      daysWithLunch++
+      daysWithDinner++
+    }
+  }
+
+  // Promedio de ocupación combinando ambos turnos
+  const avgLunchOccupancy = daysWithLunch > 0 ? totalLunchOccupancy / daysWithLunch : 0
+  const avgDinnerOccupancy = daysWithDinner > 0 ? totalDinnerOccupancy / daysWithDinner : 0
+  const avgOccupancy = Math.round((avgLunchOccupancy + avgDinnerOccupancy) / 2)
+
+  // No show rate: porcentaje de no-shows sobre el total de reservas que deberían presentarse
+  // (confirmadas + no-shows, ya que un no-show originalmente pudo ser confirmado o pendiente)
+  const expectedAttendees = confirmedCount + noShowCount
+  const noShowRate = expectedAttendees > 0
+    ? Math.round((noShowCount / expectedAttendees) * 100)
     : 0
 
   const confirmationRate = (confirmedCount + pendingCount) > 0
@@ -185,7 +235,7 @@ async function fetchAnalyticsOptimized(
     period: {
       startDate: startDateStr,
       endDate: endDateStr,
-      days: daysWithData,
+      days: allDailyData.length,
     },
     summary: {
       totalReservations,
@@ -320,16 +370,46 @@ async function fetchAnalyticsRealtime(
     sourceBreakdown[res.source] = (sourceBreakdown[res.source] || 0) + 1
   }
 
-  // Table utilization
+  // Table utilization - Mejorado: considera turnos de comida y cena
   const totalCapacity = allTables.reduce((sum, t) => sum + t.capacity, 0)
+
+  // Calcular cubiertos por turno
+  const lunchCovers = Object.values(dailyBreakdown).reduce((sum, day) => {
+    // Obtener cubiertos de comida filtrando por hora en las reservas originales
+    return sum // Se recalculará abajo
+  }, 0)
+
+  // Usar hourlyBreakdown para calcular cubiertos por turno
+  const lunchHourlyCovers = Object.values(hourlyBreakdown)
+    .filter((h) => h.hour >= 13 && h.hour < 17)
+    .reduce((sum, h) => sum + h.covers, 0)
+
+  const dinnerHourlyCovers = Object.values(hourlyBreakdown)
+    .filter((h) => h.hour >= 19 && h.hour < 24)
+    .reduce((sum, h) => sum + h.covers, 0)
+
+  // Distribuir cubiertos totales si no hay datos por hora
+  const totalLunchCovers = lunchHourlyCovers > 0 ? lunchHourlyCovers : totalCovers * 0.5
+  const totalDinnerCovers = dinnerHourlyCovers > 0 ? dinnerHourlyCovers : totalCovers * 0.5
+
+  // Calcular ocupación por turno
   const daysWithData = Object.keys(dailyBreakdown).length
-  const avgOccupancy = (totalCapacity > 0 && daysWithData > 0)
-    ? Math.round((totalCovers / (totalCapacity * daysWithData)) * 100)
+  const avgLunchOccupancy = totalCapacity > 0 && daysWithData > 0
+    ? Math.min(100, (totalLunchCovers / (totalCapacity * daysWithData)) * 100)
+    : 0
+  const avgDinnerOccupancy = totalCapacity > 0 && daysWithData > 0
+    ? Math.min(100, (totalDinnerCovers / (totalCapacity * daysWithData)) * 100)
     : 0
 
+  // Promedio de ambos turnos
+  const avgOccupancy = Math.round((avgLunchOccupancy + avgDinnerOccupancy) / 2)
+
   // No show rate
-  const noShowRate = confirmedCount > 0
-    ? Math.round((noShowCount / confirmedCount) * 100)
+  // No show rate: porcentaje de no-shows sobre el total de reservas que deberían presentarse
+  // (confirmadas + no-shows, ya que un no-show originalmente pudo ser confirmado o pendiente)
+  const expectedAttendees = confirmedCount + noShowCount
+  const noShowRate = expectedAttendees > 0
+    ? Math.round((noShowCount / expectedAttendees) * 100)
     : 0
 
   // Confirmation rate
