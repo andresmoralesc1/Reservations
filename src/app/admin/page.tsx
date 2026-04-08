@@ -121,7 +121,7 @@ export default function AdminPage() {
       }
 
       try {
-        const response = await fetch(`/api/reservations/${id}`, {
+        const response = await fetch(`/api/admin/reservations/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: "NO_SHOW" }),
@@ -132,7 +132,8 @@ export default function AdminPage() {
           reloadReservations()
           reloadStats()
         } else {
-          toast("Error al marcar No Show", "error")
+          const error = await response.json()
+          toast(error.error || "Error al marcar No Show", "error")
         }
       } catch (error) {
         console.error("Error marking no-show:", error)
@@ -151,10 +152,10 @@ export default function AdminPage() {
   )
 
   const handleConfirmDialogAction = useCallback(async () => {
-    const success = await handleConfirmAction()
-    if (success) {
+    const result = await handleConfirmAction()
+    if (result.success) {
       toast(
-        confirmDialog.action === "approve"
+        result.action === "approve"
           ? "Reserva aprobada correctamente"
           : "Reserva rechazada",
         "success"
@@ -164,7 +165,7 @@ export default function AdminPage() {
     } else {
       toast("Error al procesar la acción", "error")
     }
-  }, [handleConfirmAction, confirmDialog.action, reloadReservations, reloadStats])
+  }, [handleConfirmAction, reloadReservations, reloadStats])
 
   const handleRefreshAll = useCallback(() => {
     reloadReservations()
@@ -301,6 +302,9 @@ export default function AdminPage() {
         isOpen={detailsReservation !== null}
         onClose={() => setDetailsReservation(null)}
         reservation={detailsReservation}
+        onApprove={handleApproveById}
+        onReject={handleRejectById}
+        onNoShow={handleNoShowById}
       />
 
       <CreateReservationModal
