@@ -105,39 +105,6 @@ export function Modal({
   )
 }
 
-Modal.Footer = function ModalFooter({
-  onCancel,
-  onConfirm,
-  cancelText = "Cancelar",
-  confirmText = "Confirmar",
-  isConfirming = false,
-}: {
-  onCancel: () => void
-  onConfirm: () => void
-  cancelText?: string
-  confirmText?: string
-  isConfirming?: boolean
-}) {
-  return (
-    <>
-      <button
-        onClick={onCancel}
-        disabled={isConfirming}
-        className="px-4 py-2 bg-transparent border border-neutral-300 text-black rounded-lg text-sm font-medium hover:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {cancelText}
-      </button>
-      <button
-        onClick={onConfirm}
-        disabled={isConfirming}
-        className="px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isConfirming ? "Procesando..." : confirmText}
-      </button>
-    </>
-  )
-}
-
 export interface ModalFooterProps {
   onCancel: () => void
   onConfirm: () => void | Promise<void>
