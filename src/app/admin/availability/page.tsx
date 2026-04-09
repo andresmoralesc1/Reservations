@@ -40,7 +40,8 @@ type AvailabilityResult = {
     serviceType: string
   } | null
   message?: string
-  alternativeSlots?: Array<{ time: string; available: boolean }>
+  alternativeSlots?: string[]  // Solo horas disponibles
+  alternativeSlotsDetailed?: Array<{ time: string; available: boolean }>  // Con disponibilidad
   totalReservationsInSlot?: number
   availableTableIds?: string[]
 }
@@ -551,11 +552,11 @@ export default function AvailabilityPage() {
                         </div>
                         <p className="text-sm text-neutral-600">{slotDetails.message || 'No hay mesas disponibles'}</p>
 
-                        {slotDetails.alternativeSlots && slotDetails.alternativeSlots.length > 0 && (
+                        {slotDetails.alternativeSlotsDetailed && slotDetails.alternativeSlotsDetailed.length > 0 && (
                           <div>
                             <h4 className="font-medium text-sm mb-2">Horarios Alternativos:</h4>
                             <div className="flex flex-wrap gap-2">
-                              {slotDetails.alternativeSlots.map((slot) => (
+                              {slotDetails.alternativeSlotsDetailed.map((slot) => (
                                 <button
                                   key={slot.time}
                                   onClick={() => handleSlotClick(slot.time)}

@@ -15,7 +15,8 @@ export interface ServiceAvailabilityResult {
   suggestedTables: string[]
   service: Service | null
   message?: string
-  alternativeSlots?: Array<{ time: string; available: boolean }>
+  alternativeSlots?: string[]  // Solo horas disponibles como strings
+  alternativeSlotsDetailed?: Array<{ time: string; available: boolean }>  // Con disponibilidad
   totalReservationsInSlot?: number
   availableTableIds?: string[]
 }
@@ -286,7 +287,7 @@ export class ServicesAvailability {
 
     if (availableTables.length === 0) {
       // Find alternative slots within this service
-      const alternativeSlots = await this.findAlternativeSlotsWithinService({
+      const alternativeSlotsDetailed = await this.findAlternativeSlotsWithinService({
         service,
         date,
         time,
@@ -294,13 +295,19 @@ export class ServicesAvailability {
         restaurantId,
       })
 
+      // Filter to only available slots as strings
+      const alternativeSlots = alternativeSlotsDetailed
+        .filter(slot => slot.available)
+        .map(slot => slot.time)
+
       return {
         available: false,
         availableTables: [],
         suggestedTables: [],
         service,
-        message: `No hay mesas disponibles para las ${time} en ${service.name}`,
+        message: `No hay mesas disponibles para las ${time}`,
         alternativeSlots,
+        alternativeSlotsDetailed,
       }
     }
 

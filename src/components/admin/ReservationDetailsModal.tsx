@@ -33,6 +33,9 @@ interface ReservationDetailsModalProps {
       address: string
     }
   } | null
+  onApprove?: (id: string) => void
+  onReject?: (id: string) => void
+  onNoShow?: (id: string) => void
 }
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -46,6 +49,9 @@ export function ReservationDetailsModal({
   isOpen,
   onClose,
   reservation,
+  onApprove,
+  onReject,
+  onNoShow,
 }: ReservationDetailsModalProps) {
   if (!reservation) return null
 
@@ -83,9 +89,43 @@ export function ReservationDetailsModal({
       title="Detalles de Reserva"
       size="lg"
       footer={
-        <Button variant="ghost" size="md" onClick={onClose}>
-          Cerrar
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="ghost" size="md" onClick={onClose}>
+            Cerrar
+          </Button>
+          {reservation?.status === "PENDIENTE" && (
+            <>
+              {onApprove && (
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() => onApprove(reservation.id)}
+                >
+                  Aprobar
+                </Button>
+              )}
+              {onReject && (
+                <Button
+                  variant="danger"
+                  size="md"
+                  onClick={() => onReject(reservation.id)}
+                >
+                  Rechazar
+                </Button>
+              )}
+            </>
+          )}
+          {reservation?.status === "CONFIRMADO" && onNoShow && (
+            <Button
+              variant="outline"
+              size="md"
+              onClick={() => onNoShow(reservation.id)}
+              className="border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400"
+            >
+              Marcar No Show
+            </Button>
+          )}
+        </div>
       }
     >
       <div className="space-y-6">

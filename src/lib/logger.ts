@@ -1,47 +1,95 @@
 /**
  * Logger Configuration
  *
- * Sistema de logging basado en Pino:
- * - Ligero y rápido (ideal para serverless)
+ * Sistema de logging simple para serverless
+ * - Usa console.log/error/warn para máxima compatibilidad
  * - JSON en producción para parseo
- * - Pretty print en desarrollo para legibilidad
+ * - Soporta dos firmas: logger.info(msg, meta) o logger.info({ msg, ...meta })
  * - Niveles: debug, info, warn, error
  */
-
-import pino from 'pino'
 
 // Tipo para los metadatos del logger
 export type LogMetadata = Record<string, unknown>
 
+// Tipo del Logger
+export interface Logger {
+  info: (...args: unknown[]) => void
+  warn: (...args: unknown[]) => void
+  error: (...args: unknown[]) => void
+  debug: (...args: unknown[]) => void
+  child: (context: Record<string, string>) => Logger
+}
+
 // Determinar si estamos en producción
 const isProduction = process.env.NODE_ENV === 'production'
 
-// Configuración del transporte - JSON simple para evitar problemas con webpack
-const transport = undefined // JSON en ambos ambientes para máxima compatibilidad
+// Normaliza los argumentos del logger
+// Soporta: logger.info(msg, meta) o logger.info({ msg, ...meta })
+function normalizeArgs(args: unknown[]): { msg: string; meta: LogMetadata } {
+  if (args.length === 0) return { msg: '', meta: {} }
 
-// Configuración base del logger
-const baseConfig = {
-  level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug'),
-  // En producción, usar timestamp Unix para rendimiento
-  // En desarrollo, usar timestamp ISO para legibilidad
-  timestamp: isProduction ? pino.stdTimeFunctions.epochTime : pino.stdTimeFunctions.isoTime,
-  formatters: {
-    // Agregar caller (archivo y línea) a los logs
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // Reason: Pino's log formatter expects 'any' type - this is a third-party library signature
-    log(object: any) {
-      const { level, time, ...rest } = object
-      return {
-        level,
-        time,
-        ...rest,
-      }
-    },
-  },
+  const first = args[0]
+
+  // Si el primer argumento es un objeto con 'msg', usar formato de pino
+  if (typeof first === 'object' && first !== null && 'msg' in first) {
+    const { msg, ...rest } = first as { msg: string; [key: string]: unknown }
+    return { msg, meta: rest as LogMetadata }
+  }
+
+  // Si no, usar formato simple (msg, meta)
+  const msg = typeof first === 'string' ? first : JSON.stringify(first)
+  const meta = args.length > 1 && typeof args[1] === 'object' && args[1] !== null
+    ? args[1] as LogMetadata
+    : {}
+
+  return { msg, meta }
 }
 
-// Crear el logger
-export const logger = pino(baseConfig, transport)
+// Función para crear un logger
+function createLoggerInstance(context: Record<string, string> = {}): Logger {
+  return {
+    info: (...args: unknown[]) => {
+      const { msg, meta } = normalizeArgs(args)
+      const mergedMeta = { ...context, ...meta }
+      if (isProduction) {
+        console.log(JSON.stringify({ level: 'info', msg, ...mergedMeta }))
+      } else {
+        console.log('[INFO]', msg, Object.keys(mergedMeta).length > 0 ? mergedMeta : '')
+      }
+    },
+    warn: (...args: unknown[]) => {
+      const { msg, meta } = normalizeArgs(args)
+      const mergedMeta = { ...context, ...meta }
+      if (isProduction) {
+        console.warn(JSON.stringify({ level: 'warn', msg, ...mergedMeta }))
+      } else {
+        console.warn('[WARN]', msg, Object.keys(mergedMeta).length > 0 ? mergedMeta : '')
+      }
+    },
+    error: (...args: unknown[]) => {
+      const { msg, meta } = normalizeArgs(args)
+      const mergedMeta = { ...context, ...meta }
+      if (isProduction) {
+        console.error(JSON.stringify({ level: 'error', msg, ...mergedMeta }))
+      } else {
+        console.error('[ERROR]', msg, Object.keys(mergedMeta).length > 0 ? mergedMeta : '')
+      }
+    },
+    debug: (...args: unknown[]) => {
+      if (!isProduction) {
+        const { msg, meta } = normalizeArgs(args)
+        const mergedMeta = { ...context, ...meta }
+        console.log('[DEBUG]', msg, Object.keys(mergedMeta).length > 0 ? mergedMeta : '')
+      }
+    },
+    child: (newContext: Record<string, string>) => createLoggerInstance({ ...context, ...newContext }),
+  }
+}
+
+// Logger principal
+const logger: Logger = createLoggerInstance()
+
+export { logger }
 
 /**
  * Logger child con contexto predeterminado
@@ -53,7 +101,7 @@ export const logger = pino(baseConfig, transport)
  * const dbLogger = createLogger({ module: 'database' })
  * dbLogger.info('Query ejecutada', { query: 'SELECT * FROM...' })
  */
-export function createLogger(context: Record<string, string>) {
+export function createLogger(context: Record<string, string>): Logger {
   return logger.child(context)
 }
 

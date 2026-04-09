@@ -13,7 +13,7 @@ import {
   getReservationByCode,
   createReservation as createReservationService,
   cancelReservation as cancelReservationService,
-  updateReservation as updateReservationService,
+  updateReservation,
   listReservations
 } from "@/lib/services"
 import { servicesAvailability } from "@/lib/availability/services-availability"
@@ -110,6 +110,7 @@ export async function checkAvailability(params: CheckAvailabilityInput): Promise
       success: result.available,
       message: result.message || (result.available ? "Tenemos disponibilidad" : "No hay disponibilidad"),
       availableSlots: result.available ? [] : undefined,
+      alternativeSlots: result.available ? undefined : result.alternativeSlots,
     }
   } catch (error) {
     console.error("[Voice Service] Error in checkAvailability:", error)
@@ -283,31 +284,49 @@ export async function modifyReservation(params: ModifyReservationInput): Promise
       }
     }
 
-    // Build update object from changes
-    const updates: Record<string, unknown> = {}
+    // Build update object with only provided changes
+    const updates: {
+      reservationDate?: string
+      reservationTime?: string
+      partySize?: number
+    } = {}
+
+    let changesMade: string[] = []
 
     if (params.changes.newDate) {
       updates.reservationDate = params.changes.newDate
+      changesMade.push(`fecha a ${params.changes.newDate}`)
     }
+
     if (params.changes.newTime) {
       updates.reservationTime = params.changes.newTime
+      changesMade.push(`hora a ${params.changes.newTime}`)
     }
+
     if (params.changes.newPartySize) {
       updates.partySize = params.changes.newPartySize
+      changesMade.push(`número de personas a ${params.changes.newPartySize}`)
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return {
+        success: false,
+        message: "No se proporcionaron cambios para modificar. Por favor especifica al menos un cambio: nueva fecha, nueva hora o nuevo número de personas.",
+      }
     }
 
     // Apply the update
-    await updateReservationService(reservation.id, updates)
+    await updateReservation(reservation.id, updates)
 
     logger.info({
       msg: "Reserva modificada por voz",
       reservationCode: params.code,
-      changes: params.changes,
+      changes: updates,
     })
 
     return {
       success: true,
-      message: "Reserva modificada exitosamente.",
+      message: `Reserva ${params.code} modificada exitosamente. Cambios: ${changesMade.join(", ")}.`,
     }
   } catch (error) {
     logError("Error en modifyReservation (voz)", error, {

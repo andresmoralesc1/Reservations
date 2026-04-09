@@ -121,32 +121,51 @@ export function useReservationActions() {
     })
   }, [])
 
-  const handleConfirmAction = useCallback(async (): Promise<boolean> => {
-    if (!confirmDialog.reservation || !confirmDialog.action) return false
+  const handleConfirmAction = useCallback(async () => {
+    if (!confirmDialog.reservation || !confirmDialog.action) {
+      return { success: false, action: null }
+    }
+
+    const actionToProcess = confirmDialog.action
+    const reservationId = confirmDialog.reservation.id
+
+    console.log("[Frontend] Sending action:", { actionToProcess, reservationId })
 
     setIsProcessing(true)
 
     try {
-      const response = await fetch(`/api/admin/reservations/${confirmDialog.reservation.id}`, {
+      const response = await fetch(`/api/admin/reservations/${reservationId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: confirmDialog.action,
-          reason: confirmDialog.action === "reject" ? "No disponible" : undefined,
+          action: actionToProcess,
+          reason: actionToProcess === "reject" ? "No disponible" : undefined,
         }),
       })
 
-      if (response.ok) {
-        return true
+      const success = response.ok
+
+      console.log("[Frontend] Response:", { status: response.status, success })
+
+      // Log para debugging
+      if (!success) {
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
+        console.error("[Frontend] Action failed:", response.status, errorData)
+      } else {
+        const data = await response.json().catch(() => ({}))
+        console.log("[Frontend] Action success:", data)
       }
 
-      return false
+      // Close dialog after processing
+      setConfirmDialog({ isOpen: false, reservation: null, action: null })
+
+      return { success, action: actionToProcess }
     } catch (error) {
-      console.error("Error processing action:", error)
-      return false
+      console.error("[Frontend] Error processing action:", error)
+      setConfirmDialog({ isOpen: false, reservation: null, action: null })
+      return { success: false, action: actionToProcess }
     } finally {
       setIsProcessing(false)
-      setConfirmDialog({ isOpen: false, reservation: null, action: null })
     }
   }, [confirmDialog])
 
