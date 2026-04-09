@@ -285,6 +285,7 @@ export async function modifyReservation(params: ModifyReservationInput): Promise
     }
 
     // Build update object with only provided changes
+    // Accept both flat format (newDate, newTime, newPartySize) and nested format (changes.{...})
     const updates: {
       reservationDate?: string
       reservationTime?: string
@@ -293,19 +294,24 @@ export async function modifyReservation(params: ModifyReservationInput): Promise
 
     let changesMade: string[] = []
 
-    if (params.changes.newDate) {
-      updates.reservationDate = params.changes.newDate
-      changesMade.push(`fecha a ${params.changes.newDate}`)
+    // Get changes from flat format (Pipecat) or nested format (backward compatibility)
+    const newDate = params.newDate ?? params.changes?.newDate
+    const newTime = params.newTime ?? params.changes?.newTime
+    const newPartySize = params.newPartySize ?? params.changes?.newPartySize
+
+    if (newDate) {
+      updates.reservationDate = newDate
+      changesMade.push(`fecha a ${newDate}`)
     }
 
-    if (params.changes.newTime) {
-      updates.reservationTime = params.changes.newTime
-      changesMade.push(`hora a ${params.changes.newTime}`)
+    if (newTime) {
+      updates.reservationTime = newTime
+      changesMade.push(`hora a ${newTime}`)
     }
 
-    if (params.changes.newPartySize) {
-      updates.partySize = params.changes.newPartySize
-      changesMade.push(`número de personas a ${params.changes.newPartySize}`)
+    if (newPartySize) {
+      updates.partySize = newPartySize
+      changesMade.push(`número de personas a ${newPartySize}`)
     }
 
     if (Object.keys(updates).length === 0) {

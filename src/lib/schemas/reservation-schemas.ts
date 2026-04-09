@@ -285,18 +285,32 @@ export const VoiceCancelReservationSchema = z.object({
   phone: spanishPhoneSchema,
 })
 
+/**
+ * Schema para modificar reserva - acepta dos formatos:
+ * Formato plano (Pipecat): { code, phone, newDate?, newTime?, newPartySize? }
+ * Formato anidado: { code, phone, changes: { newDate?, newTime?, newPartySize? } }
+ */
 export const VoiceModifyReservationSchema = z.object({
   code: z.string().regex(/^RES-[A-Z0-9]{5}$/i).transform((val) => val.toUpperCase()),
   phone: spanishPhoneSchema,
+  // Accept both flat format (newDate, newTime, newPartySize at root) and nested format (changes.{...})
+  newDate: dateSchema.optional(),
+  newTime: timeSchema.optional(),
+  newPartySize: z.number().int().min(1).max(50).optional(),
   changes: z.object({
     newDate: dateSchema.optional(),
     newTime: timeSchema.optional(),
     newPartySize: z.number().int().min(1).max(50).optional(),
-  }).refine(
-    (data) => data.newDate || data.newTime || data.newPartySize,
-    "Debe proporcionar al menos un cambio"
-  ),
-})
+  }).optional(),
+}).refine(
+  // Check if at least one change is provided (either in flat format or nested format)
+  (data) => {
+    const hasFlatChanges = data.newDate || data.newTime || data.newPartySize
+    const hasNestedChanges = data.changes?.newDate || data.changes?.newTime || data.changes?.newPartySize
+    return hasFlatChanges || hasNestedChanges
+  },
+  "Debe proporcionar al menos un cambio: newDate, newTime o newPartySize"
+)
 
 // ============ Error Formatting ============
 

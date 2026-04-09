@@ -72,10 +72,20 @@ export interface CancelReservationInput {
   phone: string // Para verificación de seguridad
 }
 
+/**
+ * Input para modificar reserva - acepta dos formatos:
+ * Formato plano (Pipecat): { code, phone, newDate?, newTime?, newPartySize? }
+ * Formato anidado: { code, phone, changes?: { newDate?, newTime?, newPartySize? } }
+ */
 export interface ModifyReservationInput {
   code: string // RES-XXXXX
   phone: string // Para verificación
-  changes: {
+  // Flat format (Pipecat)
+  newDate?: string // YYYY-MM-DD
+  newTime?: string // HH:MM
+  newPartySize?: number
+  // Nested format (backward compatibility)
+  changes?: {
     newDate?: string // YYYY-MM-DD
     newTime?: string // HH:MM
     newPartySize?: number
