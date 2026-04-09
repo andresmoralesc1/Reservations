@@ -28,7 +28,7 @@ export interface VoiceActionResult {
   reservationCode?: string
   reservation?: ReservationDetails
   availableSlots?: AlternativeSlot[]
-  alternativeSlots?: AlternativeSlot[] // Alias para compatibilidad
+  alternativeSlots?: string[] // Array de horas disponibles como "HH:MM" (solo las disponibles)
   suggestedTables?: string[] // IDs de mesas sugeridas
 }
 

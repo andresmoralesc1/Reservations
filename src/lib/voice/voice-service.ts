@@ -109,6 +109,7 @@ export async function checkAvailability(params: CheckAvailabilityInput): Promise
       success: result.available,
       message: result.message || (result.available ? "Tenemos disponibilidad" : "No hay disponibilidad"),
       availableSlots: result.available ? [] : undefined,
+      alternativeSlots: result.available ? undefined : result.alternativeSlots,
     }
   } catch (error) {
     console.error("[Voice Service] Error in checkAvailability:", error)
