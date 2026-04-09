@@ -122,7 +122,9 @@ export function useReservationActions() {
   }, [])
 
   const handleConfirmAction = useCallback(async () => {
-    if (!confirmDialog.reservation || !confirmDialog.action) return false
+    if (!confirmDialog.reservation || !confirmDialog.action) {
+      return { success: false, action: null }
+    }
 
     const actionToProcess = confirmDialog.action
     const reservationId = confirmDialog.reservation.id

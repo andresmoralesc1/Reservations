@@ -153,7 +153,7 @@ export default function AdminPage() {
 
   const handleConfirmDialogAction = useCallback(async () => {
     const result = await handleConfirmAction()
-    if (result?.success) {
+    if (result?.success && result.action) {
       toast(
         result.action === "approve"
           ? "Reserva aprobada correctamente"
