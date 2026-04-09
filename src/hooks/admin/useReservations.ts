@@ -129,6 +129,8 @@ export function useReservationActions() {
     const actionToProcess = confirmDialog.action
     const reservationId = confirmDialog.reservation.id
 
+    console.log("[Frontend] Sending action:", { actionToProcess, reservationId })
+
     setIsProcessing(true)
 
     try {
@@ -143,10 +145,15 @@ export function useReservationActions() {
 
       const success = response.ok
 
+      console.log("[Frontend] Response:", { status: response.status, success })
+
       // Log para debugging
       if (!success) {
         const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
-        console.error("Action failed:", response.status, errorData)
+        console.error("[Frontend] Action failed:", response.status, errorData)
+      } else {
+        const data = await response.json().catch(() => ({}))
+        console.log("[Frontend] Action success:", data)
       }
 
       // Close dialog after processing
@@ -154,7 +161,7 @@ export function useReservationActions() {
 
       return { success, action: actionToProcess }
     } catch (error) {
-      console.error("Error processing action:", error)
+      console.error("[Frontend] Error processing action:", error)
       setConfirmDialog({ isOpen: false, reservation: null, action: null })
       return { success: false, action: actionToProcess }
     } finally {

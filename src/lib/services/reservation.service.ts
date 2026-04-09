@@ -132,9 +132,6 @@ export async function createReservation(input: CreateReservationInput) {
 export async function getReservationByCode(code: string) {
   const reservation = await db.query.reservations.findFirst({
     where: eq(reservations.reservationCode, code),
-    with: {
-      tables: true,
-    },
   })
 
   if (!reservation) {
@@ -150,9 +147,6 @@ export async function getReservationByCode(code: string) {
 export async function getReservationById(id: string) {
   const reservation = await db.query.reservations.findFirst({
     where: eq(reservations.id, id),
-    with: {
-      tables: true,
-    },
   })
 
   if (!reservation) {
