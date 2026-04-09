@@ -1,14 +1,11 @@
 /**
  * Logger Configuration
  *
- * Sistema de logging basado en Pino:
- * - Ligero y rápido (ideal para serverless)
+ * Sistema de logging simple para serverless
+ * - Usa console.log/error/warn para máxima compatibilidad
  * - JSON en producción para parseo
- * - Pretty print en desarrollo para legibilidad
  * - Niveles: debug, info, warn, error
  */
-
-import pino from 'pino'
 
 // Tipo para los metadatos del logger
 export type LogMetadata = Record<string, unknown>
@@ -16,32 +13,43 @@ export type LogMetadata = Record<string, unknown>
 // Determinar si estamos en producción
 const isProduction = process.env.NODE_ENV === 'production'
 
-// Configuración del transporte - JSON simple para evitar problemas con webpack
-const transport = undefined // JSON en ambos ambientes para máxima compatibilidad
-
-// Configuración base del logger
-const baseConfig = {
-  level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug'),
-  // En producción, usar timestamp Unix para rendimiento
-  // En desarrollo, usar timestamp ISO para legibilidad
-  timestamp: isProduction ? pino.stdTimeFunctions.epochTime : pino.stdTimeFunctions.isoTime,
-  formatters: {
-    // Agregar caller (archivo y línea) a los logs
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // Reason: Pino's log formatter expects 'any' type - this is a third-party library signature
-    log(object: any) {
-      const { level, time, ...rest } = object
-      return {
-        level,
-        time,
-        ...rest,
-      }
-    },
+// Logger simple sin dependencias externas
+const logger = {
+  info: (msg: string, meta?: LogMetadata) => {
+    if (isProduction) {
+      console.log(JSON.stringify({ level: 'info', msg, ...meta }))
+    } else {
+      console.log('[INFO]', msg, meta || '')
+    }
   },
+  warn: (msg: string, meta?: LogMetadata) => {
+    if (isProduction) {
+      console.warn(JSON.stringify({ level: 'warn', msg, ...meta }))
+    } else {
+      console.warn('[WARN]', msg, meta || '')
+    }
+  },
+  error: (msg: string, meta?: LogMetadata) => {
+    if (isProduction) {
+      console.error(JSON.stringify({ level: 'error', msg, ...meta }))
+    } else {
+      console.error('[ERROR]', msg, meta || '')
+    }
+  },
+  debug: (msg: string, meta?: LogMetadata) => {
+    if (!isProduction) {
+      console.log('[DEBUG]', msg, meta || '')
+    }
+  },
+  child: (context: Record<string, string>) => ({
+    info: (msg: string, meta?: LogMetadata) => logger.info(msg, { ...context, ...meta }),
+    warn: (msg: string, meta?: LogMetadata) => logger.warn(msg, { ...context, ...meta }),
+    error: (msg: string, meta?: LogMetadata) => logger.error(msg, { ...context, ...meta }),
+    debug: (msg: string, meta?: LogMetadata) => logger.debug(msg, { ...context, ...meta }),
+  }),
 }
 
-// Crear el logger
-export const logger = pino(baseConfig, transport)
+export { logger }
 
 /**
  * Logger child con contexto predeterminado

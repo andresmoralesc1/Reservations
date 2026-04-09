@@ -4,7 +4,7 @@ const nextConfig = {
   poweredByHeader: false,
   // Only use standalone in production
   output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
-  serverExternalPackages: ['postgres'],
+  serverExternalPackages: ['postgres', 'ioredis', 'pino'],
   // Improve hot reload reliability
   experimental: {
     optimizePackageImports: ['lucide-react', '@dnd-kit/core'],
