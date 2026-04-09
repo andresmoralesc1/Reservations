@@ -4,6 +4,7 @@
  * Sistema de logging simple para serverless
  * - Usa console.log/error/warn para máxima compatibilidad
  * - JSON en producción para parseo
+ * - Soporta dos firmas: logger.info(msg, meta) o logger.info({ msg, ...meta })
  * - Niveles: debug, info, warn, error
  */
 
@@ -13,39 +14,77 @@ export type LogMetadata = Record<string, unknown>
 // Determinar si estamos en producción
 const isProduction = process.env.NODE_ENV === 'production'
 
+// Normaliza los argumentos del logger
+// Soporta: logger.info(msg, meta) o logger.info({ msg, ...meta })
+function normalizeArgs(args: unknown[]): { msg: string; meta: LogMetadata } {
+  if (args.length === 0) return { msg: '', meta: {} }
+
+  const first = args[0]
+
+  // Si el primer argumento es un objeto con 'msg', usar formato de pino
+  if (typeof first === 'object' && first !== null && 'msg' in first) {
+    const { msg, ...rest } = first as { msg: string; [key: string]: unknown }
+    return { msg, meta: rest as LogMetadata }
+  }
+
+  // Si no, usar formato simple (msg, meta)
+  const msg = typeof first === 'string' ? first : JSON.stringify(first)
+  const meta = args.length > 1 && typeof args[1] === 'object' && args[1] !== null
+    ? args[1] as LogMetadata
+    : {}
+
+  return { msg, meta }
+}
+
 // Logger simple sin dependencias externas
 const logger = {
-  info: (msg: string, meta?: LogMetadata) => {
+  info: (...args: unknown[]) => {
+    const { msg, meta } = normalizeArgs(args)
     if (isProduction) {
       console.log(JSON.stringify({ level: 'info', msg, ...meta }))
     } else {
-      console.log('[INFO]', msg, meta || '')
+      console.log('[INFO]', msg, Object.keys(meta).length > 0 ? meta : '')
     }
   },
-  warn: (msg: string, meta?: LogMetadata) => {
+  warn: (...args: unknown[]) => {
+    const { msg, meta } = normalizeArgs(args)
     if (isProduction) {
       console.warn(JSON.stringify({ level: 'warn', msg, ...meta }))
     } else {
-      console.warn('[WARN]', msg, meta || '')
+      console.warn('[WARN]', msg, Object.keys(meta).length > 0 ? meta : '')
     }
   },
-  error: (msg: string, meta?: LogMetadata) => {
+  error: (...args: unknown[]) => {
+    const { msg, meta } = normalizeArgs(args)
     if (isProduction) {
       console.error(JSON.stringify({ level: 'error', msg, ...meta }))
     } else {
-      console.error('[ERROR]', msg, meta || '')
+      console.error('[ERROR]', msg, Object.keys(meta).length > 0 ? meta : '')
     }
   },
-  debug: (msg: string, meta?: LogMetadata) => {
+  debug: (...args: unknown[]) => {
     if (!isProduction) {
-      console.log('[DEBUG]', msg, meta || '')
+      const { msg, meta } = normalizeArgs(args)
+      console.log('[DEBUG]', msg, Object.keys(meta).length > 0 ? meta : '')
     }
   },
   child: (context: Record<string, string>) => ({
-    info: (msg: string, meta?: LogMetadata) => logger.info(msg, { ...context, ...meta }),
-    warn: (msg: string, meta?: LogMetadata) => logger.warn(msg, { ...context, ...meta }),
-    error: (msg: string, meta?: LogMetadata) => logger.error(msg, { ...context, ...meta }),
-    debug: (msg: string, meta?: LogMetadata) => logger.debug(msg, { ...context, ...meta }),
+    info: (...args: unknown[]) => {
+      const { msg, meta } = normalizeArgs(args)
+      logger.info({ msg, ...context, ...meta })
+    },
+    warn: (...args: unknown[]) => {
+      const { msg, meta } = normalizeArgs(args)
+      logger.warn({ msg, ...context, ...meta })
+    },
+    error: (...args: unknown[]) => {
+      const { msg, meta } = normalizeArgs(args)
+      logger.error({ msg, ...context, ...meta })
+    },
+    debug: (...args: unknown[]) => {
+      const { msg, meta } = normalizeArgs(args)
+      logger.debug({ msg, ...context, ...meta })
+    },
   }),
 }
 
