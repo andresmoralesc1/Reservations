@@ -11,6 +11,15 @@
 // Tipo para los metadatos del logger
 export type LogMetadata = Record<string, unknown>
 
+// Tipo del Logger
+export interface Logger {
+  info: (...args: unknown[]) => void
+  warn: (...args: unknown[]) => void
+  error: (...args: unknown[]) => void
+  debug: (...args: unknown[]) => void
+  child: (context: Record<string, string>) => Logger
+}
+
 // Determinar si estamos en producción
 const isProduction = process.env.NODE_ENV === 'production'
 
@@ -36,57 +45,49 @@ function normalizeArgs(args: unknown[]): { msg: string; meta: LogMetadata } {
   return { msg, meta }
 }
 
-// Logger simple sin dependencias externas
-const logger = {
-  info: (...args: unknown[]) => {
-    const { msg, meta } = normalizeArgs(args)
-    if (isProduction) {
-      console.log(JSON.stringify({ level: 'info', msg, ...meta }))
-    } else {
-      console.log('[INFO]', msg, Object.keys(meta).length > 0 ? meta : '')
-    }
-  },
-  warn: (...args: unknown[]) => {
-    const { msg, meta } = normalizeArgs(args)
-    if (isProduction) {
-      console.warn(JSON.stringify({ level: 'warn', msg, ...meta }))
-    } else {
-      console.warn('[WARN]', msg, Object.keys(meta).length > 0 ? meta : '')
-    }
-  },
-  error: (...args: unknown[]) => {
-    const { msg, meta } = normalizeArgs(args)
-    if (isProduction) {
-      console.error(JSON.stringify({ level: 'error', msg, ...meta }))
-    } else {
-      console.error('[ERROR]', msg, Object.keys(meta).length > 0 ? meta : '')
-    }
-  },
-  debug: (...args: unknown[]) => {
-    if (!isProduction) {
-      const { msg, meta } = normalizeArgs(args)
-      console.log('[DEBUG]', msg, Object.keys(meta).length > 0 ? meta : '')
-    }
-  },
-  child: (context: Record<string, string>) => ({
+// Función para crear un logger
+function createLoggerInstance(context: Record<string, string> = {}): Logger {
+  return {
     info: (...args: unknown[]) => {
       const { msg, meta } = normalizeArgs(args)
-      logger.info({ msg, ...context, ...meta })
+      const mergedMeta = { ...context, ...meta }
+      if (isProduction) {
+        console.log(JSON.stringify({ level: 'info', msg, ...mergedMeta }))
+      } else {
+        console.log('[INFO]', msg, Object.keys(mergedMeta).length > 0 ? mergedMeta : '')
+      }
     },
     warn: (...args: unknown[]) => {
       const { msg, meta } = normalizeArgs(args)
-      logger.warn({ msg, ...context, ...meta })
+      const mergedMeta = { ...context, ...meta }
+      if (isProduction) {
+        console.warn(JSON.stringify({ level: 'warn', msg, ...mergedMeta }))
+      } else {
+        console.warn('[WARN]', msg, Object.keys(mergedMeta).length > 0 ? mergedMeta : '')
+      }
     },
     error: (...args: unknown[]) => {
       const { msg, meta } = normalizeArgs(args)
-      logger.error({ msg, ...context, ...meta })
+      const mergedMeta = { ...context, ...meta }
+      if (isProduction) {
+        console.error(JSON.stringify({ level: 'error', msg, ...mergedMeta }))
+      } else {
+        console.error('[ERROR]', msg, Object.keys(mergedMeta).length > 0 ? mergedMeta : '')
+      }
     },
     debug: (...args: unknown[]) => {
-      const { msg, meta } = normalizeArgs(args)
-      logger.debug({ msg, ...context, ...meta })
+      if (!isProduction) {
+        const { msg, meta } = normalizeArgs(args)
+        const mergedMeta = { ...context, ...meta }
+        console.log('[DEBUG]', msg, Object.keys(mergedMeta).length > 0 ? mergedMeta : '')
+      }
     },
-  }),
+    child: (newContext: Record<string, string>) => createLoggerInstance({ ...context, ...newContext }),
+  }
 }
+
+// Logger principal
+const logger: Logger = createLoggerInstance()
 
 export { logger }
 
@@ -100,7 +101,7 @@ export { logger }
  * const dbLogger = createLogger({ module: 'database' })
  * dbLogger.info('Query ejecutada', { query: 'SELECT * FROM...' })
  */
-export function createLogger(context: Record<string, string>) {
+export function createLogger(context: Record<string, string>): Logger {
   return logger.child(context)
 }
 
