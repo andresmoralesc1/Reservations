@@ -191,7 +191,7 @@ export function ReservationTable({
                       </button>
                     </>
                   )}
-                  {reservation.status === "CONFIRMED" && onNoShow && (
+                  {reservation.status === "CONFIRMADO" && onNoShow && (
                     <button
                       onClick={() => onNoShow(reservation.id)}
                       className="px-3 py-1.5 bg-transparent border border-orange-300 text-orange-700 text-xs font-medium rounded-lg hover:bg-orange-50 transition-colors"

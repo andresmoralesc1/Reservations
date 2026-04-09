@@ -122,28 +122,41 @@ export function useReservationActions() {
   }, [])
 
   const handleConfirmAction = useCallback(async () => {
-    if (!confirmDialog.reservation || !confirmDialog.action) return
+    if (!confirmDialog.reservation || !confirmDialog.action) return false
+
+    const actionToProcess = confirmDialog.action
+    const reservationId = confirmDialog.reservation.id
 
     setIsProcessing(true)
 
     try {
-      const response = await fetch(`/api/admin/reservations/${confirmDialog.reservation.id}`, {
+      const response = await fetch(`/api/admin/reservations/${reservationId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: confirmDialog.action,
-          reason: confirmDialog.action === "reject" ? "No disponible" : undefined,
+          action: actionToProcess,
+          reason: actionToProcess === "reject" ? "No disponible" : undefined,
         }),
       })
 
       const success = response.ok
-      return success
+
+      // Log para debugging
+      if (!success) {
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
+        console.error("Action failed:", response.status, errorData)
+      }
+
+      // Close dialog after processing
+      setConfirmDialog({ isOpen: false, reservation: null, action: null })
+
+      return { success, action: actionToProcess }
     } catch (error) {
       console.error("Error processing action:", error)
-      return false
+      setConfirmDialog({ isOpen: false, reservation: null, action: null })
+      return { success: false, action: actionToProcess }
     } finally {
       setIsProcessing(false)
-      setConfirmDialog({ isOpen: false, reservation: null, action: null })
     }
   }, [confirmDialog])
 

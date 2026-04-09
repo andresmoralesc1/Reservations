@@ -152,10 +152,10 @@ export default function AdminPage() {
   )
 
   const handleConfirmDialogAction = useCallback(async () => {
-    const success = await handleConfirmAction()
-    if (success) {
+    const result = await handleConfirmAction()
+    if (result?.success) {
       toast(
-        confirmDialog.action === "approve"
+        result.action === "approve"
           ? "Reserva aprobada correctamente"
           : "Reserva rechazada",
         "success"
@@ -165,7 +165,7 @@ export default function AdminPage() {
     } else {
       toast("Error al procesar la acción", "error")
     }
-  }, [handleConfirmAction, confirmDialog.action, reloadReservations, reloadStats])
+  }, [handleConfirmAction, reloadReservations, reloadStats])
 
   const handleRefreshAll = useCallback(() => {
     reloadReservations()
