@@ -13,6 +13,7 @@ import {
   getReservationByCode,
   createReservation as createReservationService,
   cancelReservation as cancelReservationService,
+  updateReservation as updateReservationService,
   listReservations
 } from "@/lib/services"
 import { servicesAvailability } from "@/lib/availability/services-availability"
@@ -282,13 +283,37 @@ export async function modifyReservation(params: ModifyReservationInput): Promise
       }
     }
 
-    // For now, return message about modification (would need update query)
+    // Build update object from changes
+    const updates: Record<string, unknown> = {}
+
+    if (params.changes.newDate) {
+      updates.reservationDate = params.changes.newDate
+    }
+    if (params.changes.newTime) {
+      updates.reservationTime = params.changes.newTime
+    }
+    if (params.changes.newPartySize) {
+      updates.partySize = params.changes.newPartySize
+    }
+
+    // Apply the update
+    await updateReservationService(reservation.id, updates)
+
+    logger.info({
+      msg: "Reserva modificada por voz",
+      reservationCode: params.code,
+      changes: params.changes,
+    })
+
     return {
       success: true,
-      message: "La modificación de reservas no está disponible en este momento. Por favor contacta al restaurante directamente.",
+      message: "Reserva modificada exitosamente.",
     }
   } catch (error) {
-    console.error("[Voice Service] Error in modifyReservation:", error)
+    logError("Error en modifyReservation (voz)", error, {
+      code: params.code,
+      changes: params.changes,
+    })
     return {
       success: false,
       message: "Error al modificar la reserva. Por favor intenta nuevamente.",

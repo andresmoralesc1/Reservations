@@ -32,6 +32,9 @@ export interface UpdateReservationInput {
   specialRequests?: string
   tableIds?: string[]
   estimatedDurationMinutes?: number
+  reservationDate?: string
+  reservationTime?: string
+  partySize?: number
 }
 
 export interface ReservationFilters {
