@@ -13,6 +13,7 @@ import {
   getReservationByCode,
   createReservation as createReservationService,
   cancelReservation as cancelReservationService,
+  updateReservation,
   listReservations
 } from "@/lib/services"
 import { servicesAvailability } from "@/lib/availability/services-availability"
@@ -283,10 +284,49 @@ export async function modifyReservation(params: ModifyReservationInput): Promise
       }
     }
 
-    // For now, return message about modification (would need update query)
+    // Build update object with only provided changes
+    const updates: {
+      reservationDate?: string
+      reservationTime?: string
+      partySize?: number
+    } = {}
+
+    let changesMade: string[] = []
+
+    if (params.changes.newDate) {
+      updates.reservationDate = params.changes.newDate
+      changesMade.push(`fecha a ${params.changes.newDate}`)
+    }
+
+    if (params.changes.newTime) {
+      updates.reservationTime = params.changes.newTime
+      changesMade.push(`hora a ${params.changes.newTime}`)
+    }
+
+    if (params.changes.newPartySize) {
+      updates.partySize = params.changes.newPartySize
+      changesMade.push(`número de personas a ${params.changes.newPartySize}`)
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return {
+        success: false,
+        message: "No se proporcionaron cambios para modificar. Por favor especifica al menos un cambio: nueva fecha, nueva hora o nuevo número de personas.",
+      }
+    }
+
+    // Apply the update
+    await updateReservation(reservation.id, updates)
+
+    logger.info({
+      msg: "Reserva modificada por voz",
+      reservationCode: params.code,
+      changes: updates,
+    })
+
     return {
       success: true,
-      message: "La modificación de reservas no está disponible en este momento. Por favor contacta al restaurante directamente.",
+      message: `Reserva ${params.code} modificada exitosamente. Cambios: ${changesMade.join(", ")}.`,
     }
   } catch (error) {
     console.error("[Voice Service] Error in modifyReservation:", error)
