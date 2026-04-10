@@ -26,6 +26,7 @@ import { logCallStart, logCallAction, logCallEnd } from "@/lib/voice/call-logger
 import { isValidVoiceAction } from "@/lib/voice/voice-types"
 import type { VoiceAction, CallEndReason } from "@/lib/voice/voice-types"
 import { createLogger, logError } from "@/lib/logger"
+import { rateLimit, getRateLimitIdentifier, RateLimitError } from "@/lib/rate-limit"
 
 const logger = createLogger({ module: "voice-bridge" })
 
@@ -42,6 +43,38 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: auth.error || "Unauthorized", message: "Acceso no autorizado" },
       { status: 401 }
+    )
+  }
+
+  // 2. Rate limiting global (60 req/min por IP)
+  const identifier = getRateLimitIdentifier(request)
+  const globalLimit = await rateLimit({
+    identifier,
+    limit: 60,
+    windowSeconds: 60,
+    action: "voice-bridge",
+  })
+
+  if (!globalLimit.allowed) {
+    const retryAfter = globalLimit.resetAt
+      ? Math.ceil((globalLimit.resetAt.getTime() - Date.now()) / 1000)
+      : 60
+
+    return NextResponse.json(
+      {
+        error: "Rate limit exceeded",
+        message: `Has excedido el límite de requests. Intenta de nuevo en ${retryAfter} segundos.`,
+        retryAfter,
+        limit: globalLimit.limit,
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": retryAfter.toString(),
+          "X-RateLimit-Limit": globalLimit.limit.toString(),
+          "X-RateLimit-Remaining": "0",
+        },
+      }
     )
   }
 
@@ -87,10 +120,53 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 4. Ejecutar la acción
+    // 4. Rate limiting específico por acción
+    let specificLimit: Awaited<ReturnType<typeof rateLimit>> | null = null
+
+    if (action === "createReservation") {
+      specificLimit = await rateLimit({
+        identifier,
+        limit: 5,
+        windowSeconds: 60,
+        action: "voice-bridge:create",
+      })
+    } else if (action === "cancelReservation" || action === "modifyReservation") {
+      specificLimit = await rateLimit({
+        identifier,
+        limit: 10,
+        windowSeconds: 60,
+        action: "voice-bridge:mutation",
+      })
+    }
+
+    if (specificLimit && !specificLimit.allowed) {
+      const retryAfter = specificLimit.resetAt
+        ? Math.ceil((specificLimit.resetAt.getTime() - Date.now()) / 1000)
+        : 60
+
+      return NextResponse.json(
+        {
+          error: "Rate limit exceeded",
+          message: `Has excedido el límite para esta acción. Intenta de nuevo en ${retryAfter} segundos.`,
+          retryAfter,
+          limit: specificLimit.limit,
+          action,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": retryAfter.toString(),
+            "X-RateLimit-Limit": specificLimit.limit.toString(),
+            "X-RateLimit-Remaining": "0",
+          },
+        }
+      )
+    }
+
+    // 5. Ejecutar la acción
     const result = await processVoiceAction(action as VoiceAction, params || {})
 
-    // 5. Loguear acción si hay callLogId
+    // 6. Loguear acción si hay callLogId
     if (callLogId) {
       await logCallAction(callLogId, {
         action: action as VoiceAction,
@@ -100,7 +176,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // 6. Retornar resultado
+    // 7. Retornar resultado
     return NextResponse.json({
       success: result.success,
       message: result.message,
@@ -224,6 +300,42 @@ export async function GET() {
     },
     phoneFormats: {
       spanish: "+34 6XX XXX XXX (mobile) or +34 9XX XXX XXX (landline) or 9 digits without prefix",
+    },
+    rateLimiting: {
+      description: "Rate limiting por IP address",
+      global: {
+        limit: 60,
+        window: "60 seconds",
+        action: "voice-bridge",
+      },
+      specific: [
+        {
+          action: "createReservation",
+          limit: 5,
+          window: "60 seconds",
+          key: "voice-bridge:create",
+        },
+        {
+          actions: ["cancelReservation", "modifyReservation"],
+          limit: 10,
+          window: "60 seconds",
+          key: "voice-bridge:mutation",
+        },
+      ],
+      headers: {
+        "Retry-After": "Seconds until reset",
+        "X-RateLimit-Limit": "Request limit",
+        "X-RateLimit-Remaining": "Remaining requests",
+      },
+      errorResponse: {
+        status: 429,
+        body: {
+          error: "Rate limit exceeded",
+          message: "Descripción del error",
+          retryAfter: "seconds",
+          limit: "number",
+        },
+      },
     },
   })
 }
