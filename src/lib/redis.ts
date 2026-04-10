@@ -15,51 +15,72 @@ const redisMock = {
   keys: async () => [],
   flushdb: async () => "OK",
   on: () => {},
+  incr: async () => 1,
+  zadd: async () => 1,
+  zremrangebyscore: async () => 0,
+  zcard: async () => 0,
+  zrange: async () => [],
+  ttl: async () => -1,
 } as unknown as Redis
 
-// Por defecto usamos el mock (Redis no disponible)
-let redisClient: Redis = redisMock
-let connectionTimeout: NodeJS.Timeout | null = null
+// Singleton lazy - solo se conecta cuando se llama a getRedis()
+let redisInstance: Redis | null = null
+let redisInitialized = false
 
-// Redis es opcional - intentamos conectar pero si falla usamos mock
-if (redisUrl) {
+/**
+ * Obtiene la instancia de Redis (lazy connection)
+ *
+ * La primera vez que se llama, intenta conectar.
+ * Si falla, devuelve el mock (fail-open).
+ */
+export function getRedis(): Redis {
+  // Si ya tenemos una instancia (conectada o mock), retornarla
+  if (redisInitialized) {
+    return redisInstance ?? redisMock
+  }
+
+  redisInitialized = true
+
+  // Si no hay REDIS_URL, usar mock
+  if (!redisUrl) {
+    redisInstance = redisMock
+    return redisMock
+  }
+
   try {
     const redis = new Redis(redisUrl, {
       maxRetriesPerRequest: 1,
-      retryStrategy: () => null, // No reintentar
+      retryStrategy: () => null, // No reintentar automáticamente
       connectTimeout: 2000,
-      lazyConnect: false, // Intentar conectar inmediatamente
+      lazyConnect: true, // No conectar hasta que se necesite
     })
 
-    redis.on("error", () => {
-      // Error silencioso - seguimos usando el mock
+    // Manejo de errores - si falla la conexión, usar mock
+    redis.on("error", (error) => {
+      console.warn("[Redis] Connection error, using mock:", error.message)
+      redisInstance = redisMock
     })
 
-    redis.on("connect", () => {
-      redisClient = redis
+    // Intentar conectar
+    redis.connect().catch((error) => {
+      console.warn("[Redis] Failed to connect, using mock:", error.message)
+      redisInstance = redisMock
     })
 
-    // Si se conecta en 2 segundos, úsalo
-    connectionTimeout = setTimeout(() => {
-      if (redis.status !== "ready") {
-        redis.disconnect()
-        redisClient = redisMock
-      }
-    }, 2000)
-  } catch {
-    redisClient = redisMock
+    redisInstance = redis
+    return redis
+  } catch (error) {
+    console.warn("[Redis] Failed to create client, using mock:", error)
+    redisInstance = redisMock
+    return redisMock
   }
 }
 
-// Función para limpiar el timeout si es necesario
-export const clearRedisConnectionTimeout = () => {
-  if (connectionTimeout) {
-    clearTimeout(connectionTimeout)
-    connectionTimeout = null
-  }
+/**
+ * Redis está habilitado si REDIS_URL está configurado
+ */
+export function redisEnabled(): boolean {
+  return !!redisUrl
 }
-
-export const getRedis = () => redisClient
-export const redisEnabled = () => redisClient !== redisMock
 
 export type RedisClient = Redis
