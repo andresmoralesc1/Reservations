@@ -8,7 +8,7 @@ const checkAvailabilitySchema = z.object({
   restaurant_id: z.string().uuid().optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha inválido (YYYY-MM-DD)"),
   time: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido (HH:MM)"),
-  party_size: z.number().int().min(1).max(50, "El tamaño del grupo debe estar entre 1 y 50"),
+  party_size: z.number().int().min(1).max(200, "El tamaño del grupo debe estar entre 1 y 200"),
 })
 
 // Default restaurant ID from demo environment
