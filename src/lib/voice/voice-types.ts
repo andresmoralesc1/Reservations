@@ -89,6 +89,7 @@ export interface ModifyReservationInput {
     newDate?: string // YYYY-MM-DD
     newTime?: string // HH:MM
     newPartySize?: number
+    newSpecialRequests?: string
   }
 }
 

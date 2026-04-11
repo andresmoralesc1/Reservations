@@ -301,12 +301,13 @@ export const VoiceModifyReservationSchema = z.object({
     newDate: dateSchema.optional(),
     newTime: timeSchema.optional(),
     newPartySize: z.number().int().min(1).max(50).optional(),
+    newSpecialRequests: z.string().max(500).optional(),
   }).optional(),
 }).refine(
   // Check if at least one change is provided (either in flat format or nested format)
   (data) => {
-    const hasFlatChanges = data.newDate || data.newTime || data.newPartySize
-    const hasNestedChanges = data.changes?.newDate || data.changes?.newTime || data.changes?.newPartySize
+    const hasFlatChanges = data.newDate || data.newTime || data.newPartySize || data.newSpecialRequests
+    const hasNestedChanges = data.changes?.newDate || data.changes?.newTime || data.changes?.newPartySize || data.changes?.newSpecialRequests
     return hasFlatChanges || hasNestedChanges
   },
   "Debe proporcionar al menos un cambio: newDate, newTime o newPartySize"

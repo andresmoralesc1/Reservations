@@ -35,7 +35,8 @@ import {
 } from "@/lib/schemas/reservation-schemas"
 import { createLogger, logError } from "@/lib/logger"
 import { db } from "@/lib/db"
-import { callLogs } from "@/drizzle/schema"
+import { callLogs, reservations } from "@/drizzle/schema"
+import { eq } from "drizzle-orm"
 
 const logger = createLogger({ module: "voice-service" })
 
@@ -268,10 +269,10 @@ export async function cancelReservation(params: CancelReservationInput): Promise
 // ============ Función 5: modifyReservation ============
 export async function modifyReservation(params: ModifyReservationInput): Promise<VoiceActionResult> {
   try {
-    // Get reservation first
+    // Get reservation first to verify it exists
     const reservation = await getReservationByCode(params.code)
 
-    // Verify phone
+    // Verify phone matches
     const phone = params.phone?.toString().replace(/[\s-]/g, "") || ""
     const reservationPhone = (reservation.customerPhone || "").replace(/[\s-]/g, "")
 
@@ -280,17 +281,21 @@ export async function modifyReservation(params: ModifyReservationInput): Promise
         !reservationPhone.includes(phone)) {
       return {
         success: false,
-        message: "El número de teléfono no coincide con la de la reserva.",
+        message: "El número de teléfono no coincide con el de la reserva.",
       }
     }
 
-    // Build update object with only provided changes
-    // Accept both flat format (newDate, newTime, newPartySize) and nested format (changes.{...})
-    const updates: {
+    // Build dynamic updateData object with only the fields provided
+    // Accept both flat format (newDate, newTime, newPartySize, newSpecialRequests) and nested format (changes.{...})
+    const updateData: {
       reservationDate?: string
       reservationTime?: string
       partySize?: number
-    } = {}
+      specialRequests?: string
+      updatedAt: Date
+    } = {
+      updatedAt: new Date(),
+    }
 
     let changesMade: string[] = []
 
@@ -298,41 +303,49 @@ export async function modifyReservation(params: ModifyReservationInput): Promise
     const newDate = params.newDate ?? params.changes?.newDate
     const newTime = params.newTime ?? params.changes?.newTime
     const newPartySize = params.newPartySize ?? params.changes?.newPartySize
+    const newSpecialRequests = params.newSpecialRequests ?? params.changes?.newSpecialRequests
 
     if (newDate) {
-      updates.reservationDate = newDate
-      changesMade.push(`fecha a ${newDate}`)
+      updateData.reservationDate = newDate
+      changesMade.push(`fecha al ${formatDate(newDate)}`)
     }
 
     if (newTime) {
-      updates.reservationTime = newTime
-      changesMade.push(`hora a ${newTime}`)
+      updateData.reservationTime = newTime
+      changesMade.push(`hora a las ${newTime}`)
     }
 
     if (newPartySize) {
-      updates.partySize = newPartySize
+      updateData.partySize = newPartySize
       changesMade.push(`número de personas a ${newPartySize}`)
     }
 
-    if (Object.keys(updates).length === 0) {
+    if (newSpecialRequests !== undefined) {
+      updateData.specialRequests = newSpecialRequests
+      changesMade.push(`solicitudes especiales actualizadas`)
+    }
+
+    if (changesMade.length === 0) {
       return {
         success: false,
-        message: "No se proporcionaron cambios para modificar. Por favor especifica al menos un cambio: nueva fecha, nueva hora o nuevo número de personas.",
+        message: "No se proporcionaron cambios para modificar. Por favor especifica al menos un cambio: nueva fecha, nueva hora, nuevo número de personas o nuevas solicitudes especiales.",
       }
     }
 
-    // Apply the update
-    await updateReservation(reservation.id, updates)
+    // Execute real DB UPDATE
+    await db.update(reservations)
+      .set(updateData)
+      .where(eq(reservations.reservationCode, params.code))
 
     logger.info({
       msg: "Reserva modificada por voz",
       reservationCode: params.code,
-      changes: updates,
+      changes: updateData,
     })
 
     return {
       success: true,
-      message: `Reserva ${params.code} modificada exitosamente. Cambios: ${changesMade.join(", ")}.`,
+      message: `Reserva ${params.code} modificada exitosamente. ${changesMade.join(", ")}.`,
     }
   } catch (error) {
     logError("Error en modifyReservation (voz)", error, {
