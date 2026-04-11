@@ -214,6 +214,18 @@ export class ServicesAvailability {
   }): Promise<ServiceAvailabilityResult> {
     const { date, time, partySize, restaurantId, excludeReservationId } = params
 
+    // Early return for very large parties to avoid performance issues
+    // For groups > 50, direct them to call the restaurant
+    if (partySize > 50) {
+      return {
+        available: false,
+        availableTables: [],
+        suggestedTables: [],
+        service: null,
+        message: `Para grupos de más de 50 personas, por favor contacta directamente con el restaurante para coordinar tu evento.`,
+      }
+    }
+
     // Get active services for the requested date/time
     const activeServices = await this.getActiveServicesForDateTime(date, time, restaurantId)
 
@@ -351,6 +363,7 @@ export class ServicesAvailability {
     const baseMinutes = this.parseTimeToMinutes(time)
 
     // Find nearby slots (within 2 hours before/after)
+    // Limit to 5 closest alternatives to avoid slow recursive calls
     const nearbySlots = allSlots
       .map(slotTime => {
         const slotMinutes = this.parseTimeToMinutes(slotTime)
@@ -359,23 +372,55 @@ export class ServicesAvailability {
       })
       .filter(slot => Math.abs(slot.diff) <= 120 && slot.diff !== 0)
       .sort((a, b) => Math.abs(a.diff) - Math.abs(b.diff))
-      .slice(0, 10) // Limit to 10 closest alternatives
+      .slice(0, 5) // Reduced from 10 to 5 for better performance
       .map(s => s.time)
 
-    // Check availability for each slot
+    // Check availability for each slot using a simplified check
+    // This avoids recursive calls that can be slow for large parties
     const results: Array<{ time: string; available: boolean }> = []
 
     for (const slotTime of nearbySlots) {
-      const availability = await this.checkAvailabilityWithServices({
-        date,
-        time: slotTime,
-        partySize,
+      // Quick check: just verify tables exist for this party size
+      // Don't do full availability check to avoid slow recursion
+      const slotStartTime = parse(slotTime, 'HH:mm', new Date())
+      const slotEndTime = addMinutes(slotStartTime, service.defaultDurationMinutes)
+      const slotEndTimeStr = format(slotEndTime, 'HH:mm')
+
+      // Get conflicting reservations for this slot
+      const conflictingReservations = await this.getConflictingReservations({
         restaurantId,
+        date,
+        startTime: slotTime,
+        endTime: slotEndTimeStr,
+        service,
       })
+
+      // Get occupied table IDs
+      const occupiedTableIds = new Set<string>()
+      for (const res of conflictingReservations) {
+        if (res.tableIds) {
+          res.tableIds.forEach((id) => occupiedTableIds.add(id))
+        }
+      }
+
+      // Get all tables and filter by service/size
+      const allTables = await db.query.tables.findMany({
+        where: eq(tables.restaurantId, restaurantId),
+      })
+
+      let candidateTables = allTables
+      if (service.availableTableIds && service.availableTableIds.length > 0) {
+        candidateTables = allTables.filter((t) =>
+          service.availableTableIds!.includes(t.id)
+        )
+      }
+
+      const suitableTables = candidateTables.filter((t) => t.capacity >= partySize)
+      const availableTables = suitableTables.filter((t) => !occupiedTableIds.has(t.id))
 
       results.push({
         time: slotTime,
-        available: availability.available,
+        available: availableTables.length > 0,
       })
     }
 

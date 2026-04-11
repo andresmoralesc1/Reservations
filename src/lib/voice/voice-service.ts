@@ -36,7 +36,7 @@ import {
 import { createLogger, logError } from "@/lib/logger"
 import { db } from "@/lib/db"
 import { callLogs, reservations } from "@/drizzle/schema"
-import { eq, sql } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 
 const logger = createLogger({ module: "voice-service" })
 
@@ -100,6 +100,12 @@ function isLogCallStartParams(params: unknown): params is LogCallStartParams {
 // ============ Función 1: checkAvailability ============
 export async function checkAvailability(params: CheckAvailabilityInput): Promise<VoiceActionResult> {
   try {
+    console.log("[checkAvailability] Iniciando consulta:", {
+      date: params.date,
+      time: params.time,
+      partySize: params.partySize
+    })
+
     const result = await servicesAvailability.checkAvailabilityWithServices({
       date: params.date,
       time: params.time,
@@ -107,27 +113,23 @@ export async function checkAvailability(params: CheckAvailabilityInput): Promise
       restaurantId: params.restaurantId || DEFAULT_RESTAURANT_ID
     })
 
-    // Guardar como reserva fallida si no hay disponibilidad
-    if (!result.available) {
-      await saveFailedReservation({
-        customerName: "Desconocido",
-        customerPhone: (params as any).customerPhone || "Desconocido",
-        date: params.date,
-        time: params.time,
-        partySize: params.partySize,
-        failureReason: "no_availability",
-        actionAttempted: "checkAvailability",
-      })
-    }
+    console.log("[checkAvailability] Resultado obtenido:", {
+      available: result.available,
+      hasAlternatives: !!result.alternativeSlots?.length,
+      alternativesCount: result.alternativeSlots?.length || 0
+    })
+
+    // Limitar alternativas a máximo 3 para no abrumar al bot
+    const limitedAlternatives = result.alternativeSlots?.slice(0, 3)
 
     return {
       success: result.available,
       message: result.message || (result.available ? "Tenemos disponibilidad" : "No hay disponibilidad"),
       availableSlots: result.available ? [] : undefined,
-      alternativeSlots: result.available ? undefined : result.alternativeSlots,
+      alternativeSlots: result.available ? undefined : limitedAlternatives,
     }
   } catch (error) {
-    console.error("[Voice Service] Error in checkAvailability:", error)
+    console.error("[checkAvailability] Error:", error)
     return {
       success: false,
       message: "No pude verificar la disponibilidad. Por favor intenta nuevamente.",
@@ -147,18 +149,6 @@ export async function createReservation(params: CreateReservationInput): Promise
     })
 
     if (!availability.available && availability.availableTables?.length === 0) {
-      // Guardar como reserva fallida
-      await saveFailedReservation({
-        customerName: params.customerName,
-        customerPhone: params.customerPhone,
-        date: params.date,
-        time: params.time,
-        partySize: params.partySize,
-        specialRequests: params.specialRequests,
-        failureReason: "No hay disponibilidad",
-        actionAttempted: "createReservation",
-      })
-
       return {
         success: false,
         message: availability.message || "No hay disponibilidad para la fecha y hora seleccionadas",
@@ -210,19 +200,6 @@ export async function createReservation(params: CreateReservationInput): Promise
       date: params.date,
       time: params.time,
     })
-
-    // Guardar como reserva fallida
-    await saveFailedReservation({
-      customerName: params.customerName,
-      customerPhone: params.customerPhone,
-      date: params.date,
-      time: params.time,
-      partySize: params.partySize,
-      specialRequests: params.specialRequests,
-      failureReason: error instanceof Error ? error.message : "Error desconocido",
-      actionAttempted: "createReservation",
-    })
-
     return {
       success: false,
       message: "Error al crear la reserva. Por favor intenta nuevamente.",
@@ -394,61 +371,6 @@ export async function modifyReservation(params: ModifyReservationInput): Promise
       success: false,
       message: "Error al modificar la reserva. Por favor intenta nuevamente.",
     }
-  }
-}
-
-// ============ Función 6: saveFailedReservation ============
-interface FailedReservationParams {
-  customerName: string
-  customerPhone: string
-  date: string
-  time: string
-  partySize: number
-  specialRequests?: string
-  failureReason: string
-  actionAttempted: string
-  sessionId?: string
-}
-
-export async function saveFailedReservation(params: FailedReservationParams): Promise<void> {
-  try {
-    await db.execute(sql`
-      INSERT INTO failed_reservations (
-        customer_name,
-        customer_phone,
-        reservation_date,
-        reservation_time,
-        party_size,
-        special_requests,
-        failure_reason,
-        action_attempted,
-        session_id,
-        partial_data,
-        recovery_status,
-        created_at
-      ) VALUES (
-        ${params.customerName},
-        ${params.customerPhone},
-        ${params.date},
-        ${params.time},
-        ${params.partySize},
-        ${params.specialRequests || null},
-        ${params.failureReason},
-        ${params.actionAttempted},
-        ${params.sessionId || null},
-        ${JSON.stringify(params)}::jsonb,
-        'pending',
-        now()
-      )
-    `)
-
-    logger.info({
-      msg: "Reserva fallida guardada",
-      customerPhone: params.customerPhone,
-      failureReason: params.failureReason,
-    })
-  } catch (error) {
-    logError("Error guardando reserva fallida", error, { params })
   }
 }
 
