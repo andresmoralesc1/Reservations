@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server"
 import { migrate } from "drizzle-orm/postgres-js/migrator"
 import { db } from "@/lib/db"
+import path from "path"
 
 export async function POST() {
   try {
-    await migrate(db, { migrationsFolder: "drizzle/migrations" })
+    // Ruta absoluta para serverless environments
+    const migrationsFolder = path.join(process.cwd(), "drizzle/migrations")
+    await migrate(db, { migrationsFolder })
 
     return NextResponse.json({
       success: true,
