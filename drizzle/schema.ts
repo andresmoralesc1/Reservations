@@ -50,6 +50,7 @@ export {
   reservationHistory,
   reservationSessions,
   whatsappMessages,
+  failedReservations,
   type Reservation,
   type NewReservation,
   type ReservationHistory,
@@ -58,6 +59,8 @@ export {
   type NewReservationSession,
   type WhatsappMessage,
   type NewWhatsappMessage,
+  type FailedReservation,
+  type NewFailedReservation,
 } from "./schema/reservations"
 
 export {
@@ -83,6 +86,7 @@ import {
   reservationHistory,
   reservationSessions,
   whatsappMessages,
+  failedReservations,
 } from "./schema/reservations"
 import { callLogs } from "./schema/voice"
 import { dailyAnalytics } from "./schema/analytics"

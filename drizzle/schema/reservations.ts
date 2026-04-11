@@ -157,6 +157,42 @@ export const whatsappMessages = pgTable("whatsapp_messages", {
   createdAt: timestamp("created_at").defaultNow(),
 })
 
+// Reservas fallidas para recuperación posterior
+export const failedReservations = pgTable("failed_reservations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  // Datos del cliente intentados
+  customerName: text("customer_name").notNull(),
+  customerPhone: text("customer_phone").notNull(),
+
+  // Datos de la reserva intentada
+  reservationDate: text("reservation_date").notNull(),
+  reservationTime: text("reservation_time").notNull(),
+  partySize: integer("party_size").notNull(),
+  specialRequests: text("special_requests"),
+
+  // Metadata del fallo
+  failureReason: text("failure_reason").notNull(),
+  actionAttempted: text("action_attempted").notNull(),
+  restaurantId: uuid("restaurant_id"),
+  sessionId: text("session_id"),
+  partialData: jsonb("partial_data").$type<Record<string, unknown>>(),
+
+  // Estado de recuperación
+  recoveryStatus: text("recovery_status").notNull().default("pending"),
+  recoveredAt: timestamp("recovered_at"),
+  recoveredBy: text("recovered_by"),
+
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+  expiresAt: timestamp("expires_at"),
+}, (table) => ({
+  phoneIdx: index("failed_reservations_phone_idx").on(table.customerPhone),
+  statusIdx: index("failed_reservations_status_idx").on(table.recoveryStatus),
+  dateIdx: index("failed_reservations_date_idx").on(table.reservationDate),
+  createdAtIdx: index("failed_reservations_created_idx").on(table.createdAt),
+}))
+
 // Relations
 export const customersRelations = relations(customers, ({ many }) => ({
   reservations: many(reservations),
@@ -210,3 +246,5 @@ export type ReservationSession = typeof reservationSessions.$inferSelect
 export type NewReservationSession = typeof reservationSessions.$inferInsert
 export type WhatsappMessage = typeof whatsappMessages.$inferSelect
 export type NewWhatsappMessage = typeof whatsappMessages.$inferInsert
+export type FailedReservation = typeof failedReservations.$inferSelect
+export type NewFailedReservation = typeof failedReservations.$inferInsert
