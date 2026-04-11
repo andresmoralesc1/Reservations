@@ -107,6 +107,19 @@ export async function checkAvailability(params: CheckAvailabilityInput): Promise
       restaurantId: params.restaurantId || DEFAULT_RESTAURANT_ID
     })
 
+    // Guardar como reserva fallida si no hay disponibilidad
+    if (!result.available) {
+      await saveFailedReservation({
+        customerName: "Desconocido",
+        customerPhone: (params as any).customerPhone || "Desconocido",
+        date: params.date,
+        time: params.time,
+        partySize: params.partySize,
+        failureReason: "no_availability",
+        actionAttempted: "checkAvailability",
+      })
+    }
+
     return {
       success: result.available,
       message: result.message || (result.available ? "Tenemos disponibilidad" : "No hay disponibilidad"),
