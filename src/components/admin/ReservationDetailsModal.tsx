@@ -216,10 +216,10 @@ export function ReservationDetailsModal({
         {/* Special Requests */}
         {reservation.specialRequests && (
           <div className="bg-amber-900 bg-opacity-20 border border-amber-900 border-opacity-30 rounded-lg p-4">
-            <h3 className="text-sm font-medium uppercase tracking-[0.05em] text-amber-400 mb-2">
+            <h3 className="text-sm font-medium uppercase tracking-[0.05em] text-black mb-2">
               Solicitudes Especiales
             </h3>
-            <p className="text-sm text-amber-200">{reservation.specialRequests}</p>
+            <p className="text-sm text-black">{reservation.specialRequests}</p>
           </div>
         )}
 
