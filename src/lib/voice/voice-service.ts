@@ -134,6 +134,18 @@ export async function createReservation(params: CreateReservationInput): Promise
     })
 
     if (!availability.available && availability.availableTables?.length === 0) {
+      // Guardar como reserva fallida
+      await saveFailedReservation({
+        customerName: params.customerName,
+        customerPhone: params.customerPhone,
+        date: params.date,
+        time: params.time,
+        partySize: params.partySize,
+        specialRequests: params.specialRequests,
+        failureReason: "No hay disponibilidad",
+        actionAttempted: "createReservation",
+      })
+
       return {
         success: false,
         message: availability.message || "No hay disponibilidad para la fecha y hora seleccionadas",
@@ -185,6 +197,19 @@ export async function createReservation(params: CreateReservationInput): Promise
       date: params.date,
       time: params.time,
     })
+
+    // Guardar como reserva fallida
+    await saveFailedReservation({
+      customerName: params.customerName,
+      customerPhone: params.customerPhone,
+      date: params.date,
+      time: params.time,
+      partySize: params.partySize,
+      specialRequests: params.specialRequests,
+      failureReason: error instanceof Error ? error.message : "Error desconocido",
+      actionAttempted: "createReservation",
+    })
+
     return {
       success: false,
       message: "Error al crear la reserva. Por favor intenta nuevamente.",
