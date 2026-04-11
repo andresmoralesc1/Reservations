@@ -36,7 +36,7 @@ import {
 import { createLogger, logError } from "@/lib/logger"
 import { db } from "@/lib/db"
 import { callLogs, reservations } from "@/drizzle/schema"
-import { eq } from "drizzle-orm"
+import { eq, sql } from "drizzle-orm"
 
 const logger = createLogger({ module: "voice-service" })
 
@@ -356,6 +356,61 @@ export async function modifyReservation(params: ModifyReservationInput): Promise
       success: false,
       message: "Error al modificar la reserva. Por favor intenta nuevamente.",
     }
+  }
+}
+
+// ============ Función 6: saveFailedReservation ============
+interface FailedReservationParams {
+  customerName: string
+  customerPhone: string
+  date: string
+  time: string
+  partySize: number
+  specialRequests?: string
+  failureReason: string
+  actionAttempted: string
+  sessionId?: string
+}
+
+export async function saveFailedReservation(params: FailedReservationParams): Promise<void> {
+  try {
+    await db.execute(sql`
+      INSERT INTO failed_reservations (
+        customer_name,
+        customer_phone,
+        reservation_date,
+        reservation_time,
+        party_size,
+        special_requests,
+        failure_reason,
+        action_attempted,
+        session_id,
+        partial_data,
+        recovery_status,
+        created_at
+      ) VALUES (
+        ${params.customerName},
+        ${params.customerPhone},
+        ${params.date},
+        ${params.time},
+        ${params.partySize},
+        ${params.specialRequests || null},
+        ${params.failureReason},
+        ${params.actionAttempted},
+        ${params.sessionId || null},
+        ${JSON.stringify(params)}::jsonb,
+        'pending',
+        now()
+      )
+    `)
+
+    logger.info({
+      msg: "Reserva fallida guardada",
+      customerPhone: params.customerPhone,
+      failureReason: params.failureReason,
+    })
+  } catch (error) {
+    logError("Error guardando reserva fallida", error, { params })
   }
 }
 
