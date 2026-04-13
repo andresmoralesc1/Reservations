@@ -56,7 +56,7 @@ export function Modal({
   }
 
   return (
-    <div className={`fixed inset-0 z-${zIndex} flex items-center justify-center p-4`}>
+    <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: parseInt(zIndex) }}>
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
@@ -67,7 +67,7 @@ export function Modal({
       <div
         ref={modalRef}
         className={cn(
-          `relative z-10 w-full bg-white border border-neutral-200 flex flex-col max-h-[90vh] rounded-lg shadow-2xl`,
+          "relative z-10 w-full bg-white border border-neutral-200 flex flex-col max-h-[90vh] rounded-lg shadow-2xl",
           sizeClasses[size],
           className
         )}
