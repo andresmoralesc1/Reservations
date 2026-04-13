@@ -27,7 +27,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             "secondary": "bg-white text-black border-2 border-black hover:bg-neutral-100 focus:ring-black",
             "outline": "bg-transparent text-black border-2 border-black hover:bg-black hover:text-white focus:ring-black",
             "ghost": "bg-transparent text-black hover:bg-black/5 focus:ring-black",
-            "danger": "bg-posit-red text-white hover:bg-red-700 focus:ring-posit-red",
+            "danger": "bg-red-600 text-white hover:bg-red-700 focus:ring-red-600",
           }[variant],
           {
             "sm": "px-4 py-2 text-xs sm:text-sm",

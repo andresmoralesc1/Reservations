@@ -61,6 +61,7 @@ export function ConfirmDialog({
       onClose={onClose}
       title={title}
       size="sm"
+      zIndex="60"
     >
       <div className="flex items-start gap-4">
         {variantConfig[variant].icon}
