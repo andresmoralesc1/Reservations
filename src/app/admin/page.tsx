@@ -162,10 +162,13 @@ export default function AdminPage() {
       )
       reloadReservations()
       reloadStats()
+      // Cerrar modales después de acción exitosa
+      closeDialog()
+      setDetailsReservation(null)
     } else {
       toast("Error al procesar la acción", "error")
     }
-  }, [handleConfirmAction, reloadReservations, reloadStats])
+  }, [handleConfirmAction, reloadReservations, reloadStats, closeDialog])
 
   const handleRefreshAll = useCallback(() => {
     reloadReservations()
