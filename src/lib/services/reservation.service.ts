@@ -9,6 +9,7 @@ import { db } from "@/lib/db"
 import { reservations, customers } from "@/drizzle/schema"
 import { eq, and, gte, lte, sql, desc, inArray } from "drizzle-orm"
 import { nanoid } from "nanoid"
+import { customAlphabet } from "nanoid"
 import { createLogger, logError } from "@/lib/logger"
 
 const logger = createLogger({ module: "reservation-service" })
@@ -83,8 +84,9 @@ export async function createReservation(input: CreateReservationInput) {
       customer = newCustomer
     }
 
-    // 2. Generar código único
-    const reservationCode = `RES-${nanoid(5).toUpperCase()}`
+    // 2. Generar código único (solo caracteres alfanuméricos)
+    const alphanumericNanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 5)
+    const reservationCode = `RES-${alphanumericNanoid()}`
 
     // 3. Crear reserva
     const [reservation] = await db
