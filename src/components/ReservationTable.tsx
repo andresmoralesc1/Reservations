@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils"
 import { StatusBadge } from "./StatusBadge"
 import { CustomerRiskBadge } from "./admin/CustomerRiskBadge"
+import { NotesIcon } from "./admin/NotesIndicator"
 import type { Table, Reservation } from "@/drizzle/schema"
 
 type ReservationWithTables = Reservation & {
@@ -94,6 +95,9 @@ export function ReservationTable({
             <th className="px-6 py-4 text-left font-display text-xs uppercase tracking-[0.1em] text-neutral-500">
               Origen
             </th>
+            <th className="px-4 py-4 text-center font-display text-xs uppercase tracking-[0.1em] text-neutral-500">
+              Notas
+            </th>
             <th className="px-6 py-4 text-right font-display text-xs uppercase tracking-[0.1em] text-neutral-500">
               Acciones
             </th>
@@ -105,7 +109,8 @@ export function ReservationTable({
               key={reservation.id}
               className={cn(
                 "hover:bg-neutral-50 transition-colors",
-                selectedIds.has(reservation.id) && "bg-[#D4A84B] bg-opacity-10"
+                selectedIds.has(reservation.id) && "bg-[#D4A84B] bg-opacity-10",
+                reservation.specialRequests?.trim() && "border-l-4 border-l-amber-400"
               )}
             >
               {onToggleSelection && (
@@ -160,6 +165,9 @@ export function ReservationTable({
               </td>
               <td className="whitespace-nowrap px-6 py-4 font-sans text-xs text-neutral-500 uppercase">
                 {reservation.source}
+              </td>
+              <td className="whitespace-nowrap px-4 py-4 text-center">
+                <NotesIcon notes={reservation.specialRequests} />
               </td>
               <td className="whitespace-nowrap px-6 py-4 text-right">
                 <div className="flex justify-end gap-2">
